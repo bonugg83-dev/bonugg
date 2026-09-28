@@ -1,0 +1,12 @@
+{
+  "name": "개념노트",
+  "short_name": "개념노트",
+  "description": "손으로 푼 문제에서 개념만 모아 밤에 복습하는 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f7f4",
+  "theme_color": "#3d35a8",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
