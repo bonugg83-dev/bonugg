@@ -16,7 +16,7 @@ Claude Code 세션이 직접 수행해서 아티팩트의 DB/자산 저장소에
 
 1. 과목(subjectId)을 모르면 물어봐서 확인: `intermediate`(중급회계) /
    `advanced`(고급회계) / `tax`(세무회계) / `finance`(재무관리) /
-   `economics`(경제학) 중 하나.
+   `economics`(경제학) / `cost`(원가관리회계) 중 하나.
 
 2. PDF면 페이지별 이미지로 렌더링. `python3 -c "import fitz"`가 실패하면 먼저
    `pip install pymupdf`.
