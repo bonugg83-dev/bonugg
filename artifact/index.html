@@ -292,7 +292,14 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
 .week-dot { width: 26px; height: 26px; border-radius: 50%; margin: 5px auto 0; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
 .week-dot svg { width: 14px; height: 14px; }
 .week-day.on .week-dot { background: #ffedd5; }
+.week-day.ice .week-dot { background: #dbeafe; color: #2563eb; }
 .week-day.today { color: var(--accent); }
+.freeze-card { display: flex; align-items: center; gap: 14px; }
+.freeze-slots { display: flex; gap: 8px; flex-shrink: 0; }
+.freeze-slot { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-2); color: var(--text-3); display: flex; align-items: center; justify-content: center; }
+.freeze-slot.full { background: #dbeafe; color: #2563eb; }
+.freeze-slot svg { width: 22px; height: 22px; }
+.freeze-title { font-size: 14px; font-weight: 800; }
 .mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
 .mini-stat { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 14px 16px; }
 .mini-stat .v { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -1381,18 +1388,38 @@ function flameSvg(tier) {
   '</svg>';
 }
 
+var SNOWFLAKE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 4l3 2 3-2M9 20l3-2 3 2"/></svg>';
+var FREEZE_MAX = 2;          // freezes you can hold at once
+var FREEZE_EVERY_DAYS = 7;   // earn one each time the streak reaches a multiple of this
+
+// Walks the study days in order. One missed day between two study days is bridged by a
+// freeze when one is held; every FREEZE_EVERY_DAYS days of streak earns a new freeze.
 function computeStreaks(daySet, today) {
-  var current = 0;
-  var cursor = daySet[today] ? today : shiftDay(today, -1);
-  while (daySet[cursor]) { current++; cursor = shiftDay(cursor, -1); }
   var days = Object.keys(daySet).sort();
-  var longest = 0, run = 0, prev = null;
+  var freezes = 0, run = 0, longest = 0, prev = null;
+  var frozen = {};
   days.forEach(function (d) {
-    run = (prev && shiftDay(prev, 1) === d) ? run + 1 : 1;
+    if (prev && shiftDay(prev, 1) === d) {
+      run++;
+    } else if (prev && shiftDay(prev, 2) === d && freezes > 0) {
+      freezes--;
+      frozen[shiftDay(prev, 1)] = true;
+      run++;
+    } else {
+      run = 1;
+    }
+    if (run % FREEZE_EVERY_DAYS === 0) freezes = Math.min(FREEZE_MAX, freezes + 1);
     if (run > longest) longest = run;
     prev = d;
   });
-  return { current: current, longest: longest };
+  var current = 0, pendingFreeze = false;
+  if (prev === today || prev === shiftDay(today, -1)) {
+    current = run;
+  } else if (prev === shiftDay(today, -2) && freezes > 0) {
+    current = run;              // yesterday was missed; studying today spends a freeze to keep it
+    pendingFreeze = true;
+  }
+  return { current: current, longest: longest, freezes: current > 0 ? freezes : 0, frozen: frozen, pendingFreeze: pendingFreeze };
 }
 
 async function renderStatsTab() {
@@ -1425,6 +1452,7 @@ async function renderStatsTab() {
   var streaks = computeStreaks(daySet, today);
   var tier = flameTier(streaks.current);
   var note = streaks.current === 0 ? '오늘 복습하면 불꽃이 켜져요.'
+    : streaks.pendingFreeze ? '어제를 놓쳤어요. 오늘 복습하면 프리즈가 연속을 지켜요.'
     : daySet[today] ? '오늘 복습 완료. 내일도 이어가요.'
     : '오늘 복습하면 ' + (streaks.current + 1) + '일째가 돼요.';
 
@@ -1434,8 +1462,9 @@ async function renderStatsTab() {
   for (var i = 6; i >= 0; i--) {
     var k = shiftDay(today, -i);
     var on = !!daySet[k];
-    week += '<div class="week-day' + (on ? ' on' : '') + (i === 0 ? ' today' : '') + '">' + WD[weekdayOf(k)] +
-      '<div class="week-dot">' + (on ? '<svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') + '</div></div>';
+    var ice = !on && streaks.frozen[k];
+    week += '<div class="week-day' + (on ? ' on' : '') + (ice ? ' ice' : '') + (i === 0 ? ' today' : '') + '">' + WD[weekdayOf(k)] +
+      '<div class="week-dot">' + (ice ? SNOWFLAKE : on ? '<svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') + '</div></div>';
   }
 
   // recall rate per subject over the retained review log (좋음/쉬움 = recalled)
@@ -1484,6 +1513,13 @@ async function renderStatsTab() {
         '<div class="streak-note">' + note + '</div></div>' +
       '</div>' +
       '<div class="week-row">' + week + '</div>' +
+    '</div>' +
+    '<div class="stat-card freeze-card">' +
+      '<div class="freeze-slots">' + [0, 1].map(function (i) {
+        return '<span class="freeze-slot' + (i < streaks.freezes ? ' full' : '') + '">' + SNOWFLAKE + '</span>';
+      }).join('') + '</div>' +
+      '<div><div class="freeze-title">스트릭 프리즈 ' + streaks.freezes + '/' + FREEZE_MAX + '</div>' +
+      '<div class="streak-note">' + FREEZE_EVERY_DAYS + '일 연속마다 1개를 얻고, 하루 놓치면 자동으로 써서 연속을 지켜요. 이틀 이상 빠지면 끊겨요.</div></div>' +
     '</div>' +
     '<div class="mini-stats">' +
       '<div class="mini-stat"><div class="v">' + streaks.longest + '일</div><div class="l">최장 연속</div></div>' +
