@@ -1945,7 +1945,31 @@ function asReadList(res, n) {
 }
 
 // One AI call that reads images and returns parsed JSON, whichever backend is active.
+// Gemini rate limits (429) and brief overloads (503) come back as tool_error text; wait and retry a few times
+// instead of dropping the page. Daily-quota errors fail again quickly and then surface as usual.
 async function aiAsk(prompt, blobs) {
+  for (var attempt = 0; ; attempt++) {
+    try {
+      return await aiAskOnce(prompt, blobs);
+    } catch (e) {
+      var msg = String((e && e.message) || '');
+      var transient = e && e.code === 'tool_error' && /429|RESOURCE_EXHAUSTED|rate.?limit|quota|503|UNAVAILABLE|overload/i.test(msg);
+      if (!transient || attempt >= 3 || !aiCtl || aiCtl.signal.aborted) throw e;
+      var m = msg.match(/retryDelay\D{0,6}(\d+(?:\.\d+)?)\s*s/i) || msg.match(/retry in\s+(\d+(?:\.\d+)?)\s*s/i);
+      var wait = Math.min(65, Math.max(5, m ? Math.ceil(parseFloat(m[1])) + 1 : 15 * (attempt + 1)));
+      var before = aiProgress;
+      for (var left = wait; left > 0; left--) {
+        if (aiCtl.signal.aborted) throw { code: 'cancelled', message: 'cancelled' };
+        aiProgress = 'Gemini 한도 때문에 ' + left + '초 기다리는 중 (' + (attempt + 1) + '/3)';
+        renderUploadTab();
+        await new Promise(function (r) { setTimeout(r, 1000); });
+      }
+      aiProgress = before;
+    }
+  }
+}
+
+async function aiAskOnce(prompt, blobs) {
   if (aiBackend === 'claude') {
     return sampleFn.json(prompt, { images: blobs.length === 1 ? blobs[0] : blobs, signal: aiCtl.signal });
   }
