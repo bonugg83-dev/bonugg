@@ -1367,10 +1367,15 @@ function renderGalleryResults() {
 async function deleteConcept(id) {
   var concept = allConcepts.find(function (c) { return c.id === id; });
   if (!concept) return;
+  if (assets && concept.imageId) {
+    try { await assets.delete(concept.imageId); } catch (e) {} // 자산 삭제 실패는 무시 — 개념 문서 삭제가 핵심
+  }
   try {
-    if (assets && concept.imageId) await assets.delete(concept.imageId);
     await db.doc('concepts/' + id).delete();
-  } catch (e) {}
+  } catch (e) {
+    showToast('삭제 실패, 다시 눌러주세요');
+    return;
+  }
   allConcepts = allConcepts.filter(function (c) { return c.id !== id; });
   reviewQueue = null;
   waitingQueue = [];
