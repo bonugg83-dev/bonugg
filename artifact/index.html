@@ -469,7 +469,8 @@ function subjectGradient(subjectId) {
 
 var db = null, assets = null, sampleFn = null, mcpFn = null;
 var aiBackend = null;      // 'claude' (sample, if this account allows images) | 'gemini' (custom connector) | null
-var GEMINI_SERVER = '개념노트 Gemini';   // must match the connector's display name in claude.ai exactly
+var GEMINI_SERVERS = ['개념노트 Gemini', 'Gemini'];   // connector display names we accept (claude.ai may shorten a Korean name)
+var GEMINI_SERVER = GEMINI_SERVERS[0];             // name shown in messages; updated to whichever one answers
 var aiImageReady = null; // null = still checking, true/false once sample.limits() answers
 var currentTab = 'review';
 
@@ -1760,7 +1761,23 @@ async function aiAsk(prompt, blobs) {
   }
   var images = [];
   for (var i = 0; i < blobs.length; i++) images.push(await blobToBase64(blobs[i]));
-  var res = await mcpFn.callTool(GEMINI_SERVER, 'gemini_vision', { prompt: prompt, images: images, mimeType: 'image/jpeg' }, { signal: aiCtl.signal, cache: false });
+  var res = null, lastErr = null;
+  var order = GEMINI_SERVERS.slice();
+  order.sort(function (a, b) { return (a === GEMINI_SERVER ? 0 : 1) - (b === GEMINI_SERVER ? 0 : 1); });
+  for (var si = 0; si < order.length; si++) {
+    try {
+      res = await mcpFn.callTool(order[si], 'gemini_vision', { prompt: prompt, images: images, mimeType: 'image/jpeg' }, { signal: aiCtl.signal, cache: false });
+      GEMINI_SERVER = order[si];
+      lastErr = null;
+      break;
+    } catch (e) {
+      lastErr = e;
+      var c = e && e.code;
+      // only a missing/unselected connector justifies trying the other name
+      if (c !== 'server_not_connected' && c !== 'not_in_manifest' && c !== 'server_not_found' && c !== 'selection_required') break;
+    }
+  }
+  if (lastErr) throw lastErr;
   var payload = res && res.payload;
   if (typeof payload === 'string') {
     try { payload = JSON.parse(payload); }

@@ -20,7 +20,7 @@ claude.ai 에 커넥터로 등록하는 방법. 컴퓨터 브라우저에서 하
 
 ## 3. claude.ai 에 커넥터 등록
 1. claude.ai → Settings(설정) → **Connectors** → **Add custom connector**
-2. **이름은 정확히 `개념노트 Gemini`** (앱이 이 이름으로 찾는다)
+2. 이름은 `개념노트 Gemini` 또는 `Gemini` (앱이 두 이름 모두 찾는다)
 3. URL: `https://gaenyeom-gemini.<계정>.workers.dev/mcp/<PATH_TOKEN 값>`
 4. 추가 (인증 정보는 비워 둔다)
 
