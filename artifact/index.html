@@ -336,6 +336,28 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
 .weak-text { font-size: 13px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .weak-count { font-size: 12px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border-radius: 999px; padding: 3px 10px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
 
+.exam-hero {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 16px 18px; border-radius: var(--radius-lg); color: #fff; cursor: pointer;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 20px rgba(139,140,246,.3);
+}
+.exam-hero.exam-empty { background: var(--surface); color: var(--text-2); box-shadow: none; border: 1.5px dashed var(--border); font-size: 13px; font-weight: 600; }
+.exam-edit-hint { font-weight: 800; color: var(--accent); }
+.exam-main { min-width: 0; }
+.exam-name { font-size: 13px; font-weight: 700; opacity: .9; }
+.exam-date { font-size: 12px; opacity: .8; font-variant-numeric: tabular-nums; }
+.exam-dnum { font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.exam-others { flex-basis: 100%; display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; font-weight: 700; }
+.exam-others span { background: rgba(255,255,255,.22); border-radius: 999px; padding: 2px 10px; }
+.exam-line { font-size: 13px; color: var(--text-2); margin: 10px 4px 16px; line-height: 1.6; }
+.exam-line b { color: var(--text); font-variant-numeric: tabular-nums; }
+.exam-line-sub { font-size: 11px; color: var(--text-3); }
+.exam-editor { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 14px; margin: 10px 0 14px; display: flex; flex-direction: column; gap: 10px; }
+.exam-edit-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.exam-edit-row .exam-input { flex: 1 1 130px; min-width: 0; width: auto; }
+input[type=date].exam-input { padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); font-size: 14px; }
+
 .toast {
   position: fixed;
   bottom: calc(78px + env(safe-area-inset-bottom, 0px));
@@ -434,6 +456,11 @@ var undoStack = [];           // [{ conceptId, beforeCard, logId, statsField }]
 var reviewBusy = false;
 var reviewHasCompletedAny = false;
 var reviewWaitTimer = null;
+
+// exam (D-day) state
+var examList = [];            // [{ name, date: 'YYYY-MM-DD' }] stored in settings/exams
+var examEditing = false;
+var examProjection = null;    // { total, days, perConcept } for the nearest exam
 var cardShownId = null, cardShownAt = 0; // when the current card appeared, for time stats
 
 // upload tab state
@@ -459,6 +486,7 @@ var editingConceptId = null;
 async function initCapabilities() {
   try { db = await window.claude.use('db'); } catch (e) { db = null; }
   try { assets = await window.claude.use('assets'); } catch (e) { assets = null; }
+  if (db) await loadExams();
   renderCurrentTab();
   if (db) pruneOldReviewLogs(); // fire-and-forget, doesn't block the UI
 }
@@ -569,6 +597,7 @@ var SRS_CONFIG = {
   leechThreshold: 8,
   reviewLogRetentionDays: 30,
   fuzzEnabled: true,
+  examDay: null,                   // ankiDay number of the nearest upcoming exam, set at runtime
 };
 
 function localDayNumber(d) {
@@ -594,8 +623,20 @@ function ankiDayKey(date, cfg) {
   return y + '-' + m + '-' + dd;
 }
 
+// With an exam coming, never schedule a review past the exam day, and in the last
+// 14 days keep every card within 4 days so nothing sits unseen right before it.
+function examCapFor(left, cfg) {
+  var cap = left <= 14 ? Math.min(4, left - 1) : left - 1;
+  return Math.max(cfg.minimumInterval, Math.min(cfg.maxInterval, cap));
+}
+function examIntervalCap(cfg) {
+  if (cfg.examDay == null) return cfg.maxInterval;
+  var left = cfg.examDay - ankiDay(new Date(), cfg);
+  return left <= 0 ? cfg.maxInterval : examCapFor(left, cfg);
+}
+
 function clampInterval(ivl, cfg) {
-  return Math.min(Math.max(Math.round(ivl), cfg.minimumInterval), cfg.maxInterval);
+  return Math.min(Math.max(Math.round(ivl), cfg.minimumInterval), examIntervalCap(cfg));
 }
 
 function fuzzInterval(ivl, cfg, rand) {
@@ -620,6 +661,7 @@ function computeReviewIntervals(ivl, ease, delay, cfg) {
 }
 
 function graduateCard(ivl, now, cfg) {
+  ivl = Math.max(cfg.minimumInterval, Math.min(ivl, examIntervalCap(cfg)));
   return {
     state: 'review', step: 0, intervalDays: ivl,
     nextReviewDate: startOfAnkiDay(ankiDay(now, cfg) + ivl, cfg).toISOString(),
@@ -833,6 +875,148 @@ document.addEventListener('keydown', function (e) {
   }
 });
 
+/* ───────────────── D-day: 시험일 ───────────────── */
+
+function examDayNumber(dateStr) {
+  var p = String(dateStr).split('-');
+  return localDayNumber(new Date(+p[0], +p[1] - 1, +p[2], 12));
+}
+
+function nearestExam() {
+  var today = ankiDay(new Date(), SRS_CONFIG);
+  var upcoming = examList
+    .filter(function (x) { return x.date && !isNaN(examDayNumber(x.date)) && examDayNumber(x.date) >= today; })
+    .map(function (x) { return { exam: x, day: examDayNumber(x.date), left: examDayNumber(x.date) - today }; })
+    .sort(function (a, b) { return a.day - b.day; });
+  return upcoming;
+}
+
+function syncExamConfig() {
+  var up = nearestExam();
+  SRS_CONFIG.examDay = up.length ? up[0].day : null;
+}
+
+async function loadExams() {
+  try {
+    var snap = await db.doc('settings/exams').get();
+    if (snap && snap.exists) examList = (snap.data().list || []).filter(function (x) { return x && x.date; });
+  } catch (e) {}
+  syncExamConfig();
+}
+
+async function saveExams() {
+  syncExamConfig();
+  examProjection = null;
+  try { await db.doc('settings/exams').set({ list: examList }); } catch (e) { showToast('시험일 저장 실패'); }
+  renderExamBanner();
+  loadExamProjection();
+}
+
+// Reviews each concept would get before the exam if every answer were 좋음.
+async function loadExamProjection() {
+  var up = nearestExam();
+  if (!up.length || !db) { examProjection = null; renderExamBanner(); return; }
+  var examDay = up[0].day;
+  var concepts = [];
+  try {
+    var snap = await db.collection('concepts').limit(1000).get();
+    concepts = snap.docs.map(function (d) { return normalizeCard(Object.assign({ id: d.id }, d.data()), SRS_CONFIG); });
+  } catch (e) {}
+  var today = ankiDay(new Date(), SRS_CONFIG);
+  var total = 0;
+  concepts.forEach(function (c) {
+    var ivl, day, ease = c.easeFactor;
+    if (c.state === 'review') {
+      ivl = c.intervalDays;
+      day = Math.max(today, ankiDay(new Date(c.nextReviewDate), SRS_CONFIG));
+    } else {
+      ivl = SRS_CONFIG.graduatingInterval;   // the first pass counts as one review today
+      day = today;
+    }
+    while (day <= examDay) {
+      total++;
+      var next = Math.max(Math.round(ivl * ease), ivl + 1);
+      var left = examDay - day;
+      ivl = left > 0 ? Math.min(next, examCapFor(left, SRS_CONFIG)) : next;
+      day += ivl;
+    }
+  });
+  var days = Math.max(1, examDay - today + 1);
+  examProjection = { total: total, days: days, count: concepts.length };
+  renderExamBanner();
+}
+
+function fmtExamDate(dateStr) {
+  var p = dateStr.split('-');
+  var wd = ['일', '월', '화', '수', '목', '금', '토'][new Date(+p[0], +p[1] - 1, +p[2]).getDay()];
+  return p[0] + '.' + p[1] + '.' + p[2] + ' (' + wd + ')';
+}
+
+function renderExamBanner() {
+  var hero = document.getElementById('examHero');
+  var line = document.getElementById('examLine');
+  if (!hero || !line) return;
+  var up = nearestExam();
+  if (!up.length) {
+    hero.className = 'exam-hero exam-empty';
+    hero.innerHTML = '<span>시험일을 등록하면 D-day가 나와요</span><span class="exam-edit-hint">등록</span>';
+    line.innerHTML = '';
+    return;
+  }
+  var n = up[0];
+  hero.className = 'exam-hero';
+  hero.innerHTML =
+    '<div class="exam-main"><div class="exam-name">' + escapeHtml(n.exam.name || '시험') + '</div>' +
+    '<div class="exam-date">' + fmtExamDate(n.exam.date) + '</div></div>' +
+    '<div class="exam-dnum">' + (n.left === 0 ? 'D-DAY' : 'D-' + n.left) + '</div>' +
+    (up.length > 1 ? '<div class="exam-others">' + up.slice(1, 4).map(function (o) {
+      return '<span>' + escapeHtml(o.exam.name || '시험') + ' D-' + o.left + '</span>';
+    }).join('') + '</div>' : '');
+  var parts = [];
+  if (reviewQueue) parts.push('오늘 복습 <b>' + (reviewQueue.length + waitingQueue.length) + '개</b> 남음');
+  if (examProjection && examProjection.count > 0 && n.left > 0) {
+    var perDay = Math.round(examProjection.total / examProjection.days * 10) / 10;
+    var perConcept = Math.round(examProjection.total / examProjection.count * 10) / 10;
+    parts.push('시험까지 하루 평균 <b>' + (perDay < 1 ? '1개 미만' : perDay + '개') + '</b>, 개념당 <b>' + perConcept + '회</b> 복습 예정');
+  }
+  line.innerHTML = parts.join('<br>') + (parts.length > 1 ? '<div class="exam-line-sub">모두 "좋음"을 눌렀을 때 기준이에요.</div>' : '');
+}
+
+function toggleExamEditor() {
+  examEditing = !examEditing;
+  renderExamEditor();
+}
+
+function renderExamEditor() {
+  var box = document.getElementById('examEditor');
+  if (!box) return;
+  if (!examEditing) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="exam-editor">' + examList.map(function (x, i) {
+    return '<div class="exam-edit-row">' +
+      '<input type="text" class="exam-input" id="examName' + i + '" value="' + escapeHtml(x.name || '') + '" placeholder="시험 이름" onchange="onExamEdit(' + i + ', \'name\', this.value)">' +
+      '<input type="date" class="exam-input" id="examDate' + i + '" value="' + escapeHtml(x.date || '') + '" onchange="onExamEdit(' + i + ', \'date\', this.value)">' +
+      '<button class="btn-icon" onclick="removeExam(' + i + ')" aria-label="삭제"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
+    '</div>';
+  }).join('') +
+  '<button class="btn-secondary" onclick="addExam()">시험 추가</button></div>';
+}
+
+function onExamEdit(i, field, value) {
+  if (!examList[i]) return;
+  examList[i][field] = value;
+  if (field === 'date' && !value) return;
+  saveExams();
+}
+function addExam() {
+  examList.push({ name: '', date: '' });
+  renderExamEditor();
+}
+function removeExam(i) {
+  examList.splice(i, 1);
+  renderExamEditor();
+  saveExams();
+}
+
 /* ───────────────── review tab ───────────────── */
 
 async function loadReviewQueue() {
@@ -920,8 +1104,17 @@ function renderWaitingScreen(el) {
 }
 
 async function renderReviewTab() {
-  var el = document.getElementById('content');
   if (currentTab !== 'review') return;
+  var content = document.getElementById('content');
+  if (!document.getElementById('reviewBody')) {
+    content.innerHTML =
+      '<div id="examBanner"><div id="examHero" class="exam-hero" onclick="toggleExamEditor()"></div>' +
+      '<div id="examLine" class="exam-line"></div><div id="examEditor"></div></div>' +
+      '<div id="reviewBody"></div>';
+    renderExamEditor();
+  }
+  var el = document.getElementById('reviewBody');
+  renderExamBanner();
   if (!db) {
     el.innerHTML = '<div class="empty-state">' + ICONS.moon + '<p>데이터 저장 기능을 사용할 수 없어요.</p></div>';
     return;
@@ -930,6 +1123,8 @@ async function renderReviewTab() {
     el.innerHTML = '<div class="loading">불러오는 중...</div>';
     await loadReviewQueue();
     if (currentTab !== 'review') return;
+    renderExamBanner();
+    loadExamProjection();
   }
   clearInterval(reviewWaitTimer);
   tryPromoteFromWaiting();
