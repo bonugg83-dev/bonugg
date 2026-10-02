@@ -1,0 +1,1381 @@
+<title>개념노트</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+:root {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #edeef3;
+  --border: #e2e3ea;
+  --text: #1c1c1e;
+  --text-2: #6e6e73;
+  --text-3: #8e8e93;
+  --accent: #6366f1;
+  --accent-2: #a855f7;
+  --accent-soft: #eeeafd;
+  --danger: #d9463f;
+  --danger-soft: #fbeae9;
+  --warn: #b3790f;
+  --warn-soft: #faf1dc;
+  --good: #1f8a5f;
+  --good-soft: #e4f4ec;
+  --radius-lg: 20px;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --shadow-sm: 0 1px 2px rgba(20,22,30,.05);
+  --shadow-md: 0 10px 26px rgba(20,22,30,.08);
+  --sidebar-w: 232px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans KR', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-tap-highlight-color: transparent;
+}
+button, select, input, textarea { font-family: inherit; }
+img { max-width: 100%; }
+svg { display: block; }
+
+#app { display: flex; flex-direction: column; height: 100%; }
+.topbar {
+  padding: 16px 20px 14px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar .brand-mark {
+  width: 30px; height: 30px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px; flex-shrink: 0;
+}
+.topbar h1 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 18px 28px;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* phone bottom tab bar */
+.tabbar {
+  display: flex;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  flex-shrink: 0;
+}
+.tab-btn {
+  flex: 1; border: none; background: none;
+  padding: 11px 4px 9px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--text-3); font-size: 11px; font-weight: 600; cursor: pointer;
+}
+.tab-btn.active { color: var(--accent); }
+.tab-btn .icn { width: 21px; height: 21px; }
+
+/* ── tablet layout: sidebar instead of bottom bar ── */
+.sidebar { display: none; }
+
+@media (min-width: 820px) {
+  #app { flex-direction: row; }
+  .topbar { display: none; }
+  .tabbar { display: none; }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    height: 100%;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .sidebar .brand-row { display: flex; align-items: center; gap: 10px; padding: 22px 20px 20px; }
+  .sidebar .brand-mark { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; flex-shrink: 0; }
+  .sidebar h1 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+  .sidebar nav { flex: 1; padding: 4px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .sidebar .tab-btn {
+    flex-direction: row; justify-content: flex-start; gap: 12px;
+    padding: 12px 14px; border-radius: var(--radius-sm);
+    font-size: 14px;
+  }
+  .sidebar .tab-btn.active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar .tab-btn .icn { width: 20px; height: 20px; flex-shrink: 0; }
+  .content { max-width: 760px; padding: 32px 40px 40px; }
+  .thumb-grid, .gallery-grid { grid-template-columns: repeat(3, 1fr) !important; }
+}
+@media (min-width: 1180px) {
+  .content { max-width: 920px; }
+  .thumb-grid, .gallery-grid { grid-template-columns: repeat(4, 1fr) !important; }
+}
+
+.empty-state { text-align: center; padding: 64px 16px; color: var(--text-3); }
+.empty-state .e-icn { width: 40px; height: 40px; margin: 0 auto 14px; color: var(--text-3); }
+.loading { text-align: center; padding: 48px 16px; color: var(--text-3); font-size: 13px; }
+.done-banner { text-align: center; padding: 56px 16px; color: var(--text-2); }
+.done-banner .e-icn { width: 44px; height: 44px; margin: 0 auto 14px; color: var(--good); }
+
+/* ── review ── */
+.progress-line { text-align: center; margin-bottom: 14px; font-size: 12px; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--text-3); }
+.progress-line .count-new { color: #2563eb; }
+.progress-line .count-learning { color: var(--danger); }
+.progress-line .count-review { color: var(--good); }
+.review-card {
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.accent-stripe { height: 4px; width: 100%; }
+.leech-badge {
+  display: inline-block; margin: 10px 14px 0; padding: 3px 10px;
+  border-radius: 999px; background: var(--danger-soft); color: var(--danger);
+  font-size: 11px; font-weight: 700;
+}
+.review-card img { width: 100%; display: block; max-height: 56vh; object-fit: contain; background: var(--surface-2); cursor: zoom-in; }
+.review-caption { padding: 16px 18px; font-size: 15px; white-space: pre-wrap; border-top: 1px solid var(--border); }
+.rating-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.rate-btn { border: none; border-radius: var(--radius-sm); padding: 14px 4px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow-sm); }
+.rate-btn:disabled { opacity: .5; }
+.rate-again { background: var(--danger-soft); color: var(--danger); }
+.rate-hard { background: var(--warn-soft); color: var(--warn); }
+.rate-good { background: var(--good-soft); color: var(--good); }
+.rate-easy { background: var(--accent-soft); color: var(--accent); }
+.rate-preview { display: block; font-size: 10px; font-weight: 600; opacity: .75; margin-top: 3px; }
+.undo-btn { margin-top: 10px; }
+
+/* ── upload ── */
+.field-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 7px; text-transform: uppercase; letter-spacing: .04em; }
+select, textarea, input[type=text] {
+  width: 100%; padding: 11px 13px;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface-2); color: var(--text); font-size: 14px;
+}
+select:focus, textarea:focus, input:focus { outline: none; border-color: var(--accent); }
+.dropzone-group { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.dropzone {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 32px 16px; gap: 10px;
+  border: 1.5px dashed var(--border); border-radius: var(--radius-lg);
+  color: var(--text-2); font-size: 14px; font-weight: 600; cursor: pointer;
+  background: var(--surface);
+}
+.dropzone .e-icn { width: 30px; height: 30px; color: var(--accent); }
+.dropzone input { display: none; }
+
+/* ── PDF manual crop ── */
+.pdf-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.pdf-nav .page-count { font-size: 13px; font-weight: 700; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.pdf-nav button {
+  border: none; background: var(--surface-2); color: var(--text);
+  padding: 8px 14px; border-radius: var(--radius-sm); font-weight: 600; font-size: 13px; cursor: pointer;
+}
+.pdf-nav button:disabled { opacity: .4; cursor: default; }
+.crop-stage { position: relative; width: 100%; touch-action: none; border-radius: var(--radius); overflow: hidden; }
+.crop-stage img { width: 100%; display: block; user-select: none; }
+.crop-box { position: absolute; border: 2px solid var(--accent); background: rgba(99,102,241,.14); cursor: move; }
+.crop-handle {
+  position: absolute; width: 24px; height: 24px;
+  background: var(--accent); border: 2px solid #fff; border-radius: 50%;
+  transform: translate(-50%, -50%); box-shadow: var(--shadow-sm);
+}
+.crop-handle[data-mode="nw"] { left: 0; top: 0; cursor: nwse-resize; }
+.crop-handle[data-mode="ne"] { left: 100%; top: 0; cursor: nesw-resize; }
+.crop-handle[data-mode="sw"] { left: 0; top: 100%; cursor: nesw-resize; }
+.crop-handle[data-mode="se"] { left: 100%; top: 100%; cursor: nwse-resize; }
+.crop-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.crop-count { text-align: center; font-size: 12px; color: var(--text-3); margin-top: 10px; }
+
+.btn-primary {
+  width: 100%; padding: 14px; background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff;
+  border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 14px; cursor: pointer;
+  box-shadow: 0 8px 20px rgba(139,140,246,.35);
+}
+.btn-primary:disabled { opacity: .5; }
+.btn-secondary {
+  width: 100%; padding: 13px; background: var(--surface-2); color: var(--text-2);
+  border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 14px; cursor: pointer;
+  text-align: center;
+}
+.btn-icon {
+  width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--surface-2); color: var(--text-2);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.btn-icon svg { width: 15px; height: 15px; }
+.btn-icon:hover { background: var(--danger-soft); color: var(--danger); }
+
+.thumb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+.thumb-card {
+  border-radius: var(--radius); padding: 10px; background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.thumb-card img { width: 100%; border-radius: var(--radius-sm); cursor: pointer; display: block; margin-bottom: 8px; aspect-ratio: 4/3; object-fit: cover; background: var(--surface-2); }
+.thumb-card input[type=text] { font-size: 12px; padding: 7px 10px; margin-bottom: 8px; }
+.thumb-card-foot { display: flex; align-items: center; justify-content: space-between; }
+.thumb-card-foot label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); font-weight: 600; }
+.save-bar { position: sticky; bottom: 0; padding-top: 6px; }
+
+/* ── concepts grid (모아보기) ── */
+.subject-filter { margin-bottom: 16px; max-width: 220px; }
+.gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.gallery-item {
+  border-radius: var(--radius); overflow: hidden; background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.gallery-item img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; cursor: pointer; background: var(--surface-2); }
+.gallery-item .g-body { padding: 10px 12px 12px; }
+.gallery-item .g-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+/* the color dot sits over the select via a positioned wrapper, so the select itself stays plain text */
+.subj-select-wrap { position: relative; display: inline-flex; align-items: center; }
+.subj-select-wrap select {
+  font: inherit; font-weight: 700; color: #fff;
+  border: none; cursor: pointer;
+  padding: 3px 10px 3px 22px; border-radius: 999px; appearance: none; -webkit-appearance: none;
+}
+/* the dropdown's own option list is native UI (white popup), so give options
+   their own dark-on-light colors instead of inheriting the select's white text */
+.subj-select-wrap select option { color: var(--text); background: var(--surface); font-weight: 500; }
+.subj-select-wrap .dot {
+  position: absolute; left: 3px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; border-radius: 50%; color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;
+  pointer-events: none;
+}
+.gallery-item .g-caption { font-size: 12px; color: var(--text-2); white-space: pre-wrap; word-break: break-word; cursor: pointer; }
+.gallery-item .g-caption-edit {
+  width: 100%; font-size: 12px; color: var(--text); line-height: 1.5;
+  border: 1.5px solid var(--accent); border-radius: 8px; padding: 6px 8px;
+  min-height: 44px; resize: vertical; background: var(--surface);
+}
+
+.lightbox-overlay {
+  position: fixed; inset: 0; z-index: 220;
+  background: rgba(8,9,13,.85);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; cursor: zoom-out;
+}
+.lightbox-overlay img { max-height: 100%; border-radius: 10px; }
+
+.toast {
+  position: fixed;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  left: 50%; transform: translateX(-50%) translateY(10px);
+  background: var(--text); color: var(--bg);
+  padding: 11px 20px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  z-index: 300; max-width: 86vw; text-align: center; box-shadow: var(--shadow-md);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (min-width: 820px) { .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); } }
+</style>
+
+<div id="app">
+  <!-- tablet sidebar -->
+  <aside class="sidebar">
+    <div class="brand-row"><div class="brand-mark">개</div><h1>개념노트</h1></div>
+    <nav>
+      <button class="tab-btn active" data-tab="review" onclick="switchTab('review')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
+        오늘의 복습
+      </button>
+      <button class="tab-btn" data-tab="upload" onclick="switchTab('upload')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.6"/></svg>
+        업로드
+      </button>
+      <button class="tab-btn" data-tab="concepts" onclick="switchTab('concepts')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+        모아보기
+      </button>
+    </nav>
+  </aside>
+
+  <div class="main-area" style="display:flex;flex-direction:column;flex:1;min-width:0;">
+    <div class="topbar"><div class="brand-mark">개</div><h1>개념노트</h1></div>
+    <div class="content" id="content"></div>
+    <nav class="tabbar">
+      <button class="tab-btn active" data-tab="review" onclick="switchTab('review')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
+        오늘의 복습
+      </button>
+      <button class="tab-btn" data-tab="upload" onclick="switchTab('upload')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.6"/></svg>
+        업로드
+      </button>
+      <button class="tab-btn" data-tab="concepts" onclick="switchTab('concepts')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+        모아보기
+      </button>
+    </nav>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var ICONS = {
+  empty: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h8l6 6v9.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 4v5a1 1 0 0 0 1 1h5"/></svg>',
+  done: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>',
+  moon: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>',
+  photos: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 15.5l4.5-4.5a1.5 1.5 0 0 1 2.1 0l3.4 3.4"/><path d="M13.5 12.5l1.4-1.4a1.5 1.5 0 0 1 2.1 0l3 3"/><circle cx="8" cy="9" r="1.4"/></svg>',
+  pdf: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5v4a1 1 0 0 0 1 1h4"/><path d="M8.5 13.5h7M8.5 17h4.5"/></svg>',
+};
+
+var SUBJECTS = [
+  { id: 'intermediate', name: '중급회계', mono: '중', c1: '#6366f1', c2: '#a855f7' },
+  { id: 'advanced', name: '고급회계', mono: '고', c1: '#2563eb', c2: '#06b6d4' },
+  { id: 'tax', name: '세무회계', mono: '세', c1: '#f59e0b', c2: '#f97316' },
+  { id: 'finance', name: '재무관리', mono: '재', c1: '#10b981', c2: '#14b8a6' },
+  { id: 'economics', name: '경제학', mono: '경', c1: '#f43f5e', c2: '#ec4899' },
+  { id: 'cost', name: '원가관리회계', mono: '원', c1: '#a855f7', c2: '#d946ef' },
+];
+
+function subjectGradient(subjectId) {
+  var subj = SUBJECTS.find(function (s) { return s.id === subjectId; });
+  return subj ? ('linear-gradient(120deg, ' + subj.c1 + ', ' + subj.c2 + ')') : 'var(--surface-2)';
+}
+
+var db = null, assets = null;
+var currentTab = 'review';
+
+// review tab state
+var reviewQueue = null;       // FIFO array of normalized cards ready to show now
+var waitingQueue = [];        // [{ card, dueAt(ms) }] learning/relearning cards deferred within this session
+var dailyStatsToday = null;   // { newIntroduced, reviewsDone } cache for today's ankiDay
+var dailyStatsKey = null;
+var undoStack = [];           // [{ conceptId, beforeCard, logId, statsField }]
+var reviewBusy = false;
+var reviewHasCompletedAny = false;
+var reviewWaitTimer = null;
+
+// upload tab state
+var uploadStage = 'idle'; // idle | pdf-crop | review | saving | done
+var uploadSubject = SUBJECTS[0].id;
+var pendingUploads = []; // { localId, file, url, caption, included }
+var uploadSeq = 0;
+var savedCount = 0;
+
+// pdf manual-crop state
+var pdfDoc = null;
+var pdfCurrentPage = 1;
+var pdfPageImage = null; // { dataUrl, width, height }
+var cropBounds = { x: 0.08, y: 0.08, width: 0.84, height: 0.3 };
+var cropDragMode = null;
+var cropDragStartX = 0, cropDragStartY = 0, cropDragStartBounds = null;
+
+// concepts tab state
+var allConcepts = null;
+var conceptsSubjectFilter = '';
+var editingConceptId = null;
+
+async function initCapabilities() {
+  try { db = await window.claude.use('db'); } catch (e) { db = null; }
+  try { assets = await window.claude.use('assets'); } catch (e) { assets = null; }
+  renderCurrentTab();
+  if (db) pruneOldReviewLogs(); // fire-and-forget, doesn't block the UI
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  renderCurrentTab();
+}
+
+function renderCurrentTab() {
+  if (currentTab === 'review') renderReviewTab();
+  else if (currentTab === 'upload') renderUploadTab();
+  else if (currentTab === 'concepts') renderConceptsTab();
+}
+
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(function () { el.classList.remove('show'); }, 2200);
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function subjectEditor(conceptId, subjectId) {
+  var subj = SUBJECTS.find(function (s) { return s.id === subjectId; });
+  var mono = subj ? subj.mono : '?';
+  return '<span class="subj-select-wrap">' +
+    '<span class="dot" style="background:' + (subj ? subj.c1 : '#8e8e93') + '">' + mono + '</span>' +
+    '<select style="background:' + subjectGradient(subjectId) + '" onclick="event.stopPropagation()" onchange="onSubjectChange(\'' + conceptId + '\', this.value)">' +
+    SUBJECTS.map(function (s) {
+      return '<option value="' + s.id + '"' + (s.id === subjectId ? ' selected' : '') + '>' + s.name + '</option>';
+    }).join('') +
+    '</select></span>';
+}
+
+async function onSubjectChange(conceptId, newSubjectId) {
+  try {
+    await db.doc('concepts/' + conceptId).update({ subjectId: newSubjectId });
+  } catch (e) {
+    showToast('과목 변경 실패');
+    return;
+  }
+  var concept = allConcepts.find(function (c) { return c.id === conceptId; });
+  if (concept) concept.subjectId = newSubjectId;
+  renderGalleryResults();
+}
+
+function startEditCaption(conceptId) {
+  editingConceptId = conceptId;
+  renderGalleryResults();
+  var el = document.querySelector('.g-caption-edit');
+  if (el) {
+    el.focus();
+    el.selectionStart = el.selectionEnd = el.value.length;
+  }
+}
+
+async function saveEditCaption(conceptId, newText) {
+  editingConceptId = null;
+  try {
+    await db.doc('concepts/' + conceptId).update({ text: newText });
+  } catch (e) {
+    showToast('저장 실패');
+    renderGalleryResults();
+    return;
+  }
+  var concept = allConcepts.find(function (c) { return c.id === conceptId; });
+  if (concept) concept.text = newText;
+  renderGalleryResults();
+}
+
+function openLightbox(url) {
+  var overlay = document.createElement('div');
+  overlay.className = 'lightbox-overlay';
+  overlay.innerHTML = '<img src="' + url + '" alt="원본">';
+  overlay.addEventListener('click', function () { overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+/* ───────────────── SRS: 안키 v2 스케줄러 (순수 함수) ───────────────── */
+
+var SRS_CONFIG = {
+  learningSteps: [1, 10],          // 분
+  graduatingInterval: 1,           // 일
+  easyInterval: 4,                 // 일
+  relearningSteps: [10],           // 분
+  lapseNewIntervalMultiplier: 0,
+  minimumInterval: 1,              // 일
+  startingEase: 2.5,
+  minEase: 1.3,
+  easyBonus: 1.3,
+  hardMultiplier: 1.2,
+  intervalModifier: 1.0,
+  maxInterval: 180,                // 일
+  newCardsPerDay: 20,
+  reviewsPerDay: 200,
+  dayRolloverHour: 4,
+  learnAheadMinutes: 20,
+  leechThreshold: 8,
+  reviewLogRetentionDays: 30,
+  fuzzEnabled: true,
+};
+
+function localDayNumber(d) {
+  return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000);
+}
+
+function ankiDay(date, cfg) {
+  var shifted = new Date(date.getTime() - cfg.dayRolloverHour * 3600000);
+  return localDayNumber(shifted);
+}
+
+function startOfAnkiDay(dayNumber, cfg) {
+  var now = new Date();
+  var offsetMs = now.getTimezoneOffset() * 60000;
+  var d = new Date(dayNumber * 86400000 + offsetMs);
+  d.setTime(d.getTime() + cfg.dayRolloverHour * 3600000);
+  return d;
+}
+
+function ankiDayKey(date, cfg) {
+  var d = startOfAnkiDay(ankiDay(date, cfg), cfg);
+  var y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
+}
+
+function clampInterval(ivl, cfg) {
+  return Math.min(Math.max(Math.round(ivl), cfg.minimumInterval), cfg.maxInterval);
+}
+
+function fuzzInterval(ivl, cfg, rand) {
+  if (!cfg.fuzzEnabled) return ivl;
+  rand = rand || Math.random;
+  if (ivl < 2) return ivl;
+  if (ivl === 2) return 2 + Math.floor(rand() * 2);
+  var r = ivl < 7 ? 0.25 : ivl < 30 ? 0.15 : 0.05;
+  var fuzz = Math.max(1, Math.round(ivl * r));
+  var min = ivl - fuzz, max = ivl + fuzz;
+  return min + Math.floor(rand() * (max - min + 1));
+}
+
+function computeReviewIntervals(ivl, ease, delay, cfg) {
+  var hardRaw = (ivl + Math.floor(delay / 4)) * cfg.hardMultiplier;
+  var hard = Math.max(Math.round(hardRaw * cfg.intervalModifier), ivl + 1);
+  var goodRaw = (ivl + Math.floor(delay / 2)) * ease;
+  var good = Math.max(Math.round(goodRaw * cfg.intervalModifier), hard + 1);
+  var easyRaw = (ivl + delay) * ease * cfg.easyBonus;
+  var easy = Math.max(Math.round(easyRaw * cfg.intervalModifier), good + 1);
+  return { hard: hard, good: good, easy: easy };
+}
+
+function graduateCard(ivl, now, cfg) {
+  return {
+    state: 'review', step: 0, intervalDays: ivl,
+    nextReviewDate: startOfAnkiDay(ankiDay(now, cfg) + ivl, cfg).toISOString(),
+  };
+}
+
+function scheduleLearning(card, rating, now, cfg, steps, stateName, normalGraduateIvl, easyGraduateIvl) {
+  var step = card.step || 0;
+  if (rating === 'again') {
+    return { state: stateName, step: 0, nextReviewDate: new Date(now.getTime() + steps[0] * 60000).toISOString() };
+  }
+  if (rating === 'hard') {
+    var minutes;
+    if (step === 0) {
+      minutes = steps.length >= 2 ? Math.round((steps[0] + steps[1]) / 2) : Math.min(steps[0] * 1.5, steps[0] + 1440);
+    } else {
+      minutes = steps[step];
+    }
+    return { state: stateName, step: step, nextReviewDate: new Date(now.getTime() + minutes * 60000).toISOString() };
+  }
+  if (rating === 'easy') {
+    return graduateCard(easyGraduateIvl, now, cfg);
+  }
+  var nextStep = step + 1;
+  if (nextStep < steps.length) {
+    return { state: stateName, step: nextStep, nextReviewDate: new Date(now.getTime() + steps[nextStep] * 60000).toISOString() };
+  }
+  return graduateCard(normalGraduateIvl, now, cfg);
+}
+
+function scheduleReview(card, rating, now, cfg, rand) {
+  var ivl = card.intervalDays;
+  var ease = card.easeFactor;
+  var delay = Math.max(0, ankiDay(now, cfg) - ankiDay(new Date(card.nextReviewDate), cfg));
+
+  if (rating === 'again') {
+    var newLapses = (card.lapses || 0) + 1;
+    var newEase = Math.max(cfg.minEase, ease - 0.20);
+    var lapseIvl = Math.max(cfg.minimumInterval, Math.round(ivl * cfg.lapseNewIntervalMultiplier));
+    return {
+      state: 'relearning', step: 0,
+      easeFactor: newEase,
+      lapseInterval: lapseIvl,
+      lapses: newLapses,
+      leech: newLapses >= cfg.leechThreshold,
+      nextReviewDate: new Date(now.getTime() + cfg.relearningSteps[0] * 60000).toISOString(),
+    };
+  }
+
+  var computed = computeReviewIntervals(ivl, ease, delay, cfg);
+  var chosenIvl, newEase2;
+  if (rating === 'hard') { chosenIvl = computed.hard; newEase2 = Math.max(cfg.minEase, ease - 0.15); }
+  else if (rating === 'good') { chosenIvl = computed.good; newEase2 = ease; }
+  else { chosenIvl = computed.easy; newEase2 = ease + 0.15; }
+
+  var finalIvl = clampInterval(fuzzInterval(chosenIvl, cfg, rand), cfg);
+
+  return {
+    state: 'review', step: 0,
+    easeFactor: newEase2,
+    intervalDays: finalIvl,
+    nextReviewDate: startOfAnkiDay(ankiDay(now, cfg) + finalIvl, cfg).toISOString(),
+  };
+}
+
+function schedule(card, rating, now, cfg, rand) {
+  var state = card.state;
+  var result;
+  if (state === 'new' || state === 'learning') {
+    result = scheduleLearning(card, rating, now, cfg, cfg.learningSteps, 'learning', cfg.graduatingInterval, cfg.easyInterval);
+  } else if (state === 'relearning') {
+    var lapseIvl = card.lapseInterval || cfg.minimumInterval;
+    result = scheduleLearning(card, rating, now, cfg, cfg.relearningSteps, 'relearning', lapseIvl, lapseIvl + 1);
+  } else {
+    result = scheduleReview(card, rating, now, cfg, rand);
+  }
+  result.reps = (card.reps || 0) + 1;
+  result.lastReviewedAt = now.toISOString();
+  if (result.lapses === undefined) result.lapses = card.lapses || 0;
+  if (result.leech === undefined) result.leech = card.leech || false;
+  if (result.easeFactor === undefined) result.easeFactor = card.easeFactor;
+  if (result.lapseInterval === undefined) result.lapseInterval = card.lapseInterval || cfg.minimumInterval;
+  if (result.intervalDays === undefined) result.intervalDays = card.intervalDays;
+  return result;
+}
+
+function formatMinutes(mins) {
+  if (mins < 60) return Math.round(mins) + '분';
+  var hours = mins / 60;
+  if (hours < 24) return (Math.round(hours * 10) / 10) + '시간';
+  return formatDays(Math.round(hours / 24));
+}
+function formatDays(days) {
+  if (days < 30) return days + '일';
+  if (days < 365) return (Math.round(days / 30 * 10) / 10) + '개월';
+  return (Math.round(days / 365 * 10) / 10) + '년';
+}
+
+function previewIntervals(card, now, cfg) {
+  var state = card.state;
+  if (state === 'new' || state === 'learning') {
+    var steps = cfg.learningSteps;
+    var step = card.step || 0;
+    var hardMin = step === 0
+      ? (steps.length >= 2 ? (steps[0] + steps[1]) / 2 : Math.min(steps[0] * 1.5, steps[0] + 1440))
+      : steps[step];
+    var nextStep = step + 1;
+    var goodLabel = nextStep < steps.length ? formatMinutes(steps[nextStep]) : formatDays(cfg.graduatingInterval);
+    return { again: formatMinutes(steps[0]), hard: formatMinutes(hardMin), good: goodLabel, easy: formatDays(cfg.easyInterval) };
+  }
+  if (state === 'relearning') {
+    var rsteps = cfg.relearningSteps;
+    var rstep = card.step || 0;
+    var lapseIvl = card.lapseInterval || cfg.minimumInterval;
+    var rHard = rstep === 0
+      ? (rsteps.length >= 2 ? (rsteps[0] + rsteps[1]) / 2 : Math.min(rsteps[0] * 1.5, rsteps[0] + 1440))
+      : rsteps[rstep];
+    var rNextStep = rstep + 1;
+    var rGood = rNextStep < rsteps.length ? formatMinutes(rsteps[rNextStep]) : formatDays(lapseIvl);
+    return { again: formatMinutes(rsteps[0]), hard: formatMinutes(rHard), good: rGood, easy: formatDays(lapseIvl + 1) };
+  }
+  var ivl = card.intervalDays, ease = card.easeFactor;
+  var delay = Math.max(0, ankiDay(now, cfg) - ankiDay(new Date(card.nextReviewDate), cfg));
+  var c = computeReviewIntervals(ivl, ease, delay, cfg);
+  return {
+    again: formatMinutes(cfg.relearningSteps[0]),
+    hard: formatDays(clampInterval(c.hard, cfg)),
+    good: formatDays(clampInterval(c.good, cfg)),
+    easy: formatDays(clampInterval(c.easy, cfg)),
+  };
+}
+
+function normalizeCard(doc, cfg) {
+  var c = Object.assign({}, doc);
+  if (c.state === undefined) {
+    if (!c.lastReviewedAt) {
+      c.state = 'new'; c.step = 0; c.easeFactor = cfg.startingEase; c.reps = 0; c.lapses = 0;
+      c.intervalDays = c.intervalDays || cfg.minimumInterval;
+    } else {
+      c.state = 'review';
+      c.easeFactor = c.easeFactor || cfg.startingEase;
+      c.intervalDays = c.intervalDays || cfg.minimumInterval;
+      if (c.nextReviewDate) {
+        var day = ankiDay(new Date(c.nextReviewDate), cfg);
+        c.nextReviewDate = startOfAnkiDay(day, cfg).toISOString();
+      }
+      c.reps = c.reps === undefined ? 1 : c.reps;
+      c.lapses = c.lapses || 0;
+      c.step = 0;
+    }
+  }
+  if (c.step === undefined) c.step = 0;
+  if (c.lapses === undefined) c.lapses = 0;
+  if (c.leech === undefined) c.leech = false;
+  if (c.reps === undefined) c.reps = 0;
+  if (c.easeFactor === undefined) c.easeFactor = cfg.startingEase;
+  if (c.intervalDays === undefined) c.intervalDays = cfg.minimumInterval;
+  if (c.lapseInterval === undefined) c.lapseInterval = cfg.minimumInterval;
+  return c;
+}
+
+/* ── reviewLog 정리: 30일 넘은 로그는 세션 시작 시 조용히 지운다.
+   undo는 메모리 스택으로만 동작하므로 DB의 reviewLog는 undo에 필요하지 않고,
+   dailyStats가 이미 날짜별 집계를 영구 보존하므로 원본 로그를 오래 쌓아둘 이유가 없다. ── */
+async function pruneOldReviewLogs() {
+  try {
+    var cutoffDay = ankiDay(new Date(), SRS_CONFIG) - SRS_CONFIG.reviewLogRetentionDays;
+    var snap = await db.collection('reviewLog').where('ankiDay', '<', cutoffDay).limit(200).get();
+    for (var i = 0; i < snap.docs.length; i++) {
+      try { await db.doc('reviewLog/' + snap.docs[i].id).delete(); } catch (e) {}
+    }
+  } catch (e) {}
+}
+
+async function loadDailyStats(key) {
+  try {
+    var snap = await db.doc('dailyStats/' + key).get();
+    if (snap && snap.exists) {
+      var data = snap.data();
+      return { newIntroduced: data.newIntroduced || 0, reviewsDone: data.reviewsDone || 0 };
+    }
+  } catch (e) {}
+  return { newIntroduced: 0, reviewsDone: 0 };
+}
+
+async function bumpDailyStats(field, delta) {
+  dailyStatsToday[field] = Math.max(0, (dailyStatsToday[field] || 0) + delta);
+  await db.doc('dailyStats/' + dailyStatsKey).set({
+    newIntroduced: dailyStatsToday.newIntroduced,
+    reviewsDone: dailyStatsToday.reviewsDone,
+  });
+}
+
+document.addEventListener('keydown', function (e) {
+  if (currentTab !== 'review' || !reviewQueue || reviewQueue.length === 0 || reviewBusy) return;
+  var tag = e.target && e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (e.key === '1') rateCurrent('again');
+  else if (e.key === '2') rateCurrent('hard');
+  else if (e.key === '3') rateCurrent('good');
+  else if (e.key === '4') rateCurrent('easy');
+  else if (e.key === 'u' || e.key === 'U' || ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z'))) {
+    e.preventDefault();
+    undoLast();
+  }
+});
+
+/* ───────────────── review tab ───────────────── */
+
+async function loadReviewQueue() {
+  var now = new Date();
+  var tomorrowBound = startOfAnkiDay(ankiDay(now, SRS_CONFIG) + 1, SRS_CONFIG).toISOString();
+  var snap;
+  try {
+    snap = await db.collection('concepts')
+      .where('nextReviewDate', '<=', tomorrowBound)
+      .orderBy('nextReviewDate', 'asc')
+      .limit(1000)
+      .get();
+  } catch (e) {
+    snap = { docs: [] };
+  }
+  var cards = snap.docs.map(function (d) { return normalizeCard(Object.assign({ id: d.id }, d.data()), SRS_CONFIG); });
+
+  dailyStatsKey = ankiDayKey(now, SRS_CONFIG);
+  dailyStatsToday = await loadDailyStats(dailyStatsKey);
+  var newLeft = Math.max(0, SRS_CONFIG.newCardsPerDay - dailyStatsToday.newIntroduced);
+  var reviewLeft = Math.max(0, SRS_CONFIG.reviewsPerDay - dailyStatsToday.reviewsDone);
+
+  var learningDueNow = [], learningAhead = [], reviewCards = [], newCards = [];
+  var learnAheadBound = now.getTime() + SRS_CONFIG.learnAheadMinutes * 60000;
+  var today = ankiDay(now, SRS_CONFIG);
+
+  cards.forEach(function (c) {
+    if (c.state === 'learning' || c.state === 'relearning') {
+      var due = new Date(c.nextReviewDate).getTime();
+      if (due <= now.getTime()) learningDueNow.push(c);
+      else if (due <= learnAheadBound) learningAhead.push({ card: c, dueAt: due });
+    } else if (c.state === 'review') {
+      if (ankiDay(new Date(c.nextReviewDate), SRS_CONFIG) <= today) reviewCards.push(c);
+    } else if (c.state === 'new') {
+      newCards.push(c);
+    }
+  });
+
+  reviewCards.sort(function (a, b) { return a.nextReviewDate.localeCompare(b.nextReviewDate); });
+  newCards.sort(function (a, b) { return (a.createdAt || '').localeCompare(b.createdAt || ''); });
+
+  reviewQueue = learningDueNow.concat(reviewCards.slice(0, reviewLeft), newCards.slice(0, newLeft));
+  waitingQueue = learningAhead;
+}
+
+function tryPromoteFromWaiting() {
+  if (!reviewQueue || reviewQueue.length > 0 || waitingQueue.length === 0) return;
+  var now = Date.now();
+  var idx = -1;
+  for (var i = 0; i < waitingQueue.length; i++) {
+    if (waitingQueue[i].dueAt <= now) { idx = i; break; }
+  }
+  if (idx === -1) {
+    // 보여줄 카드가 없고 학습 카드만 남아 있으면 learnAhead 범위까지 당겨 보여준다
+    var aheadBound = now + SRS_CONFIG.learnAheadMinutes * 60000;
+    var soonest = null;
+    for (var j = 0; j < waitingQueue.length; j++) {
+      if (waitingQueue[j].dueAt <= aheadBound && (!soonest || waitingQueue[j].dueAt < soonest.dueAt)) {
+        soonest = waitingQueue[j]; idx = j;
+      }
+    }
+  }
+  if (idx !== -1) {
+    var entry = waitingQueue.splice(idx, 1)[0];
+    reviewQueue.push(entry.card);
+  }
+}
+
+function queueCounts() {
+  var all = reviewQueue.concat(waitingQueue.map(function (w) { return w.card; }));
+  var counts = { newCount: 0, learningCount: 0, reviewCount: 0 };
+  all.forEach(function (c) {
+    if (c.state === 'new') counts.newCount++;
+    else if (c.state === 'learning' || c.state === 'relearning') counts.learningCount++;
+    else counts.reviewCount++;
+  });
+  return counts;
+}
+
+function renderWaitingScreen(el) {
+  var nextDue = Math.min.apply(null, waitingQueue.map(function (w) { return w.dueAt; }));
+  var mins = Math.max(1, Math.ceil((nextDue - Date.now()) / 60000));
+  el.innerHTML = '<div class="empty-state">' + ICONS.moon + '<p>' + mins + '분 후에 다시 나와요.</p></div>' +
+    (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '');
+}
+
+async function renderReviewTab() {
+  var el = document.getElementById('content');
+  if (currentTab !== 'review') return;
+  if (!db) {
+    el.innerHTML = '<div class="empty-state">' + ICONS.moon + '<p>데이터 저장 기능을 사용할 수 없어요.</p></div>';
+    return;
+  }
+  if (reviewQueue === null) {
+    el.innerHTML = '<div class="loading">불러오는 중...</div>';
+    await loadReviewQueue();
+    if (currentTab !== 'review') return;
+  }
+  clearInterval(reviewWaitTimer);
+  tryPromoteFromWaiting();
+
+  if (reviewQueue.length === 0) {
+    if (waitingQueue.length > 0) {
+      renderWaitingScreen(el);
+      reviewWaitTimer = setInterval(function () {
+        if (currentTab !== 'review') { clearInterval(reviewWaitTimer); return; }
+        tryPromoteFromWaiting();
+        if (reviewQueue.length > 0) renderReviewTab();
+        else renderWaitingScreen(el);
+      }, 5000);
+      return;
+    }
+    el.innerHTML = reviewHasCompletedAny
+      ? '<div class="done-banner">' + ICONS.done + '<p>오늘 밤 복습을 다 마쳤어요.</p></div>'
+      : '<div class="empty-state">' + ICONS.moon + '<p>오늘 밤 복습할 개념이 없어요.</p></div>';
+    return;
+  }
+
+  var item = reviewQueue[0];
+  var counts = queueCounts();
+  var preview = previewIntervals(item, new Date(), SRS_CONFIG);
+  var imgUrl = item.imageId ? ('/_blob/' + item.imageId) : '';
+  el.innerHTML =
+    '<div class="progress-line">' +
+      '<span class="count-new">새 ' + counts.newCount + '</span> · ' +
+      '<span class="count-learning">학습 ' + counts.learningCount + '</span> · ' +
+      '<span class="count-review">복습 ' + counts.reviewCount + '</span>' +
+    '</div>' +
+    '<div class="review-card">' +
+      '<div class="accent-stripe" style="background:' + subjectGradient(item.subjectId) + '"></div>' +
+      (item.leech ? '<div class="leech-badge">자주 틀림</div>' : '') +
+      (imgUrl ? '<img src="' + imgUrl + '" alt="개념" onclick="openLightbox(\'' + imgUrl + '\')">' : '') +
+      (item.text ? '<div class="review-caption">' + escapeHtml(item.text) + '</div>' : '') +
+    '</div>' +
+    '<div class="rating-grid">' +
+      '<button class="rate-btn rate-again" onclick="rateCurrent(\'again\')"' + (reviewBusy ? ' disabled' : '') + '>다시<span class="rate-preview">' + preview.again + '</span></button>' +
+      '<button class="rate-btn rate-hard" onclick="rateCurrent(\'hard\')"' + (reviewBusy ? ' disabled' : '') + '>어려움<span class="rate-preview">' + preview.hard + '</span></button>' +
+      '<button class="rate-btn rate-good" onclick="rateCurrent(\'good\')"' + (reviewBusy ? ' disabled' : '') + '>좋음<span class="rate-preview">' + preview.good + '</span></button>' +
+      '<button class="rate-btn rate-easy" onclick="rateCurrent(\'easy\')"' + (reviewBusy ? ' disabled' : '') + '>쉬움<span class="rate-preview">' + preview.easy + '</span></button>' +
+    '</div>' +
+    (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '');
+}
+
+async function rateCurrent(rating) {
+  if (reviewBusy || !reviewQueue || reviewQueue.length === 0) return;
+  var before = reviewQueue[0];
+  reviewBusy = true;
+  renderReviewTab();
+
+  var now = new Date();
+  var after = schedule(before, rating, now, SRS_CONFIG);
+  var updated = Object.assign({}, before, after);
+  delete updated.id;
+
+  var logId = 'revlog-' + now.getTime() + '-' + Math.random().toString(36).slice(2, 8);
+  var logEntry = {
+    conceptId: before.id, rating: rating,
+    stateBefore: before.state, intervalBefore: before.intervalDays, easeBefore: before.easeFactor,
+    stateAfter: after.state, intervalAfter: after.intervalDays, easeAfter: after.easeFactor,
+    dueBefore: before.nextReviewDate, dueAfter: after.nextReviewDate,
+    reviewedAt: now.toISOString(), ankiDay: ankiDay(now, SRS_CONFIG),
+  };
+  var statsField = before.state === 'new' ? 'newIntroduced' : (before.state === 'review' ? 'reviewsDone' : null);
+
+  try {
+    await db.doc('concepts/' + before.id).update(updated);
+    await db.doc('reviewLog/' + logId).set(logEntry);
+    if (statsField) await bumpDailyStats(statsField, 1);
+  } catch (e) {
+    reviewBusy = false;
+    showToast('저장 실패, 다시 눌러주세요');
+    renderReviewTab();
+    return;
+  }
+
+  reviewHasCompletedAny = true;
+  reviewQueue.shift();
+  undoStack.push({ conceptId: before.id, beforeCard: before, logId: logId, statsField: statsField });
+  if (undoStack.length > 30) undoStack.shift();
+
+  if (after.state === 'learning' || after.state === 'relearning') {
+    waitingQueue.push({ card: Object.assign({}, updated, { id: before.id }), dueAt: new Date(after.nextReviewDate).getTime() });
+  }
+
+  reviewBusy = false;
+  renderReviewTab();
+}
+
+async function undoLast() {
+  if (undoStack.length === 0) return;
+  var entry = undoStack.pop();
+  try {
+    await db.doc('concepts/' + entry.conceptId).update(entry.beforeCard);
+    await db.doc('reviewLog/' + entry.logId).delete();
+    if (entry.statsField) await bumpDailyStats(entry.statsField, -1);
+  } catch (e) {
+    undoStack.push(entry);
+    showToast('되돌리기 실패, 다시 눌러주세요');
+    return;
+  }
+  waitingQueue = waitingQueue.filter(function (w) { return w.card.id !== entry.conceptId; });
+  reviewQueue = reviewQueue.filter(function (c) { return c.id !== entry.conceptId; });
+  reviewQueue.unshift(entry.beforeCard);
+  renderReviewTab();
+}
+
+/* ───────────────── upload tab ───────────────── */
+
+function renderUploadTab() {
+  if (currentTab !== 'upload') return;
+  var el = document.getElementById('content');
+
+  if (uploadStage === 'idle') {
+    el.innerHTML =
+      '<label class="field-label">과목</label>' +
+      '<select id="subjectSelect" onchange="uploadSubject=this.value">' +
+        SUBJECTS.map(function (s) {
+          return '<option value="' + s.id + '"' + (s.id === uploadSubject ? ' selected' : '') + '>' + s.name + '</option>';
+        }).join('') +
+      '</select>' +
+      '<div class="dropzone-group">' +
+        '<label class="dropzone">' +
+          ICONS.pdf +
+          'PDF 업로드 (직접 영역을 잘라서 추가)' +
+          '<input type="file" accept="application/pdf" onchange="onPdfFilePicked(this.files[0])">' +
+        '</label>' +
+        '<label class="dropzone">' +
+          ICONS.photos +
+          '이미 잘라낸 사진/스크린샷 업로드' +
+          '<input type="file" accept="image/*" multiple onchange="onImagesPicked(this.files)">' +
+        '</label>' +
+      '</div>';
+    return;
+  }
+
+  if (uploadStage === 'pdf-crop') {
+    renderPdfCropStage(el);
+    return;
+  }
+
+  if (uploadStage === 'saving') {
+    el.innerHTML = '<div class="loading">저장하는 중...</div>';
+    return;
+  }
+
+  if (uploadStage === 'done') {
+    el.innerHTML =
+      '<div class="empty-state">' + ICONS.done + '<p>' + savedCount + '개 개념이 저장됐어요.<br>오늘 밤 복습 큐에 나타나요.</p></div>' +
+      '<button class="btn-primary" onclick="resetUploadFlow()">새로 업로드</button>';
+    return;
+  }
+
+  // review stage — plain confirm-before-save, no AI involved
+  var html = '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
+    '<div class="save-bar"><button class="btn-primary" onclick="saveAllUploads()">전체 저장 (' +
+    pendingUploads.filter(function (i) { return i.included; }).length + '개)</button></div>';
+  el.innerHTML = html;
+}
+
+function renderThumbCard(item) {
+  return '<div class="thumb-card">' +
+    '<img src="' + item.url + '" onclick="openLightbox(\'' + item.url + '\')" alt="개념">' +
+    '<input type="text" placeholder="메모 (선택)" value="' + escapeHtml(item.caption) + '" oninput="onCaptionInput(\'' + item.localId + '\', this.value)">' +
+    '<div class="thumb-card-foot">' +
+      '<label><input type="checkbox" ' + (item.included ? 'checked' : '') + ' onchange="onIncludedChange(\'' + item.localId + '\', this.checked)"> 포함</label>' +
+      '<button class="btn-icon" onclick="removePendingUpload(\'' + item.localId + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
+    '</div>' +
+  '</div>';
+}
+
+function findPending(localId) { return pendingUploads.find(function (i) { return i.localId === localId; }); }
+
+function onCaptionInput(localId, value) {
+  var item = findPending(localId);
+  if (item) item.caption = value;
+}
+function onIncludedChange(localId, checked) {
+  var item = findPending(localId);
+  if (item) item.included = checked;
+  renderUploadTab();
+}
+function removePendingUpload(localId) {
+  pendingUploads = pendingUploads.filter(function (i) { return i.localId !== localId; });
+  renderUploadTab();
+}
+
+function onImagesPicked(fileList) {
+  var files = Array.prototype.slice.call(fileList || []);
+  if (files.length === 0) return;
+  pendingUploads = pendingUploads.concat(files.map(function (file) {
+    return {
+      localId: 'p' + (uploadSeq++),
+      file: file,
+      url: URL.createObjectURL(file),
+      caption: '',
+      included: true,
+    };
+  }));
+  uploadStage = 'review';
+  renderUploadTab();
+}
+
+/* ───────────────── PDF manual crop ───────────────── */
+
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+async function onPdfFilePicked(file) {
+  if (!file) return;
+  try {
+    var buf = await file.arrayBuffer();
+    pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+  } catch (e) {
+    showToast('PDF를 여는 중 문제가 생겼어요');
+    return;
+  }
+  pdfCurrentPage = 1;
+  cropBounds = { x: 0.08, y: 0.08, width: 0.84, height: 0.3 };
+  uploadStage = 'pdf-crop';
+  await loadPdfPage();
+  renderUploadTab();
+}
+
+function loadPdfPage() {
+  return pdfDoc.getPage(pdfCurrentPage).then(function (page) {
+    var viewport = page.getViewport({ scale: 1.6 });
+    var canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    var ctx = canvas.getContext('2d');
+    return page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function () {
+      pdfPageImage = {
+        dataUrl: canvas.toDataURL('image/jpeg', 0.9),
+        width: canvas.width,
+        height: canvas.height,
+      };
+    });
+  });
+}
+
+function renderPdfCropStage(el) {
+  if (!pdfPageImage) {
+    el.innerHTML = '<div class="loading">페이지를 불러오는 중...</div>';
+    return;
+  }
+  el.innerHTML =
+    '<div class="pdf-nav">' +
+      '<button onclick="pdfGoPage(-1)"' + (pdfCurrentPage <= 1 ? ' disabled' : '') + '>← 이전</button>' +
+      '<span class="page-count">' + pdfCurrentPage + ' / ' + pdfDoc.numPages + '페이지</span>' +
+      '<button onclick="pdfGoPage(1)"' + (pdfCurrentPage >= pdfDoc.numPages ? ' disabled' : '') + '>다음 →</button>' +
+    '</div>' +
+    '<div class="crop-stage" id="cropStage">' +
+      '<img id="cropStageImg" src="' + pdfPageImage.dataUrl + '" alt="페이지" draggable="false">' +
+      '<div class="crop-box" id="cropBox">' +
+        '<div class="crop-handle" data-mode="nw"></div>' +
+        '<div class="crop-handle" data-mode="ne"></div>' +
+        '<div class="crop-handle" data-mode="sw"></div>' +
+        '<div class="crop-handle" data-mode="se"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="crop-actions">' +
+      '<button class="btn-primary" onclick="addCropRegion()">이 영역을 개념으로 담기</button>' +
+      '<button class="btn-secondary" onclick="finishPdfCrop()">완료 — 검토 화면으로</button>' +
+    '</div>' +
+    '<p class="crop-count">지금까지 ' + pendingUploads.length + '개 담김</p>';
+  updateCropBoxUI();
+  wireCropBoxDrag();
+}
+
+function pdfGoPage(delta) {
+  var next = pdfCurrentPage + delta;
+  if (next < 1 || next > pdfDoc.numPages) return;
+  pdfCurrentPage = next;
+  cropBounds = { x: 0.08, y: 0.08, width: 0.84, height: 0.3 };
+  pdfPageImage = null;
+  renderUploadTab();
+  loadPdfPage().then(renderUploadTab);
+}
+
+async function addCropRegion() {
+  var blob = await cropToBlob(pdfPageImage, cropBounds);
+  pendingUploads.push({
+    localId: 'p' + (uploadSeq++),
+    file: blob,
+    url: URL.createObjectURL(blob),
+    caption: '',
+    included: true,
+  });
+  showToast('담았어요 (' + pendingUploads.length + '개)');
+  // shift the box down as a starting guess for the next region on this page
+  var nextY = Math.min(0.95 - cropBounds.height, cropBounds.y + cropBounds.height + 0.03);
+  cropBounds = Object.assign({}, cropBounds, { y: Math.max(0, nextY) });
+  updateCropBoxUI();
+  document.querySelector('.crop-count').textContent = '지금까지 ' + pendingUploads.length + '개 담김';
+}
+
+function finishPdfCrop() {
+  pdfDoc = null;
+  pdfPageImage = null;
+  uploadStage = pendingUploads.length > 0 ? 'review' : 'idle';
+  renderUploadTab();
+}
+
+function cropToBlob(page, bounds) {
+  return new Promise(function (resolve) {
+    var img = new Image();
+    img.onload = function () {
+      var px = {
+        x: Math.round(bounds.x * page.width),
+        y: Math.round(bounds.y * page.height),
+        w: Math.max(1, Math.round(bounds.width * page.width)),
+        h: Math.max(1, Math.round(bounds.height * page.height)),
+      };
+      var canvas = document.createElement('canvas');
+      canvas.width = px.w;
+      canvas.height = px.h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, px.x, px.y, px.w, px.h, 0, 0, px.w, px.h);
+      canvas.toBlob(function (blob) { resolve(blob); }, 'image/jpeg', 0.92);
+    };
+    img.src = page.dataUrl;
+  });
+}
+
+function updateCropBoxUI() {
+  var box = document.getElementById('cropBox');
+  if (!box) return;
+  box.style.left = (cropBounds.x * 100) + '%';
+  box.style.top = (cropBounds.y * 100) + '%';
+  box.style.width = (cropBounds.width * 100) + '%';
+  box.style.height = (cropBounds.height * 100) + '%';
+}
+
+function wireCropBoxDrag() {
+  var box = document.getElementById('cropBox');
+  if (!box) return;
+
+  function beginDrag(mode) {
+    return function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      cropDragMode = mode;
+      cropDragStartX = e.clientX;
+      cropDragStartY = e.clientY;
+      cropDragStartBounds = Object.assign({}, cropBounds);
+      window.addEventListener('pointermove', onCropDragMove);
+      window.addEventListener('pointerup', onCropDragUp);
+    };
+  }
+
+  box.onpointerdown = beginDrag('move');
+  box.querySelectorAll('.crop-handle').forEach(function (h) {
+    h.onpointerdown = beginDrag(h.dataset.mode);
+  });
+}
+
+function onCropDragMove(e) {
+  if (!cropDragMode) return;
+  var stage = document.getElementById('cropStage');
+  if (!stage) return;
+  var rect = stage.getBoundingClientRect();
+  var dx = (e.clientX - cropDragStartX) / rect.width;
+  var dy = (e.clientY - cropDragStartY) / rect.height;
+  var b = cropDragStartBounds;
+  var clamp01 = function (n) { return Math.min(1, Math.max(0, n)); };
+  var next = Object.assign({}, b);
+
+  if (cropDragMode === 'move') {
+    next.x = clamp01(b.x + dx);
+    next.y = clamp01(b.y + dy);
+  } else if (cropDragMode === 'se') {
+    next.width = clamp01(b.x + b.width + dx) - b.x;
+    next.height = clamp01(b.y + b.height + dy) - b.y;
+  } else if (cropDragMode === 'nw') {
+    var nx = clamp01(b.x + dx), ny = clamp01(b.y + dy);
+    next.width = b.x + b.width - nx;
+    next.height = b.y + b.height - ny;
+    next.x = nx; next.y = ny;
+  } else if (cropDragMode === 'ne') {
+    var ny2 = clamp01(b.y + dy);
+    next.width = clamp01(b.x + b.width + dx) - b.x;
+    next.height = b.y + b.height - ny2;
+    next.y = ny2;
+  } else if (cropDragMode === 'sw') {
+    var nx2 = clamp01(b.x + dx);
+    next.width = b.x + b.width - nx2;
+    next.height = clamp01(b.y + b.height + dy) - b.y;
+    next.x = nx2;
+  }
+
+  next.width = Math.max(0.03, Math.min(next.width, 1 - next.x));
+  next.height = Math.max(0.03, Math.min(next.height, 1 - next.y));
+  cropBounds = next;
+  updateCropBoxUI();
+}
+
+function onCropDragUp() {
+  cropDragMode = null;
+  window.removeEventListener('pointermove', onCropDragMove);
+  window.removeEventListener('pointerup', onCropDragUp);
+}
+
+function resetUploadFlow() {
+  uploadStage = 'idle';
+  pendingUploads = [];
+  savedCount = 0;
+  renderUploadTab();
+}
+
+async function saveAllUploads() {
+  if (!assets || !db) { showToast('저장 기능을 사용할 수 없어요'); return; }
+  uploadStage = 'saving';
+  renderUploadTab();
+  var toSave = pendingUploads.filter(function (i) { return i.included; });
+  var count = 0;
+  for (var i = 0; i < toSave.length; i++) {
+    var item = toSave[i];
+    try {
+      var up = await assets.upload(item.file);
+      await db.collection('concepts').add({
+        text: item.caption || '',
+        subjectId: uploadSubject,
+        imageId: up.id,
+        state: 'new',
+        step: 0,
+        easeFactor: SRS_CONFIG.startingEase,
+        intervalDays: SRS_CONFIG.minimumInterval,
+        lapseInterval: SRS_CONFIG.minimumInterval,
+        reps: 0,
+        lapses: 0,
+        leech: false,
+        nextReviewDate: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        lastReviewedAt: null,
+      });
+      count++;
+    } catch (e) {}
+  }
+  savedCount = count;
+  uploadStage = 'done';
+  reviewQueue = null; // force the review tab to refetch and include today's new concepts
+  waitingQueue = [];
+  allConcepts = null;
+  renderUploadTab();
+}
+
+/* ───────────────── concepts tab (모아보기) ───────────────── */
+
+async function renderConceptsTab() {
+  var el = document.getElementById('content');
+  if (!db) {
+    el.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>데이터 저장 기능을 사용할 수 없어요.</p></div>';
+    return;
+  }
+  if (allConcepts === null) {
+    el.innerHTML = '<div class="loading">불러오는 중...</div>';
+    try {
+      var snap = await db.collection('concepts').limit(1000).get();
+      allConcepts = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      allConcepts.sort(function (a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+    } catch (e) {
+      allConcepts = [];
+    }
+  }
+  if (currentTab !== 'concepts') return;
+
+  el.innerHTML =
+    '<div class="subject-filter"><select id="subjectFilterSelect">' +
+      '<option value="">전체 과목</option>' +
+      SUBJECTS.map(function (s) {
+        return '<option value="' + s.id + '"' + (s.id === conceptsSubjectFilter ? ' selected' : '') + '>' + s.name + '</option>';
+      }).join('') +
+    '</select></div><div id="galleryResults"></div>';
+  document.getElementById('subjectFilterSelect').addEventListener('change', function (e) {
+    conceptsSubjectFilter = e.target.value;
+    renderGalleryResults();
+  });
+  renderGalleryResults();
+}
+
+function renderGalleryResults() {
+  var resultsEl = document.getElementById('galleryResults');
+  if (!resultsEl) return;
+  var filtered = conceptsSubjectFilter
+    ? allConcepts.filter(function (c) { return c.subjectId === conceptsSubjectFilter; })
+    : allConcepts;
+
+  if (filtered.length === 0) {
+    resultsEl.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>저장된 개념이 없어요.</p></div>';
+    return;
+  }
+  resultsEl.innerHTML = '<div class="gallery-grid">' + filtered.map(function (c) {
+    var url = c.imageId ? ('/_blob/' + c.imageId) : '';
+    return '<div class="gallery-item">' +
+      '<div class="accent-stripe" style="background:' + subjectGradient(c.subjectId) + '"></div>' +
+      (url ? '<img src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')">' : '') +
+      '<div class="g-body">' +
+        '<div class="g-top">' + subjectEditor(c.id, c.subjectId) +
+          '<button class="btn-icon" onclick="deleteConcept(\'' + c.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
+        '</div>' +
+        (editingConceptId === c.id
+          ? '<textarea class="g-caption-edit" onblur="saveEditCaption(\'' + c.id + '\', this.value)">' + escapeHtml(c.text || '') + '</textarea>'
+          : '<div class="g-caption" onclick="startEditCaption(\'' + c.id + '\')">' + (c.text ? escapeHtml(c.text) : '메모 추가...') + '</div>') +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+async function deleteConcept(id) {
+  var concept = allConcepts.find(function (c) { return c.id === id; });
+  if (!concept) return;
+  try {
+    if (assets && concept.imageId) await assets.delete(concept.imageId);
+    await db.doc('concepts/' + id).delete();
+  } catch (e) {}
+  allConcepts = allConcepts.filter(function (c) { return c.id !== id; });
+  reviewQueue = null;
+  waitingQueue = [];
+  renderGalleryResults();
+}
+
+initCapabilities();
+</script>

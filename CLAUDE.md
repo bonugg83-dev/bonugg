@@ -76,8 +76,14 @@ Claude Code 세션이 직접 수행해서 아티팩트의 DB/자산 저장소에
            text: "<다듬은 텍스트, 없으면 빈 문자열>",
            subjectId: "<과목 id>",
            imageId: "<6번에서 추출한 id>",
+           state: "new",
+           step: 0,
            easeFactor: 2.5,
            intervalDays: 1,
+           lapseInterval: 1,
+           reps: 0,
+           lapses: 0,
+           leech: false,
            nextReviewDate: "<지금 시각, ISO 문자열>",
            createdAt: "<지금 시각, ISO 문자열>",
            lastReviewedAt: null
@@ -92,13 +98,27 @@ Claude Code 세션이 직접 수행해서 아티팩트의 DB/자산 저장소에
 
 ## 데이터 모델 참고
 
-`concepts` 컬렉션 문서 하나 = 개념 하나:
+`concepts` 컬렉션 문서 하나 = 개념 하나 (안키 v2 스케줄러, 페이지 JS의
+`SRS_CONFIG`/`schedule`/`normalizeCard` 참고):
 - `text`: 다듬어진 개념 텍스트 (빈 문자열 가능)
-- `subjectId`: 위 5개 중 하나
+- `subjectId`: 위 6개 중 하나
 - `imageId`: 자산 id — 아티팩트 페이지는 `/_blob/` + imageId 로 표시
-- `easeFactor`, `intervalDays`, `nextReviewDate`: SM-2 기반 안키식 복습 스케줄
-  (180일 최대 간격, 졸업 없음 — 페이지 JS의 `applySrs` 참고)
+- `state`: `new` | `learning` | `review` | `relearning`
+- `step`: 학습/재학습 단계 인덱스
+- `easeFactor`: 복습 카드의 ease (기본 2.5, 최소 1.3)
+- `intervalDays`: 복습 카드의 현재 간격(일), 최대 180일
+- `lapseInterval`: 재학습 졸업 시 쓸 간격(일)
+- `reps`: 총 답한 횟수, `lapses`: 복습 중 '다시' 누른 횟수, `leech`: lapses가
+  8 이상이면 true
+- `nextReviewDate`: review 상태면 만기일 04:00(현지) ISO, learning/relearning
+  이면 정확한 만기 시각
 - `createdAt`, `lastReviewedAt`
 
-새로 만든 개념은 항상 `nextReviewDate`를 지금 시각으로 넣어서, 그날 밤 복습 큐에
-바로 뜨게 한다.
+새로 만든 개념은 위 7번 예시처럼 `state:"new", step:0, reps:0, lapses:0,
+leech:false`로 넣고, `nextReviewDate`를 지금 시각으로 넣어서 그날 밤 복습
+큐에 바로 뜨게 한다. 이 틀을 벗어난 옛 문서(이 파이프라인 이전에 만들어진 것)는
+페이지가 읽을 때 `normalizeCard`로 자동 정규화하므로 그대로 둬도 된다.
+
+답할 때마다 `reviewLog`(복습 1건 기록, 되돌리기용)와 `dailyStats`(문서 id
+`YYYY-MM-DD`, 그날 새 카드/복습 카드 수)도 함께 쓰인다 — 이 파이프라인에서는
+직접 건드리지 않는다.
