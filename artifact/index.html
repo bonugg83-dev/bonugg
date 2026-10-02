@@ -267,6 +267,13 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
   min-height: 44px; resize: vertical; background: var(--surface);
 }
 
+.concept-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.concept-toolbar .subject-filter { margin-bottom: 0; flex: 0 1 160px; }
+.search-input { flex: 1 1 180px; min-width: 0; width: auto; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); font-size: 14px; }
+.search-input:focus { outline: none; border-color: var(--accent); }
+.search-count { font-size: 12px; font-weight: 700; color: var(--text-3); margin-bottom: 10px; }
+.g-caption mark { background: #fde68a; color: inherit; border-radius: 3px; padding: 0 1px; }
+
 .lightbox-overlay {
   position: fixed; inset: 0; z-index: 220;
   background: rgba(8,9,13,.85);
@@ -481,6 +488,7 @@ var cropDragStartX = 0, cropDragStartY = 0, cropDragStartBounds = null;
 // concepts tab state
 var allConcepts = null;
 var conceptsSubjectFilter = '';
+var conceptsSearch = '';
 var editingConceptId = null;
 
 async function initCapabilities() {
@@ -1843,12 +1851,18 @@ async function renderConceptsTab() {
   if (currentTab !== 'concepts') return;
 
   el.innerHTML =
+    '<div class="concept-toolbar">' +
+    '<input type="search" id="conceptSearch" class="search-input" placeholder="메모 검색" value="' + escapeHtml(conceptsSearch) + '" autocomplete="off">' +
     '<div class="subject-filter"><select id="subjectFilterSelect">' +
       '<option value="">전체 과목</option>' +
       SUBJECTS.map(function (s) {
         return '<option value="' + s.id + '"' + (s.id === conceptsSubjectFilter ? ' selected' : '') + '>' + s.name + '</option>';
       }).join('') +
-    '</select></div><div id="galleryResults"></div>';
+    '</select></div></div><div id="galleryResults"></div>';
+  document.getElementById('conceptSearch').addEventListener('input', function (e) {
+    conceptsSearch = e.target.value;
+    renderGalleryResults();
+  });
   document.getElementById('subjectFilterSelect').addEventListener('change', function (e) {
     conceptsSubjectFilter = e.target.value;
     renderGalleryResults();
@@ -1856,18 +1870,28 @@ async function renderConceptsTab() {
   renderGalleryResults();
 }
 
+// Wraps each search word found in the raw text in <mark>, escaping everything else.
+function highlightText(text, tokens) {
+  if (!tokens.length) return escapeHtml(text);
+  var re = new RegExp('(' + tokens.map(function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')', 'gi');
+  return text.split(re).map(function (part, i) { return i % 2 ? '<mark>' + escapeHtml(part) + '</mark>' : escapeHtml(part); }).join('');
+}
+
 function renderGalleryResults() {
   var resultsEl = document.getElementById('galleryResults');
   if (!resultsEl) return;
-  var filtered = conceptsSubjectFilter
-    ? allConcepts.filter(function (c) { return c.subjectId === conceptsSubjectFilter; })
-    : allConcepts;
+  var tokens = conceptsSearch.toLowerCase().split(/\s+/).filter(Boolean);
+  var filtered = allConcepts.filter(function (c) {
+    if (conceptsSubjectFilter && c.subjectId !== conceptsSubjectFilter) return false;
+    var text = (c.text || '').toLowerCase();
+    return tokens.every(function (t) { return text.indexOf(t) !== -1; });
+  });
 
   if (filtered.length === 0) {
-    resultsEl.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>저장된 개념이 없어요.</p></div>';
+    resultsEl.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>' + (tokens.length ? '검색 결과가 없어요.' : '저장된 개념이 없어요.') + '</p></div>';
     return;
   }
-  resultsEl.innerHTML = '<div class="gallery-grid">' + filtered.map(function (c) {
+  resultsEl.innerHTML = (tokens.length ? '<div class="search-count">검색 결과 ' + filtered.length + '개</div>' : '') + '<div class="gallery-grid">' + filtered.map(function (c) {
     var url = c.imageId ? ('/_blob/' + c.imageId) : '';
     return '<div class="gallery-item">' +
       '<div class="accent-stripe" style="background:' + subjectGradient(c.subjectId) + '"></div>' +
@@ -1878,7 +1902,7 @@ function renderGalleryResults() {
         '</div>' +
         (editingConceptId === c.id
           ? '<textarea class="g-caption-edit" onblur="saveEditCaption(\'' + c.id + '\', this.value)">' + escapeHtml(c.text || '') + '</textarea>'
-          : '<div class="g-caption" onclick="startEditCaption(\'' + c.id + '\')">' + (c.text ? escapeHtml(c.text) : '메모 추가...') + '</div>') +
+          : '<div class="g-caption" onclick="startEditCaption(\'' + c.id + '\')">' + (c.text ? highlightText(c.text, tokens) : '메모 추가...') + '</div>') +
       '</div>' +
     '</div>';
   }).join('') + '</div>';
