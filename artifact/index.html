@@ -311,6 +311,31 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
 .due-d { font-size: 11px; color: var(--text-3); font-weight: 600; }
 .stat-empty { font-size: 13px; color: var(--text-3); }
 
+.heat-wrap { overflow-x: auto; padding-bottom: 4px; }
+.heat-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 14px); grid-auto-columns: 14px; gap: 3px; width: max-content; }
+.heat-cell { border-radius: 3px; background: var(--surface-2); }
+.heat-cell.l1 { background: #dcdcfb; }
+.heat-cell.l2 { background: #b3b5f8; }
+.heat-cell.l3 { background: #8588f2; }
+.heat-cell.l4 { background: #6366f1; }
+.heat-cell.today { outline: 1.5px solid var(--text-2); outline-offset: 1px; }
+.heat-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; font-size: 11px; color: var(--text-3); font-weight: 600; flex-wrap: wrap; }
+.heat-legend { display: flex; align-items: center; gap: 3px; }
+.heat-legend .heat-cell { width: 12px; height: 12px; }
+.mature-bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--surface-2); }
+.mature-seg { height: 100%; }
+.mature-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 14px; font-size: 13px; }
+.mature-legend span.k { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+.mature-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.mature-legend b { font-variant-numeric: tabular-nums; margin-left: 4px; }
+.weak-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
+.weak-row:first-of-type { border-top: none; padding-top: 0; }
+.weak-thumb { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: var(--surface-2); cursor: zoom-in; flex-shrink: 0; }
+.weak-body { min-width: 0; flex: 1; }
+.weak-subj { font-size: 11px; font-weight: 700; }
+.weak-text { font-size: 13px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weak-count { font-size: 12px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border-radius: 999px; padding: 3px 10px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
 .toast {
   position: fixed;
   bottom: calc(78px + env(safe-area-inset-bottom, 0px));
@@ -409,6 +434,7 @@ var undoStack = [];           // [{ conceptId, beforeCard, logId, statsField }]
 var reviewBusy = false;
 var reviewHasCompletedAny = false;
 var reviewWaitTimer = null;
+var cardShownId = null, cardShownAt = 0; // when the current card appeared, for time stats
 
 // upload tab state
 var uploadStage = 'idle'; // idle | pdf-crop | review | saving | done
@@ -773,17 +799,23 @@ async function loadDailyStats(key) {
     var snap = await db.doc('dailyStats/' + key).get();
     if (snap && snap.exists) {
       var data = snap.data();
-      return { newIntroduced: data.newIntroduced || 0, reviewsDone: data.reviewsDone || 0 };
+      return { newIntroduced: data.newIntroduced || 0, reviewsDone: data.reviewsDone || 0, studyMs: data.studyMs || 0, answered: data.answered || 0 };
     }
   } catch (e) {}
-  return { newIntroduced: 0, reviewsDone: 0 };
+  return { newIntroduced: 0, reviewsDone: 0, studyMs: 0, answered: 0 };
 }
 
-async function bumpDailyStats(field, delta) {
-  dailyStatsToday[field] = Math.max(0, (dailyStatsToday[field] || 0) + delta);
+async function bumpDailyStats(field, delta, extra) {
+  if (field) dailyStatsToday[field] = Math.max(0, (dailyStatsToday[field] || 0) + delta);
+  if (extra) {
+    dailyStatsToday.studyMs = (dailyStatsToday.studyMs || 0) + extra.studyMs;
+    dailyStatsToday.answered = (dailyStatsToday.answered || 0) + extra.answered;
+  }
   await db.doc('dailyStats/' + dailyStatsKey).set({
     newIntroduced: dailyStatsToday.newIntroduced,
     reviewsDone: dailyStatsToday.reviewsDone,
+    studyMs: dailyStatsToday.studyMs || 0,
+    answered: dailyStatsToday.answered || 0,
   });
 }
 
@@ -920,6 +952,7 @@ async function renderReviewTab() {
   }
 
   var item = reviewQueue[0];
+  if (cardShownId !== item.id) { cardShownId = item.id; cardShownAt = Date.now(); }
   var counts = queueCounts();
   var preview = previewIntervals(item, new Date(), SRS_CONFIG);
   var imgUrl = item.imageId ? ('/_blob/' + item.imageId) : '';
@@ -964,11 +997,13 @@ async function rateCurrent(rating) {
     reviewedAt: now.toISOString(), ankiDay: ankiDay(now, SRS_CONFIG),
   };
   var statsField = before.state === 'new' ? 'newIntroduced' : (before.state === 'review' ? 'reviewsDone' : null);
+  // time on this card, capped so a card left open doesn't inflate the total
+  var spentMs = cardShownAt ? Math.min(Date.now() - cardShownAt, 120000) : 0;
 
   try {
     await db.doc('concepts/' + before.id).update(updated);
     await db.doc('reviewLog/' + logId).set(logEntry);
-    if (statsField) await bumpDailyStats(statsField, 1);
+    await bumpDailyStats(statsField, statsField ? 1 : 0, { studyMs: spentMs, answered: 1 });
   } catch (e) {
     reviewBusy = false;
     showToast('저장 실패, 다시 눌러주세요');
@@ -977,6 +1012,7 @@ async function rateCurrent(rating) {
   }
 
   reviewHasCompletedAny = true;
+  cardShownId = null;
   reviewQueue.shift();
   undoStack.push({ conceptId: before.id, beforeCard: before, logId: logId, statsField: statsField });
   if (undoStack.length > 30) undoStack.shift();
@@ -1420,7 +1456,11 @@ async function renderStatsTab() {
 
   // a day counts as studied if dailyStats logged any review, or a concept's last review fell on it
   var daySet = {};
-  dailyDocs.forEach(function (d) { if ((d.newIntroduced || 0) + (d.reviewsDone || 0) > 0) daySet[d.id] = true; });
+  var dayCounts = {};
+  dailyDocs.forEach(function (d) {
+    var n = Math.max(d.answered || 0, (d.newIntroduced || 0) + (d.reviewsDone || 0));
+    if (n > 0) { daySet[d.id] = true; dayCounts[d.id] = n; }
+  });
   concepts.forEach(function (c) { if (c.lastReviewedAt) daySet[ankiDayKey(new Date(c.lastReviewedAt), SRS_CONFIG)] = true; });
   var streaks = computeStreaks(daySet, today);
   var tier = flameTier(streaks.current);
@@ -1475,6 +1515,95 @@ async function renderStatsTab() {
       '<span class="due-d">' + label + '</span></div>';
   }).join('');
 
+  // heatmap: last 16 weeks, one column per week starting Sunday
+  var todayWd = weekdayOf(today);
+  var heatStart = shiftDay(today, -(15 * 7 + todayWd));
+  var heatCells = '', heatTotal = 0;
+  for (var hk = heatStart; hk <= today; hk = shiftDay(hk, 1)) {
+    var hn = dayCounts[hk] || (daySet[hk] ? 1 : 0);
+    heatTotal += hn;
+    var lvl = hn === 0 ? 0 : hn < 5 ? 1 : hn < 15 ? 2 : hn < 30 ? 3 : 4;
+    var hp = hk.split('-');
+    heatCells += '<div class="heat-cell' + (lvl ? ' l' + lvl : '') + (hk === today ? ' today' : '') + '" title="' + (+hp[1]) + '월 ' + (+hp[2]) + '일 · ' + hn + '회"></div>';
+  }
+  var heatCard = '<div class="stat-card"><h2 class="stat-title">학습 달력 (최근 16주)</h2>' +
+    '<div class="heat-wrap" id="heatWrap"><div class="heat-grid">' + heatCells + '</div></div>' +
+    '<div class="heat-foot"><span>' + heatTotal + '회 복습</span><span class="heat-legend">적음 ' +
+    '<div class="heat-cell"></div><div class="heat-cell l1"></div><div class="heat-cell l2"></div><div class="heat-cell l3"></div><div class="heat-cell l4"></div> 많음</span></div></div>';
+
+  // study time: today, per-card average over days that recorded time, and the last 7 days
+  function fmtDuration(ms) {
+    var sec = Math.round(ms / 1000);
+    if (sec < 60) return sec + '초';
+    var min = Math.round(sec / 60);
+    return min < 60 ? min + '분' : Math.floor(min / 60) + '시간 ' + (min % 60) + '분';
+  }
+  var msByDay = {}, timedMs = 0, timedCards = 0;
+  dailyDocs.forEach(function (d) {
+    if (d.studyMs > 0) {
+      msByDay[d.id] = d.studyMs;
+      if (d.id >= shiftDay(today, -6)) { timedMs += d.studyMs; timedCards += d.answered || 0; }
+    }
+  });
+  var timeKeys = [6, 5, 4, 3, 2, 1, 0].map(function (i) { return shiftDay(today, -i); });
+  var maxMs = Math.max.apply(null, timeKeys.map(function (k) { return msByDay[k] || 0; }).concat([1]));
+  var timeCols = timeKeys.map(function (k, i) {
+    var ms = msByDay[k] || 0;
+    return '<div class="due-col"><span class="due-n">' + (ms ? Math.max(1, Math.round(ms / 60000)) : 0) + '</span>' +
+      '<div class="due-bar' + (ms ? '' : ' zero') + '" style="height:' + Math.round(ms / maxMs * 86) + 'px"></div>' +
+      '<span class="due-d">' + (i === 6 ? '오늘' : WD[weekdayOf(k)]) + '</span></div>';
+  }).join('');
+  var timeCard =
+    '<div class="mini-stats">' +
+      '<div class="mini-stat"><div class="v">' + (msByDay[today] ? fmtDuration(msByDay[today]) : '0분') + '</div><div class="l">오늘 학습 시간</div></div>' +
+      '<div class="mini-stat"><div class="v">' + (timedCards ? fmtDuration(timedMs / timedCards) : '-') + '</div><div class="l">카드당 평균 (최근 7일)</div></div>' +
+    '</div>' +
+    '<div class="stat-card"><h2 class="stat-title">하루 학습 시간 (분)</h2><div class="due-chart">' + timeCols + '</div>' +
+    (Object.keys(msByDay).length ? '' : '<div class="stat-empty" style="margin-top:10px">시간 기록은 이번 업데이트 이후 복습부터 쌓여요.</div>') + '</div>';
+
+  // maturity: how settled the concepts are (young = interval under 21 days)
+  var mat = { newC: 0, learning: 0, young: 0, mature: 0 };
+  concepts.forEach(function (c) {
+    var n = normalizeCard(c, SRS_CONFIG);
+    if (n.state === 'new') mat.newC++;
+    else if (n.state === 'learning' || n.state === 'relearning') mat.learning++;
+    else if (n.intervalDays < 21) mat.young++;
+    else mat.mature++;
+  });
+  var matDefs = [
+    { key: 'newC', label: '새 카드', color: '#3b82f6' },
+    { key: 'learning', label: '학습 중', color: '#f87171' },
+    { key: 'young', label: '어린 카드', color: '#fbbf24' },
+    { key: 'mature', label: '숙성 카드', color: '#22c55e' },
+  ];
+  var matCard = '<div class="stat-card"><h2 class="stat-title">개념 성숙도</h2>' +
+    (concepts.length
+      ? '<div class="mature-bar">' + matDefs.map(function (m) {
+          return mat[m.key] ? '<div class="mature-seg" style="width:' + (mat[m.key] / concepts.length * 100) + '%;background:' + m.color + '"></div>' : '';
+        }).join('') + '</div>' +
+        '<div class="mature-legend">' + matDefs.map(function (m) {
+          return '<span class="k"><i style="background:' + m.color + '"></i>' + m.label + '<b>' + mat[m.key] + '</b></span>';
+        }).join('') + '</div>'
+      : '<div class="stat-empty">개념을 추가하면 성숙도가 나타나요.</div>') +
+    '</div>';
+
+  // weak concepts: most lapses (pressed 다시 on a review card)
+  var weak = concepts.map(function (c) { return { c: c, lapses: c.lapses || 0 }; })
+    .filter(function (w) { return w.lapses > 0; })
+    .sort(function (a, b) { return b.lapses - a.lapses; })
+    .slice(0, 5);
+  var weakCard = '<div class="stat-card"><h2 class="stat-title">자주 틀리는 개념 TOP 5</h2>' +
+    (weak.length ? weak.map(function (w) {
+      var subj = SUBJECTS.find(function (x) { return x.id === w.c.subjectId; });
+      var url = w.c.imageId ? '/_blob/' + w.c.imageId : '';
+      return '<div class="weak-row">' +
+        (url ? '<img class="weak-thumb" src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')">' : '<div class="weak-thumb"></div>') +
+        '<div class="weak-body"><div class="weak-subj" style="color:' + (subj ? subj.c1 : 'var(--text-3)') + '">' + (subj ? subj.name : '') + '</div>' +
+        '<div class="weak-text">' + (w.c.text ? escapeHtml(w.c.text) : '메모 없음') + '</div></div>' +
+        '<span class="weak-count">다시 ' + w.lapses + '회</span></div>';
+    }).join('') : '<div class="stat-empty">복습 중 "다시"를 누른 개념이 아직 없어요.</div>') +
+    '</div>';
+
   el.innerHTML =
     '<div class="stat-card">' +
       '<div class="streak-hero">' +
@@ -1489,10 +1618,13 @@ async function renderStatsTab() {
       '<div class="mini-stat"><div class="v">' + streaks.longest + '일</div><div class="l">최장 연속</div></div>' +
       '<div class="mini-stat"><div class="v">' + concepts.length + '개</div><div class="l">저장한 개념</div></div>' +
     '</div>' +
+    heatCard + timeCard + matCard +
     '<div class="stat-card"><h2 class="stat-title">과목별 기억률 (최근 30일)</h2>' +
       (accRows || '<div class="stat-empty">복습을 시작하면 과목별 기억률(좋음·쉬움 비율)이 나타나요.</div>') +
     '</div>' +
-    '<div class="stat-card"><h2 class="stat-title">앞으로 7일 복습 예정</h2><div class="due-chart">' + dueCols + '</div></div>';
+    '<div class="stat-card"><h2 class="stat-title">앞으로 7일 복습 예정</h2><div class="due-chart">' + dueCols + '</div></div>' + weakCard;
+  var heatEl = document.getElementById('heatWrap');
+  if (heatEl) heatEl.scrollLeft = heatEl.scrollWidth;
 }
 
 /* ───────────────── concepts tab (모아보기) ───────────────── */
