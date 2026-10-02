@@ -133,8 +133,10 @@ svg { display: block; }
 .done-banner .e-icn { width: 44px; height: 44px; margin: 0 auto 14px; color: var(--good); }
 
 /* ── review ── */
-.progress-line { text-align: center; margin-bottom: 14px; }
-.progress-line .count { font-size: 12px; font-weight: 700; color: var(--text-3); letter-spacing: .03em; font-variant-numeric: tabular-nums; }
+.progress-line { text-align: center; margin-bottom: 14px; font-size: 12px; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--text-3); }
+.progress-line .count-new { color: #2563eb; }
+.progress-line .count-learning { color: var(--danger); }
+.progress-line .count-review { color: var(--good); }
 .review-card {
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -143,6 +145,11 @@ svg { display: block; }
   margin-bottom: 18px;
 }
 .accent-stripe { height: 4px; width: 100%; }
+.leech-badge {
+  display: inline-block; margin: 10px 14px 0; padding: 3px 10px;
+  border-radius: 999px; background: var(--danger-soft); color: var(--danger);
+  font-size: 11px; font-weight: 700;
+}
 .review-card img { width: 100%; display: block; max-height: 56vh; object-fit: contain; background: var(--surface-2); cursor: zoom-in; }
 .review-caption { padding: 16px 18px; font-size: 15px; white-space: pre-wrap; border-top: 1px solid var(--border); }
 .rating-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -152,6 +159,8 @@ svg { display: block; }
 .rate-hard { background: var(--warn-soft); color: var(--warn); }
 .rate-good { background: var(--good-soft); color: var(--good); }
 .rate-easy { background: var(--accent-soft); color: var(--accent); }
+.rate-preview { display: block; font-size: 10px; font-weight: 600; opacity: .75; margin-top: 3px; }
+.undo-btn { margin-top: 10px; }
 
 /* ── upload ── */
 .field-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 7px; text-transform: uppercase; letter-spacing: .04em; }
@@ -266,6 +275,42 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
 }
 .lightbox-overlay img { max-height: 100%; border-radius: 10px; }
 
+/* ── stats ── */
+.stat-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 18px; margin-bottom: 14px; }
+.stat-title { font-size: 12px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 12px; }
+.streak-hero { display: flex; align-items: center; gap: 18px; }
+.flame-wrap { width: 112px; height: 124px; display: flex; align-items: flex-end; justify-content: center; flex-shrink: 0; }
+.flame { transform-origin: 50% 100%; animation: flicker 1.6s ease-in-out infinite; }
+@keyframes flicker { 0%,100% { transform: scale(1,1) rotate(0deg); } 30% { transform: scale(1.03,.97) rotate(-1.5deg); } 65% { transform: scale(.97,1.04) rotate(1.5deg); } }
+@media (prefers-reduced-motion: reduce) { .flame { animation: none; } }
+.streak-num { font-size: 44px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.streak-num small { font-size: 16px; font-weight: 700; margin-left: 4px; color: var(--text-2); }
+.streak-tier { font-size: 13px; font-weight: 700; margin-top: 6px; }
+.streak-note { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.week-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 16px; }
+.week-day { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-3); }
+.week-dot { width: 26px; height: 26px; border-radius: 50%; margin: 5px auto 0; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
+.week-dot svg { width: 14px; height: 14px; }
+.week-day.on .week-dot { background: #ffedd5; }
+.week-day.today { color: var(--accent); }
+.mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.mini-stat { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 14px 16px; }
+.mini-stat .v { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.mini-stat .l { font-size: 12px; color: var(--text-2); font-weight: 600; }
+.acc-row { display: grid; grid-template-columns: 78px 1fr auto; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+.acc-row:last-child { margin-bottom: 0; }
+.acc-name { font-weight: 700; }
+.acc-track { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.acc-fill { height: 100%; border-radius: 999px; }
+.acc-val { font-variant-numeric: tabular-nums; color: var(--text-2); font-size: 12px; min-width: 76px; text-align: right; }
+.due-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 130px; }
+.due-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+.due-bar { width: 100%; max-width: 34px; border-radius: 8px 8px 4px 4px; background: linear-gradient(180deg, var(--accent), var(--accent-2)); min-height: 3px; }
+.due-bar.zero { background: var(--surface-2); }
+.due-n { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.due-d { font-size: 11px; color: var(--text-3); font-weight: 600; }
+.stat-empty { font-size: 13px; color: var(--text-3); }
+
 .toast {
   position: fixed;
   bottom: calc(78px + env(safe-area-inset-bottom, 0px));
@@ -296,6 +341,10 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
         <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
         모아보기
       </button>
+      <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        통계
+      </button>
     </nav>
   </aside>
 
@@ -314,6 +363,10 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
       <button class="tab-btn" data-tab="concepts" onclick="switchTab('concepts')">
         <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
         모아보기
+      </button>
+      <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        통계
       </button>
     </nav>
   </div>
@@ -344,17 +397,18 @@ function subjectGradient(subjectId) {
   return subj ? ('linear-gradient(120deg, ' + subj.c1 + ', ' + subj.c2 + ')') : 'var(--surface-2)';
 }
 
-var DEFAULT_EASE = 2.5;
-var MAX_INTERVAL_DAYS = 180;
-var DAILY_REVIEW_CAP = 50;
-var MIN_EASE = 1.3;
-
 var db = null, assets = null;
 var currentTab = 'review';
 
 // review tab state
-var reviewQueue = null;
-var reviewIndex = 0;
+var reviewQueue = null;       // FIFO array of normalized cards ready to show now
+var waitingQueue = [];        // [{ card, dueAt(ms) }] learning/relearning cards deferred within this session
+var dailyStatsToday = null;   // { newIntroduced, reviewsDone } cache for today's ankiDay
+var dailyStatsKey = null;
+var undoStack = [];           // [{ conceptId, beforeCard, logId, statsField }]
+var reviewBusy = false;
+var reviewHasCompletedAny = false;
+var reviewWaitTimer = null;
 
 // upload tab state
 var uploadStage = 'idle'; // idle | pdf-crop | review | saving | done
@@ -380,6 +434,7 @@ async function initCapabilities() {
   try { db = await window.claude.use('db'); } catch (e) { db = null; }
   try { assets = await window.claude.use('assets'); } catch (e) { assets = null; }
   renderCurrentTab();
+  if (db) pruneOldReviewLogs(); // fire-and-forget, doesn't block the UI
 }
 
 function switchTab(tab) {
@@ -394,6 +449,7 @@ function renderCurrentTab() {
   if (currentTab === 'review') renderReviewTab();
   else if (currentTab === 'upload') renderUploadTab();
   else if (currentTab === 'concepts') renderConceptsTab();
+  else if (currentTab === 'stats') renderStatsTab();
 }
 
 function showToast(msg) {
@@ -465,35 +521,371 @@ function openLightbox(url) {
   document.body.appendChild(overlay);
 }
 
-/* ───────────────── SRS ───────────────── */
+/* ───────────────── SRS: 안키 v2 스케줄러 (순수 함수) ───────────────── */
 
-function applySrs(state, rating) {
-  var base = Math.max(state.intervalDays, 1);
-  var ease = state.easeFactor;
-  var interval;
+var SRS_CONFIG = {
+  learningSteps: [1, 10],          // 분
+  graduatingInterval: 1,           // 일
+  easyInterval: 4,                 // 일
+  relearningSteps: [10],           // 분
+  lapseNewIntervalMultiplier: 0,
+  minimumInterval: 1,              // 일
+  startingEase: 2.5,
+  minEase: 1.3,
+  easyBonus: 1.3,
+  hardMultiplier: 1.2,
+  intervalModifier: 1.0,
+  maxInterval: 180,                // 일
+  newCardsPerDay: 20,
+  reviewsPerDay: 200,
+  dayRolloverHour: 4,
+  learnAheadMinutes: 20,
+  leechThreshold: 8,
+  reviewLogRetentionDays: 30,
+  fuzzEnabled: true,
+};
+
+function localDayNumber(d) {
+  return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000);
+}
+
+function ankiDay(date, cfg) {
+  var shifted = new Date(date.getTime() - cfg.dayRolloverHour * 3600000);
+  return localDayNumber(shifted);
+}
+
+function startOfAnkiDay(dayNumber, cfg) {
+  var now = new Date();
+  var offsetMs = now.getTimezoneOffset() * 60000;
+  var d = new Date(dayNumber * 86400000 + offsetMs);
+  d.setTime(d.getTime() + cfg.dayRolloverHour * 3600000);
+  return d;
+}
+
+function ankiDayKey(date, cfg) {
+  var d = startOfAnkiDay(ankiDay(date, cfg), cfg);
+  var y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
+}
+
+function clampInterval(ivl, cfg) {
+  return Math.min(Math.max(Math.round(ivl), cfg.minimumInterval), cfg.maxInterval);
+}
+
+function fuzzInterval(ivl, cfg, rand) {
+  if (!cfg.fuzzEnabled) return ivl;
+  rand = rand || Math.random;
+  if (ivl < 2) return ivl;
+  if (ivl === 2) return 2 + Math.floor(rand() * 2);
+  var r = ivl < 7 ? 0.25 : ivl < 30 ? 0.15 : 0.05;
+  var fuzz = Math.max(1, Math.round(ivl * r));
+  var min = ivl - fuzz, max = ivl + fuzz;
+  return min + Math.floor(rand() * (max - min + 1));
+}
+
+function computeReviewIntervals(ivl, ease, delay, cfg) {
+  var hardRaw = (ivl + Math.floor(delay / 4)) * cfg.hardMultiplier;
+  var hard = Math.max(Math.round(hardRaw * cfg.intervalModifier), ivl + 1);
+  var goodRaw = (ivl + Math.floor(delay / 2)) * ease;
+  var good = Math.max(Math.round(goodRaw * cfg.intervalModifier), hard + 1);
+  var easyRaw = (ivl + delay) * ease * cfg.easyBonus;
+  var easy = Math.max(Math.round(easyRaw * cfg.intervalModifier), good + 1);
+  return { hard: hard, good: good, easy: easy };
+}
+
+function graduateCard(ivl, now, cfg) {
+  return {
+    state: 'review', step: 0, intervalDays: ivl,
+    nextReviewDate: startOfAnkiDay(ankiDay(now, cfg) + ivl, cfg).toISOString(),
+  };
+}
+
+function scheduleLearning(card, rating, now, cfg, steps, stateName, normalGraduateIvl, easyGraduateIvl) {
+  var step = card.step || 0;
   if (rating === 'again') {
-    ease = Math.max(MIN_EASE, ease - 0.2);
-    interval = 1;
-  } else if (rating === 'hard') {
-    ease = Math.max(MIN_EASE, ease - 0.15);
-    interval = Math.round(base * 1.2);
-  } else if (rating === 'good') {
-    interval = Math.round(base * ease);
-  } else { // easy
-    ease = ease + 0.15;
-    interval = Math.round(base * ease * 1.3);
+    return { state: stateName, step: 0, nextReviewDate: new Date(now.getTime() + steps[0] * 60000).toISOString() };
   }
-  interval = Math.min(Math.max(interval, 1), MAX_INTERVAL_DAYS);
-  return { easeFactor: ease, intervalDays: interval };
+  if (rating === 'hard') {
+    var minutes;
+    if (step === 0) {
+      minutes = steps.length >= 2 ? Math.round((steps[0] + steps[1]) / 2) : Math.min(steps[0] * 1.5, steps[0] + 1440);
+    } else {
+      minutes = steps[step];
+    }
+    return { state: stateName, step: step, nextReviewDate: new Date(now.getTime() + minutes * 60000).toISOString() };
+  }
+  if (rating === 'easy') {
+    return graduateCard(easyGraduateIvl, now, cfg);
+  }
+  var nextStep = step + 1;
+  if (nextStep < steps.length) {
+    return { state: stateName, step: nextStep, nextReviewDate: new Date(now.getTime() + steps[nextStep] * 60000).toISOString() };
+  }
+  return graduateCard(normalGraduateIvl, now, cfg);
 }
 
-function addDaysIso(days) {
-  var d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString();
+function scheduleReview(card, rating, now, cfg, rand) {
+  var ivl = card.intervalDays;
+  var ease = card.easeFactor;
+  var delay = Math.max(0, ankiDay(now, cfg) - ankiDay(new Date(card.nextReviewDate), cfg));
+
+  if (rating === 'again') {
+    var newLapses = (card.lapses || 0) + 1;
+    var newEase = Math.max(cfg.minEase, ease - 0.20);
+    var lapseIvl = Math.max(cfg.minimumInterval, Math.round(ivl * cfg.lapseNewIntervalMultiplier));
+    return {
+      state: 'relearning', step: 0,
+      easeFactor: newEase,
+      lapseInterval: lapseIvl,
+      lapses: newLapses,
+      leech: newLapses >= cfg.leechThreshold,
+      nextReviewDate: new Date(now.getTime() + cfg.relearningSteps[0] * 60000).toISOString(),
+    };
+  }
+
+  var computed = computeReviewIntervals(ivl, ease, delay, cfg);
+  var chosenIvl, newEase2;
+  if (rating === 'hard') { chosenIvl = computed.hard; newEase2 = Math.max(cfg.minEase, ease - 0.15); }
+  else if (rating === 'good') { chosenIvl = computed.good; newEase2 = ease; }
+  else { chosenIvl = computed.easy; newEase2 = ease + 0.15; }
+
+  var finalIvl = clampInterval(fuzzInterval(chosenIvl, cfg, rand), cfg);
+
+  return {
+    state: 'review', step: 0,
+    easeFactor: newEase2,
+    intervalDays: finalIvl,
+    nextReviewDate: startOfAnkiDay(ankiDay(now, cfg) + finalIvl, cfg).toISOString(),
+  };
 }
+
+function schedule(card, rating, now, cfg, rand) {
+  var state = card.state;
+  var result;
+  if (state === 'new' || state === 'learning') {
+    result = scheduleLearning(card, rating, now, cfg, cfg.learningSteps, 'learning', cfg.graduatingInterval, cfg.easyInterval);
+  } else if (state === 'relearning') {
+    var lapseIvl = card.lapseInterval || cfg.minimumInterval;
+    result = scheduleLearning(card, rating, now, cfg, cfg.relearningSteps, 'relearning', lapseIvl, lapseIvl + 1);
+  } else {
+    result = scheduleReview(card, rating, now, cfg, rand);
+  }
+  result.reps = (card.reps || 0) + 1;
+  result.lastReviewedAt = now.toISOString();
+  if (result.lapses === undefined) result.lapses = card.lapses || 0;
+  if (result.leech === undefined) result.leech = card.leech || false;
+  if (result.easeFactor === undefined) result.easeFactor = card.easeFactor;
+  if (result.lapseInterval === undefined) result.lapseInterval = card.lapseInterval || cfg.minimumInterval;
+  if (result.intervalDays === undefined) result.intervalDays = card.intervalDays;
+  return result;
+}
+
+function formatMinutes(mins) {
+  if (mins < 60) return Math.round(mins) + '분';
+  var hours = mins / 60;
+  if (hours < 24) return (Math.round(hours * 10) / 10) + '시간';
+  return formatDays(Math.round(hours / 24));
+}
+function formatDays(days) {
+  if (days < 30) return days + '일';
+  if (days < 365) return (Math.round(days / 30 * 10) / 10) + '개월';
+  return (Math.round(days / 365 * 10) / 10) + '년';
+}
+
+function previewIntervals(card, now, cfg) {
+  var state = card.state;
+  if (state === 'new' || state === 'learning') {
+    var steps = cfg.learningSteps;
+    var step = card.step || 0;
+    var hardMin = step === 0
+      ? (steps.length >= 2 ? (steps[0] + steps[1]) / 2 : Math.min(steps[0] * 1.5, steps[0] + 1440))
+      : steps[step];
+    var nextStep = step + 1;
+    var goodLabel = nextStep < steps.length ? formatMinutes(steps[nextStep]) : formatDays(cfg.graduatingInterval);
+    return { again: formatMinutes(steps[0]), hard: formatMinutes(hardMin), good: goodLabel, easy: formatDays(cfg.easyInterval) };
+  }
+  if (state === 'relearning') {
+    var rsteps = cfg.relearningSteps;
+    var rstep = card.step || 0;
+    var lapseIvl = card.lapseInterval || cfg.minimumInterval;
+    var rHard = rstep === 0
+      ? (rsteps.length >= 2 ? (rsteps[0] + rsteps[1]) / 2 : Math.min(rsteps[0] * 1.5, rsteps[0] + 1440))
+      : rsteps[rstep];
+    var rNextStep = rstep + 1;
+    var rGood = rNextStep < rsteps.length ? formatMinutes(rsteps[rNextStep]) : formatDays(lapseIvl);
+    return { again: formatMinutes(rsteps[0]), hard: formatMinutes(rHard), good: rGood, easy: formatDays(lapseIvl + 1) };
+  }
+  var ivl = card.intervalDays, ease = card.easeFactor;
+  var delay = Math.max(0, ankiDay(now, cfg) - ankiDay(new Date(card.nextReviewDate), cfg));
+  var c = computeReviewIntervals(ivl, ease, delay, cfg);
+  return {
+    again: formatMinutes(cfg.relearningSteps[0]),
+    hard: formatDays(clampInterval(c.hard, cfg)),
+    good: formatDays(clampInterval(c.good, cfg)),
+    easy: formatDays(clampInterval(c.easy, cfg)),
+  };
+}
+
+function normalizeCard(doc, cfg) {
+  var c = Object.assign({}, doc);
+  if (c.state === undefined) {
+    if (!c.lastReviewedAt) {
+      c.state = 'new'; c.step = 0; c.easeFactor = cfg.startingEase; c.reps = 0; c.lapses = 0;
+      c.intervalDays = c.intervalDays || cfg.minimumInterval;
+    } else {
+      c.state = 'review';
+      c.easeFactor = c.easeFactor || cfg.startingEase;
+      c.intervalDays = c.intervalDays || cfg.minimumInterval;
+      if (c.nextReviewDate) {
+        var day = ankiDay(new Date(c.nextReviewDate), cfg);
+        c.nextReviewDate = startOfAnkiDay(day, cfg).toISOString();
+      }
+      c.reps = c.reps === undefined ? 1 : c.reps;
+      c.lapses = c.lapses || 0;
+      c.step = 0;
+    }
+  }
+  if (c.step === undefined) c.step = 0;
+  if (c.lapses === undefined) c.lapses = 0;
+  if (c.leech === undefined) c.leech = false;
+  if (c.reps === undefined) c.reps = 0;
+  if (c.easeFactor === undefined) c.easeFactor = cfg.startingEase;
+  if (c.intervalDays === undefined) c.intervalDays = cfg.minimumInterval;
+  if (c.lapseInterval === undefined) c.lapseInterval = cfg.minimumInterval;
+  return c;
+}
+
+/* ── reviewLog 정리: 30일 넘은 로그는 세션 시작 시 조용히 지운다.
+   undo는 메모리 스택으로만 동작하므로 DB의 reviewLog는 undo에 필요하지 않고,
+   dailyStats가 이미 날짜별 집계를 영구 보존하므로 원본 로그를 오래 쌓아둘 이유가 없다. ── */
+async function pruneOldReviewLogs() {
+  try {
+    var cutoffDay = ankiDay(new Date(), SRS_CONFIG) - SRS_CONFIG.reviewLogRetentionDays;
+    var snap = await db.collection('reviewLog').where('ankiDay', '<', cutoffDay).limit(200).get();
+    for (var i = 0; i < snap.docs.length; i++) {
+      try { await db.doc('reviewLog/' + snap.docs[i].id).delete(); } catch (e) {}
+    }
+  } catch (e) {}
+}
+
+async function loadDailyStats(key) {
+  try {
+    var snap = await db.doc('dailyStats/' + key).get();
+    if (snap && snap.exists) {
+      var data = snap.data();
+      return { newIntroduced: data.newIntroduced || 0, reviewsDone: data.reviewsDone || 0 };
+    }
+  } catch (e) {}
+  return { newIntroduced: 0, reviewsDone: 0 };
+}
+
+async function bumpDailyStats(field, delta) {
+  dailyStatsToday[field] = Math.max(0, (dailyStatsToday[field] || 0) + delta);
+  await db.doc('dailyStats/' + dailyStatsKey).set({
+    newIntroduced: dailyStatsToday.newIntroduced,
+    reviewsDone: dailyStatsToday.reviewsDone,
+  });
+}
+
+document.addEventListener('keydown', function (e) {
+  if (currentTab !== 'review' || !reviewQueue || reviewQueue.length === 0 || reviewBusy) return;
+  var tag = e.target && e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (e.key === '1') rateCurrent('again');
+  else if (e.key === '2') rateCurrent('hard');
+  else if (e.key === '3') rateCurrent('good');
+  else if (e.key === '4') rateCurrent('easy');
+  else if (e.key === 'u' || e.key === 'U' || ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z'))) {
+    e.preventDefault();
+    undoLast();
+  }
+});
 
 /* ───────────────── review tab ───────────────── */
+
+async function loadReviewQueue() {
+  var now = new Date();
+  var tomorrowBound = startOfAnkiDay(ankiDay(now, SRS_CONFIG) + 1, SRS_CONFIG).toISOString();
+  var snap;
+  try {
+    snap = await db.collection('concepts')
+      .where('nextReviewDate', '<=', tomorrowBound)
+      .orderBy('nextReviewDate', 'asc')
+      .limit(1000)
+      .get();
+  } catch (e) {
+    snap = { docs: [] };
+  }
+  var cards = snap.docs.map(function (d) { return normalizeCard(Object.assign({ id: d.id }, d.data()), SRS_CONFIG); });
+
+  dailyStatsKey = ankiDayKey(now, SRS_CONFIG);
+  dailyStatsToday = await loadDailyStats(dailyStatsKey);
+  var newLeft = Math.max(0, SRS_CONFIG.newCardsPerDay - dailyStatsToday.newIntroduced);
+  var reviewLeft = Math.max(0, SRS_CONFIG.reviewsPerDay - dailyStatsToday.reviewsDone);
+
+  var learningDueNow = [], learningAhead = [], reviewCards = [], newCards = [];
+  var learnAheadBound = now.getTime() + SRS_CONFIG.learnAheadMinutes * 60000;
+  var today = ankiDay(now, SRS_CONFIG);
+
+  cards.forEach(function (c) {
+    if (c.state === 'learning' || c.state === 'relearning') {
+      var due = new Date(c.nextReviewDate).getTime();
+      if (due <= now.getTime()) learningDueNow.push(c);
+      else if (due <= learnAheadBound) learningAhead.push({ card: c, dueAt: due });
+    } else if (c.state === 'review') {
+      if (ankiDay(new Date(c.nextReviewDate), SRS_CONFIG) <= today) reviewCards.push(c);
+    } else if (c.state === 'new') {
+      newCards.push(c);
+    }
+  });
+
+  reviewCards.sort(function (a, b) { return a.nextReviewDate.localeCompare(b.nextReviewDate); });
+  newCards.sort(function (a, b) { return (a.createdAt || '').localeCompare(b.createdAt || ''); });
+
+  reviewQueue = learningDueNow.concat(reviewCards.slice(0, reviewLeft), newCards.slice(0, newLeft));
+  waitingQueue = learningAhead;
+}
+
+function tryPromoteFromWaiting() {
+  if (!reviewQueue || reviewQueue.length > 0 || waitingQueue.length === 0) return;
+  var now = Date.now();
+  var idx = -1;
+  for (var i = 0; i < waitingQueue.length; i++) {
+    if (waitingQueue[i].dueAt <= now) { idx = i; break; }
+  }
+  if (idx === -1) {
+    // 보여줄 카드가 없고 학습 카드만 남아 있으면 learnAhead 범위까지 당겨 보여준다
+    var aheadBound = now + SRS_CONFIG.learnAheadMinutes * 60000;
+    var soonest = null;
+    for (var j = 0; j < waitingQueue.length; j++) {
+      if (waitingQueue[j].dueAt <= aheadBound && (!soonest || waitingQueue[j].dueAt < soonest.dueAt)) {
+        soonest = waitingQueue[j]; idx = j;
+      }
+    }
+  }
+  if (idx !== -1) {
+    var entry = waitingQueue.splice(idx, 1)[0];
+    reviewQueue.push(entry.card);
+  }
+}
+
+function queueCounts() {
+  var all = reviewQueue.concat(waitingQueue.map(function (w) { return w.card; }));
+  var counts = { newCount: 0, learningCount: 0, reviewCount: 0 };
+  all.forEach(function (c) {
+    if (c.state === 'new') counts.newCount++;
+    else if (c.state === 'learning' || c.state === 'relearning') counts.learningCount++;
+    else counts.reviewCount++;
+  });
+  return counts;
+}
+
+function renderWaitingScreen(el) {
+  var nextDue = Math.min.apply(null, waitingQueue.map(function (w) { return w.dueAt; }));
+  var mins = Math.max(1, Math.ceil((nextDue - Date.now()) / 60000));
+  el.innerHTML = '<div class="empty-state">' + ICONS.moon + '<p>' + mins + '분 후에 다시 나와요.</p></div>' +
+    (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '');
+}
 
 async function renderReviewTab() {
   var el = document.getElementById('content');
@@ -504,62 +896,114 @@ async function renderReviewTab() {
   }
   if (reviewQueue === null) {
     el.innerHTML = '<div class="loading">불러오는 중...</div>';
-    try {
-      var nowIso = new Date().toISOString();
-      var snap = await db.collection('concepts')
-        .where('nextReviewDate', '<=', nowIso)
-        .orderBy('nextReviewDate', 'asc')
-        .limit(DAILY_REVIEW_CAP)
-        .get();
-      reviewQueue = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
-    } catch (e) {
-      reviewQueue = [];
-    }
-    reviewIndex = 0;
+    await loadReviewQueue();
+    if (currentTab !== 'review') return;
   }
-  if (currentTab !== 'review') return;
+  clearInterval(reviewWaitTimer);
+  tryPromoteFromWaiting();
 
   if (reviewQueue.length === 0) {
-    el.innerHTML = '<div class="empty-state">' + ICONS.done + '<p>오늘 밤 복습할 개념이 없어요.</p></div>';
-    return;
-  }
-  if (reviewIndex >= reviewQueue.length) {
-    el.innerHTML = '<div class="done-banner">' + ICONS.done + '<p>오늘 밤 복습을 다 마쳤어요.</p></div>';
+    if (waitingQueue.length > 0) {
+      renderWaitingScreen(el);
+      reviewWaitTimer = setInterval(function () {
+        if (currentTab !== 'review') { clearInterval(reviewWaitTimer); return; }
+        tryPromoteFromWaiting();
+        if (reviewQueue.length > 0) renderReviewTab();
+        else renderWaitingScreen(el);
+      }, 5000);
+      return;
+    }
+    el.innerHTML = reviewHasCompletedAny
+      ? '<div class="done-banner">' + ICONS.done + '<p>오늘 밤 복습을 다 마쳤어요.</p></div>'
+      : '<div class="empty-state">' + ICONS.moon + '<p>오늘 밤 복습할 개념이 없어요.</p></div>';
     return;
   }
 
-  var item = reviewQueue[reviewIndex];
+  var item = reviewQueue[0];
+  var counts = queueCounts();
+  var preview = previewIntervals(item, new Date(), SRS_CONFIG);
   var imgUrl = item.imageId ? ('/_blob/' + item.imageId) : '';
   el.innerHTML =
-    '<div class="progress-line"><span class="count">' + (reviewIndex + 1) + ' / ' + reviewQueue.length + '</span></div>' +
+    '<div class="progress-line">' +
+      '<span class="count-new">새 ' + counts.newCount + '</span> · ' +
+      '<span class="count-learning">학습 ' + counts.learningCount + '</span> · ' +
+      '<span class="count-review">복습 ' + counts.reviewCount + '</span>' +
+    '</div>' +
     '<div class="review-card">' +
       '<div class="accent-stripe" style="background:' + subjectGradient(item.subjectId) + '"></div>' +
+      (item.leech ? '<div class="leech-badge">자주 틀림</div>' : '') +
       (imgUrl ? '<img src="' + imgUrl + '" alt="개념" onclick="openLightbox(\'' + imgUrl + '\')">' : '') +
       (item.text ? '<div class="review-caption">' + escapeHtml(item.text) + '</div>' : '') +
     '</div>' +
     '<div class="rating-grid">' +
-      '<button class="rate-btn rate-again" onclick="rateCurrent(\'again\')">다시</button>' +
-      '<button class="rate-btn rate-hard" onclick="rateCurrent(\'hard\')">어려움</button>' +
-      '<button class="rate-btn rate-good" onclick="rateCurrent(\'good\')">좋음</button>' +
-      '<button class="rate-btn rate-easy" onclick="rateCurrent(\'easy\')">쉬움</button>' +
-    '</div>';
+      '<button class="rate-btn rate-again" onclick="rateCurrent(\'again\')"' + (reviewBusy ? ' disabled' : '') + '>다시<span class="rate-preview">' + preview.again + '</span></button>' +
+      '<button class="rate-btn rate-hard" onclick="rateCurrent(\'hard\')"' + (reviewBusy ? ' disabled' : '') + '>어려움<span class="rate-preview">' + preview.hard + '</span></button>' +
+      '<button class="rate-btn rate-good" onclick="rateCurrent(\'good\')"' + (reviewBusy ? ' disabled' : '') + '>좋음<span class="rate-preview">' + preview.good + '</span></button>' +
+      '<button class="rate-btn rate-easy" onclick="rateCurrent(\'easy\')"' + (reviewBusy ? ' disabled' : '') + '>쉬움<span class="rate-preview">' + preview.easy + '</span></button>' +
+    '</div>' +
+    (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '');
 }
 
 async function rateCurrent(rating) {
-  var item = reviewQueue[reviewIndex];
-  if (!item) return;
-  document.querySelectorAll('.rate-btn').forEach(function (b) { b.disabled = true; });
-  var next = applySrs({ easeFactor: item.easeFactor || DEFAULT_EASE, intervalDays: item.intervalDays || 1 }, rating);
-  var nextReviewDate = addDaysIso(next.intervalDays);
+  if (reviewBusy || !reviewQueue || reviewQueue.length === 0) return;
+  var before = reviewQueue[0];
+  reviewBusy = true;
+  renderReviewTab();
+
+  var now = new Date();
+  var after = schedule(before, rating, now, SRS_CONFIG);
+  var updated = Object.assign({}, before, after);
+  delete updated.id;
+
+  var logId = 'revlog-' + now.getTime() + '-' + Math.random().toString(36).slice(2, 8);
+  var logEntry = {
+    conceptId: before.id, rating: rating,
+    stateBefore: before.state, intervalBefore: before.intervalDays, easeBefore: before.easeFactor,
+    stateAfter: after.state, intervalAfter: after.intervalDays, easeAfter: after.easeFactor,
+    dueBefore: before.nextReviewDate, dueAfter: after.nextReviewDate,
+    reviewedAt: now.toISOString(), ankiDay: ankiDay(now, SRS_CONFIG),
+  };
+  var statsField = before.state === 'new' ? 'newIntroduced' : (before.state === 'review' ? 'reviewsDone' : null);
+
   try {
-    await db.doc('concepts/' + item.id).update({
-      easeFactor: next.easeFactor,
-      intervalDays: next.intervalDays,
-      nextReviewDate: nextReviewDate,
-      lastReviewedAt: new Date().toISOString(),
-    });
-  } catch (e) {}
-  reviewIndex++;
+    await db.doc('concepts/' + before.id).update(updated);
+    await db.doc('reviewLog/' + logId).set(logEntry);
+    if (statsField) await bumpDailyStats(statsField, 1);
+  } catch (e) {
+    reviewBusy = false;
+    showToast('저장 실패, 다시 눌러주세요');
+    renderReviewTab();
+    return;
+  }
+
+  reviewHasCompletedAny = true;
+  reviewQueue.shift();
+  undoStack.push({ conceptId: before.id, beforeCard: before, logId: logId, statsField: statsField });
+  if (undoStack.length > 30) undoStack.shift();
+
+  if (after.state === 'learning' || after.state === 'relearning') {
+    waitingQueue.push({ card: Object.assign({}, updated, { id: before.id }), dueAt: new Date(after.nextReviewDate).getTime() });
+  }
+
+  reviewBusy = false;
+  renderReviewTab();
+}
+
+async function undoLast() {
+  if (undoStack.length === 0) return;
+  var entry = undoStack.pop();
+  try {
+    await db.doc('concepts/' + entry.conceptId).update(entry.beforeCard);
+    await db.doc('reviewLog/' + entry.logId).delete();
+    if (entry.statsField) await bumpDailyStats(entry.statsField, -1);
+  } catch (e) {
+    undoStack.push(entry);
+    showToast('되돌리기 실패, 다시 눌러주세요');
+    return;
+  }
+  waitingQueue = waitingQueue.filter(function (w) { return w.card.id !== entry.conceptId; });
+  reviewQueue = reviewQueue.filter(function (c) { return c.id !== entry.conceptId; });
+  reviewQueue.unshift(entry.beforeCard);
   renderReviewTab();
 }
 
@@ -881,8 +1325,14 @@ async function saveAllUploads() {
         text: item.caption || '',
         subjectId: uploadSubject,
         imageId: up.id,
-        easeFactor: DEFAULT_EASE,
-        intervalDays: 1,
+        state: 'new',
+        step: 0,
+        easeFactor: SRS_CONFIG.startingEase,
+        intervalDays: SRS_CONFIG.minimumInterval,
+        lapseInterval: SRS_CONFIG.minimumInterval,
+        reps: 0,
+        lapses: 0,
+        leech: false,
         nextReviewDate: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         lastReviewedAt: null,
@@ -893,8 +1343,156 @@ async function saveAllUploads() {
   savedCount = count;
   uploadStage = 'done';
   reviewQueue = null; // force the review tab to refetch and include today's new concepts
+  waitingQueue = [];
   allConcepts = null;
   renderUploadTab();
+}
+
+/* ───────────────── stats tab ───────────────── */
+
+function shiftDay(key, n) {
+  var p = key.split('-');
+  var d = new Date(+p[0], +p[1] - 1, +p[2] + n);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// flame grows and shifts from orange toward blue as the streak gets longer
+var FLAME_TIERS = [
+  { min: 0,  size: 64,  label: '불씨가 꺼졌어요',    c1: '#c7c7cc', c2: '#e5e5ea', core: '#f2f2f7', glow: 0 },
+  { min: 1,  size: 70,  label: '작은 불씨',          c1: '#fb923c', c2: '#fdba74', core: '#fef3c7', glow: 2 },
+  { min: 3,  size: 84,  label: '타오르는 중',        c1: '#f97316', c2: '#fbbf24', core: '#fef9c3', glow: 5 },
+  { min: 7,  size: 98,  label: '활활 타오르는 불꽃', c1: '#ea580c', c2: '#f59e0b', core: '#fef08a', glow: 9 },
+  { min: 14, size: 110, label: '맹렬한 불꽃',        c1: '#dc2626', c2: '#f97316', core: '#fde047', glow: 14 },
+  { min: 30, size: 122, label: '푸른 불꽃',          c1: '#2563eb', c2: '#06b6d4', core: '#e0f2fe', glow: 20 },
+];
+function flameTier(streak) {
+  var t = FLAME_TIERS[0];
+  FLAME_TIERS.forEach(function (x) { if (streak >= x.min) t = x; });
+  return t;
+}
+
+function flameSvg(tier) {
+  var h = Math.round(tier.size * 1.25);
+  var glow = tier.glow ? 'filter:drop-shadow(0 0 ' + tier.glow + 'px ' + tier.c1 + ');' : '';
+  return '<svg class="flame" viewBox="0 0 64 80" width="' + tier.size + '" height="' + h + '" style="' + glow + '" aria-hidden="true">' +
+    '<defs><linearGradient id="flameGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="' + tier.c1 + '"/><stop offset="1" stop-color="' + tier.c2 + '"/></linearGradient></defs>' +
+    '<path fill="url(#flameGrad)" d="M32 4C34 18 50 26 50 46C50 62 42 76 32 76C22 76 14 62 14 46C14 38 18 32 22 28C22 36 26 40 28 40C26 28 28 14 32 4Z"/>' +
+    '<path fill="' + tier.core + '" d="M32 38C33 46 40 50 40 58C40 66 36 72 32 72C28 72 24 66 24 58C24 50 30 46 32 38Z"/>' +
+  '</svg>';
+}
+
+function computeStreaks(daySet, today) {
+  var current = 0;
+  var cursor = daySet[today] ? today : shiftDay(today, -1);
+  while (daySet[cursor]) { current++; cursor = shiftDay(cursor, -1); }
+  var days = Object.keys(daySet).sort();
+  var longest = 0, run = 0, prev = null;
+  days.forEach(function (d) {
+    run = (prev && shiftDay(prev, 1) === d) ? run + 1 : 1;
+    if (run > longest) longest = run;
+    prev = d;
+  });
+  return { current: current, longest: longest };
+}
+
+async function renderStatsTab() {
+  var el = document.getElementById('content');
+  if (!db) {
+    el.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>데이터 저장 기능을 사용할 수 없어요.</p></div>';
+    return;
+  }
+  el.innerHTML = '<div class="loading">불러오는 중...</div>';
+  var dailyDocs = [], logDocs = [], concepts = [];
+  try {
+    var results = await Promise.all([
+      db.collection('dailyStats').limit(1000).get(),
+      db.collection('reviewLog').limit(5000).get(),
+      db.collection('concepts').limit(1000).get(),
+    ]);
+    dailyDocs = results[0].docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+    logDocs = results[1].docs.map(function (d) { return d.data(); });
+    concepts = results[2].docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+  } catch (e) {}
+  if (currentTab !== 'stats') return;
+
+  var now = new Date();
+  var today = ankiDayKey(now, SRS_CONFIG);
+
+  // a day counts as studied if dailyStats logged any review, or a concept's last review fell on it
+  var daySet = {};
+  dailyDocs.forEach(function (d) { if ((d.newIntroduced || 0) + (d.reviewsDone || 0) > 0) daySet[d.id] = true; });
+  concepts.forEach(function (c) { if (c.lastReviewedAt) daySet[ankiDayKey(new Date(c.lastReviewedAt), SRS_CONFIG)] = true; });
+  var streaks = computeStreaks(daySet, today);
+  var tier = flameTier(streaks.current);
+  var note = streaks.current === 0 ? '오늘 복습하면 불꽃이 켜져요.'
+    : daySet[today] ? '오늘 복습 완료. 내일도 이어가요.'
+    : '오늘 복습하면 ' + (streaks.current + 1) + '일째가 돼요.';
+
+  var WD = ['일', '월', '화', '수', '목', '금', '토'];
+  function weekdayOf(key) { var p = key.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]).getDay(); }
+  var week = '';
+  for (var i = 6; i >= 0; i--) {
+    var k = shiftDay(today, -i);
+    var on = !!daySet[k];
+    week += '<div class="week-day' + (on ? ' on' : '') + (i === 0 ? ' today' : '') + '">' + WD[weekdayOf(k)] +
+      '<div class="week-dot">' + (on ? '<svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') + '</div></div>';
+  }
+
+  // recall rate per subject over the retained review log (좋음/쉬움 = recalled)
+  var subjectOf = {};
+  concepts.forEach(function (c) { subjectOf[c.id] = c.subjectId; });
+  var bySubject = {};
+  logDocs.forEach(function (r) {
+    var sid = subjectOf[r.conceptId];
+    if (!sid) return;
+    var b = bySubject[sid] || (bySubject[sid] = { total: 0, ok: 0 });
+    b.total++;
+    if (r.rating === 'good' || r.rating === 'easy') b.ok++;
+  });
+  var accRows = SUBJECTS.filter(function (s) { return bySubject[s.id]; }).map(function (s) {
+    var b = bySubject[s.id];
+    var pct = Math.round(b.ok / b.total * 100);
+    return '<div class="acc-row"><span class="acc-name">' + s.name + '</span>' +
+      '<div class="acc-track"><div class="acc-fill" style="width:' + pct + '%;background:' + subjectGradient(s.id) + '"></div></div>' +
+      '<span class="acc-val">' + pct + '% · ' + b.total + '회</span></div>';
+  }).join('');
+
+  // reviews due per day for the next 7 days; overdue and learning cards count toward today
+  var dueKeys = [0, 1, 2, 3, 4, 5, 6].map(function (i) { return shiftDay(today, i); });
+  var due = [0, 0, 0, 0, 0, 0, 0];
+  concepts.forEach(function (c) {
+    if (!c.nextReviewDate) return;
+    var dk = ankiDayKey(new Date(c.nextReviewDate), SRS_CONFIG);
+    if (dk < today) dk = today;
+    var idx = dueKeys.indexOf(dk);
+    if (idx >= 0) due[idx]++;
+  });
+  var maxDue = Math.max.apply(null, due.concat([1]));
+  var dueCols = due.map(function (n, i) {
+    var label = i === 0 ? '오늘' : i === 1 ? '내일' : WD[weekdayOf(dueKeys[i])];
+    return '<div class="due-col"><span class="due-n">' + n + '</span>' +
+      '<div class="due-bar' + (n === 0 ? ' zero' : '') + '" style="height:' + Math.round(n / maxDue * 86) + 'px"></div>' +
+      '<span class="due-d">' + label + '</span></div>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="stat-card">' +
+      '<div class="streak-hero">' +
+        '<div class="flame-wrap">' + flameSvg(tier) + '</div>' +
+        '<div><div class="streak-num">' + streaks.current + '<small>일 연속</small></div>' +
+        '<div class="streak-tier" style="color:' + tier.c1 + '">' + tier.label + '</div>' +
+        '<div class="streak-note">' + note + '</div></div>' +
+      '</div>' +
+      '<div class="week-row">' + week + '</div>' +
+    '</div>' +
+    '<div class="mini-stats">' +
+      '<div class="mini-stat"><div class="v">' + streaks.longest + '일</div><div class="l">최장 연속</div></div>' +
+      '<div class="mini-stat"><div class="v">' + concepts.length + '개</div><div class="l">저장한 개념</div></div>' +
+    '</div>' +
+    '<div class="stat-card"><h2 class="stat-title">과목별 기억률 (최근 30일)</h2>' +
+      (accRows || '<div class="stat-empty">복습을 시작하면 과목별 기억률(좋음·쉬움 비율)이 나타나요.</div>') +
+    '</div>' +
+    '<div class="stat-card"><h2 class="stat-title">앞으로 7일 복습 예정</h2><div class="due-chart">' + dueCols + '</div></div>';
 }
 
 /* ───────────────── concepts tab (모아보기) ───────────────── */
@@ -962,12 +1560,18 @@ function renderGalleryResults() {
 async function deleteConcept(id) {
   var concept = allConcepts.find(function (c) { return c.id === id; });
   if (!concept) return;
+  if (assets && concept.imageId) {
+    try { await assets.delete(concept.imageId); } catch (e) {} // 자산 삭제 실패는 무시 — 개념 문서 삭제가 핵심
+  }
   try {
-    if (assets && concept.imageId) await assets.delete(concept.imageId);
     await db.doc('concepts/' + id).delete();
-  } catch (e) {}
+  } catch (e) {
+    showToast('삭제 실패, 다시 눌러주세요');
+    return;
+  }
   allConcepts = allConcepts.filter(function (c) { return c.id !== id; });
   reviewQueue = null;
+  waitingQueue = [];
   renderGalleryResults();
 }
 
