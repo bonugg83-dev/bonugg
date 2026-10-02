@@ -501,6 +501,7 @@ var savedCount = 0;
 var aiCtl = null;            // AbortController for the running sample call
 var aiProgress = '';         // line shown while analyzing
 var aiSkipped = 0;           // problems with no red/blue ink
+var aiGateSkipped = 0;       // pages skipped by the local colour gate (no AI call)
 var aiFailed = 0;            // pages/images the AI couldn't read
 var aiLastError = '';        // most recent AI/connector error text, shown on the review screen
 
@@ -1333,8 +1334,9 @@ function renderUploadTab() {
   }
 
   // review stage — confirm before save (captions may come from the AI pass)
-  var summary = (aiSkipped || aiFailed)
+  var summary = (aiSkipped || aiFailed || aiGateSkipped)
     ? '<div class="ai-summary">' +
+        (aiGateSkipped ? '빨강·파랑 메모가 없는 ' + aiGateSkipped + '페이지는 AI를 쓰지 않고 건너뛰었어요. ' : '') +
         (aiSkipped ? '빨강·파랑 손글씨가 없는 문제 ' + aiSkipped + '개는 제외했어요. ' : '') +
         (aiFailed ? aiFailed + '개는 AI가 읽지 못했어요. 필요하면 직접 잘라서 추가해 주세요.' : '') +
         (aiLastError ? '<div style="margin-top:6px;font-size:12px;color:var(--danger);word-break:break-all">원인: ' + escapeHtml(aiLastError) + '</div>' : '') +
@@ -1728,6 +1730,29 @@ async function renderPdfPageCanvas(doc, n, scale) {
   return canvas;
 }
 
+// Local colour gate: counts red/blue pen pixels (HSV) on a downscaled copy of the page.
+// Pages with almost none are skipped without any AI call. Tuned on a tablet-exported PDF
+// (memo page ≈1400 px at half of 2.5×, memo-less page 0 px); the threshold is deliberately low (recall first).
+var GATE_MIN_PX = 40;
+function pageHasColoredInk(canvas) {
+  var w = Math.max(1, Math.round(canvas.width / 2)), h = Math.max(1, Math.round(canvas.height / 2));
+  var c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  var ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(canvas, 0, 0, w, h);
+  var d = ctx.getImageData(0, 0, w, h).data, n = 0;
+  for (var i = 0; i < d.length; i += 4) {
+    var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), df = mx - mn;
+    if (mx < 0.25 || df / mx < 0.35) continue;
+    var hue;
+    if (mx === r) hue = ((g - b) / df + 6) % 6; else if (mx === g) hue = (b - r) / df + 2; else hue = (r - g) / df + 4;
+    hue *= 60;
+    if (hue < 20 || hue > 335 || (hue > 190 && hue < 260)) { if (++n >= GATE_MIN_PX) return true; }
+  }
+  return false;
+}
+
 function cropCanvas(src, box) {
   var clamp = function (v) { return Math.min(1000, Math.max(0, v)); };
   var x0 = clamp(Math.min(box[0], box[2]) - AI_BOX_PAD), y0 = clamp(Math.min(box[1], box[3]) - AI_BOX_PAD);
@@ -1888,6 +1913,7 @@ function pushPending(blob, caption, included) {
 function startAiRun() {
   aiCtl = new AbortController();
   aiSkipped = 0;
+  aiGateSkipped = 0;
   aiFailed = 0;
   aiLastError = '';
   uploadStage = 'ai';
@@ -1919,6 +1945,7 @@ async function onAiPdfPicked(file) {
       aiProgress = n + ' / ' + doc.numPages + '페이지에서 문제 찾는 중';
       renderUploadTab();
       var pageCanvas = await renderPdfPageCanvas(doc, n, AI_PAGE_SCALE);
+      if (!pageHasColoredInk(pageCanvas)) { aiGateSkipped++; continue; }
       var pageBlob = await canvasToBlob(pageCanvas, 0.85);
       // the connector takes at most ~1 MiB of JSON per call, so shrink big pages
       for (var q = 0.7; aiBackend === 'gemini' && pageBlob.size > 650000 && q >= 0.4; q -= 0.15) pageBlob = await canvasToBlob(pageCanvas, q);
