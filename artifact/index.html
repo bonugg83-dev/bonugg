@@ -365,6 +365,8 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
 .exam-edit-row .exam-input { flex: 1 1 130px; min-width: 0; width: auto; }
 input[type=date].exam-input { padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); font-size: 14px; }
 
+.stat-warn { background: var(--danger-soft); color: var(--danger); font-size: 13px; font-weight: 600; }
+
 .toast {
   position: fixed;
   bottom: calc(78px + env(safe-area-inset-bottom, 0px));
@@ -1641,17 +1643,23 @@ async function renderStatsTab() {
     return;
   }
   el.innerHTML = '<div class="loading">불러오는 중...</div>';
-  var dailyDocs = [], logDocs = [], concepts = [];
-  try {
-    var results = await Promise.all([
-      db.collection('dailyStats').limit(1000).get(),
-      db.collection('reviewLog').limit(5000).get(),
-      db.collection('concepts').limit(1000).get(),
-    ]);
-    dailyDocs = results[0].docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
-    logDocs = results[1].docs.map(function (d) { return d.data(); });
-    concepts = results[2].docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
-  } catch (e) {}
+  // each source loads on its own so one failing query can't blank the whole page (page size max is 1000)
+  var failed = [];
+  async function loadDocs(label, query) {
+    try {
+      var snap = await query.get();
+      return snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+    } catch (e) {
+      failed.push(label);
+      return [];
+    }
+  }
+  var loaded = await Promise.all([
+    loadDocs('학습 기록', db.collection('dailyStats').limit(1000)),
+    loadDocs('복습 로그', db.collection('reviewLog').orderBy('reviewedAt', 'desc').limit(1000)),
+    loadDocs('개념', db.collection('concepts').limit(1000)),
+  ]);
+  var dailyDocs = loaded[0], logDocs = loaded[1], concepts = loaded[2];
   if (currentTab !== 'stats') return;
 
   var now = new Date();
@@ -1807,7 +1815,8 @@ async function renderStatsTab() {
     }).join('') : '<div class="stat-empty">복습 중 "다시"를 누른 개념이 아직 없어요.</div>') +
     '</div>';
 
-  el.innerHTML =
+  var warn = failed.length ? '<div class="stat-card stat-warn">' + failed.join(', ') + '을(를) 불러오지 못했어요. 잠시 뒤 통계 탭을 다시 열어 주세요.</div>' : '';
+  el.innerHTML = warn +
     '<div class="stat-card">' +
       '<div class="streak-hero">' +
         '<div class="flame-wrap">' + flameSvg(tier) + '</div>' +
