@@ -501,6 +501,7 @@ var savedCount = 0;
 var aiCtl = null;            // AbortController for the running sample call
 var aiProgress = '';         // line shown while analyzing
 var aiSkipped = 0;           // problems with no red/blue ink
+var aiScanSkipped = 0;       // of those, scanned pages without a handwriting layer
 var aiPlanPages = 0;         // pages split by the PDF text layer (no AI position call)
 var aiGateSkipped = 0;       // pages skipped by the local colour gate (no AI call)
 var aiFailed = 0;            // pages/images the AI couldn't read
@@ -1338,7 +1339,7 @@ function renderUploadTab() {
   var summary = (aiSkipped || aiFailed || aiGateSkipped || aiPlanPages)
     ? '<div class="ai-summary">' +
         (aiPlanPages ? aiPlanPages + '페이지는 글자 위치로 문제를 나눠 AI 위치 호출을 줄였어요. ' : '') +
-        (aiGateSkipped ? '빨강·파랑 메모가 없는 ' + aiGateSkipped + '페이지는 AI를 쓰지 않고 건너뛰었어요. ' : '') +
+        (aiGateSkipped ? '빨강·파랑 메모가 없는 ' + aiGateSkipped + '페이지는 AI를 쓰지 않고 건너뛰었어요' + (aiScanSkipped ? '(스캔 쪽 ' + aiScanSkipped + '쪽은 필기 그림층이 없어서 제외)' : '') + '. ' : '') +
         (aiSkipped ? '빨강·파랑 손글씨가 없는 문제 ' + aiSkipped + '개는 제외했어요. ' : '') +
         (aiFailed ? aiFailed + '개는 AI가 읽지 못했어요. 필요하면 직접 잘라서 추가해 주세요.' : '') +
         (aiLastError ? '<div style="margin-top:6px;font-size:12px;color:var(--danger);word-break:break-all">원인: ' + escapeHtml(aiLastError) + '</div>' : '') +
@@ -1738,7 +1739,7 @@ async function renderPdfPageCanvas(doc, n, scale) {
 // Pages with almost no pen ink left are skipped without any AI call (recall first: the threshold is low).
 var GATE_MIN_PX = 40;
 
-function penInk(canvas, textBoxes) {
+function penInk(canvas, textBoxes, layers) {
   var w = Math.max(1, Math.round(canvas.width / 2)), h = Math.max(1, Math.round(canvas.height / 2));
   var c = document.createElement('canvas');
   c.width = w; c.height = h;
@@ -1746,7 +1747,17 @@ function penInk(canvas, textBoxes) {
   ctx.drawImage(canvas, 0, 0, w, h);
   var d = ctx.getImageData(0, 0, w, h).data;
   var mask = new Uint8Array(w * h), list = [], i;
-  for (i = 0; i < w * h; i++) if (isPenPx(d, i * 4)) { mask[i] = 1; list.push(i); }
+  // when the page carries separate overlay images (tablet export puts handwriting there), only look inside them
+  var zones = (layers || []).map(function (z) { return [Math.floor((z[0] - 0.01) * w), Math.floor((z[1] - 0.01) * h), Math.ceil((z[2] + 0.01) * w), Math.ceil((z[3] + 0.01) * h)]; });
+  for (i = 0; i < w * h; i++) {
+    if (zones.length) {
+      var zx = i % w, zy = (i / w) | 0, inZone = false;
+      for (var zi = 0; zi < zones.length; zi++) { var zz = zones[zi]; if (zx >= zz[0] && zx <= zz[2] && zy >= zz[1] && zy <= zz[3]) { inZone = true; break; } }
+      if (!inZone) continue;
+    }
+    if (isPenPx(d, i * 4)) { mask[i] = 1; list.push(i); }
+  }
+  if (layers && !layers.length) return { w: w, h: h, xs: [], ys: [], n: 0 }; // bare scan: printed colour lives in the image, no overlay = no handwriting
   var boxes = (textBoxes || []).map(function (b) { return [b[0] * w, b[1] * h, b[2] * w, b[3] * h]; });
   var inText = function (x, y) {
     for (var k = 0; k < boxes.length; k++) { var b = boxes[k]; if (x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]) return true; }
@@ -1793,6 +1804,34 @@ function penInk(canvas, textBoxes) {
     for (j = 0; j < comp.length; j++) { xs.push(comp[j] % w); ys.push((comp[j] / w) | 0); }
   }
   return { w: w, h: h, xs: xs, ys: ys, n: xs.length };
+}
+
+// Overlay images on the page (not the page-sized background), as page fractions. Tablet note apps
+// export handwriting as one image laid over the page (digital or scanned); null = no usable overlay info.
+async function pdfOverlayImages(page) {
+  var vp = page.getViewport({ scale: 1 });
+  var ol = await page.getOperatorList(), O = pdfjsLib.OPS, U = pdfjsLib.Util;
+  var ctm = vp.transform.slice(), stack = [], boxes = [];
+  var imgOps = [O.paintImageXObject, O.paintInlineImageXObject, O.paintImageMaskXObject, O.paintSolidColorImageMask, O.paintJpegXObject];
+  for (var i = 0; i < ol.fnArray.length; i++) {
+    var fn = ol.fnArray[i];
+    if (fn === O.save) stack.push(ctm.slice());
+    else if (fn === O.restore) { if (stack.length) ctm = stack.pop(); }
+    else if (fn === O.transform) ctm = U.transform(ctm, ol.argsArray[i]);
+    else if (imgOps.indexOf(fn) >= 0) {
+      var pts = [[0, 0], [1, 0], [0, 1], [1, 1]].map(function (pt) { return U.applyTransform(pt, ctm); });
+      var xs = pts.map(function (q) { return q[0]; }), ys = pts.map(function (q) { return q[1]; });
+      boxes.push([Math.max(0, Math.min.apply(null, xs) / vp.width), Math.max(0, Math.min.apply(null, ys) / vp.height),
+                  Math.min(1, Math.max.apply(null, xs) / vp.width), Math.min(1, Math.max.apply(null, ys) / vp.height)]);
+    }
+  }
+  var area = function (b) { return Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]); };
+  var big = boxes.filter(function (b) { return area(b) >= 0.7; });
+  var overlays = boxes.filter(function (b) { return area(b) < 0.7 && area(b) >= 0.002; });
+  // two page-sized images: could be background + a full-page ink layer, so no overlay shortcut
+  if (big.length > 1) return null;
+  if (!overlays.length) return big.length === 1 ? [] : null; // [] = bare page image, no overlay
+  return overlays;
 }
 
 function pageHasColoredInk(ink) { return ink.n >= GATE_MIN_PX; }
@@ -2156,6 +2195,7 @@ function startAiRun() {
   aiSkipped = 0;
   aiGateSkipped = 0;
   aiPlanPages = 0;
+  aiScanSkipped = 0;
   aiFailed = 0;
   aiLastError = '';
   uploadStage = 'ai';
@@ -2190,8 +2230,12 @@ async function onAiPdfPicked(file) {
       var pageCanvas = await renderPdfPageCanvas(doc, n, AI_PAGE_SCALE);
       var textPage = await doc.getPage(n), boxes = [];
       try { boxes = await pdfTextBoxes(textPage); } catch (e) { boxes = []; }
-      var ink = penInk(pageCanvas, boxes);
-      if (!pageHasColoredInk(ink)) { aiGateSkipped++; continue; }
+      var layers = null;
+      try { layers = await pdfOverlayImages(textPage); } catch (e) { layers = null; }
+      var bareScan = false;
+      if (layers && !layers.length) { if (boxes.length) layers = null; else bareScan = true; } // pages with a text layer keep the colour rules
+      var ink = penInk(pageCanvas, boxes, layers);
+      if (!pageHasColoredInk(ink)) { aiGateSkipped++; if (bareScan) aiScanSkipped++; continue; }
       var plan = null;
       try { plan = await aiPlanPage(textPage, pageCanvas, ink); } catch (e) { plan = null; }
       if (plan && !plan.fallback && plan.problems.length) {
