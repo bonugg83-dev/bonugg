@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>개념노트</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -203,6 +204,20 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
 .crop-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .crop-count { text-align: center; font-size: 12px; color: var(--text-3); margin-top: 10px; }
 
+/* ── AI auto-extract ── */
+.dropzone.ai-zone { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.ai-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--accent); color: #fff; }
+.ai-sub { font-size: 12px; font-weight: 500; color: var(--text-2); }
+.section-label { font-size: 12px; font-weight: 700; color: var(--text-3); margin: 20px 0 -4px; }
+.ai-note { font-size: 12px; color: var(--text-3); margin-top: 14px; text-align: center; }
+.ai-progress { text-align: center; padding: 48px 16px 20px; color: var(--text-2); font-size: 14px; font-weight: 600; }
+.ai-progress .sub { font-size: 12px; color: var(--text-3); font-weight: 500; margin-top: 6px; }
+.ai-spinner { width: 28px; height: 28px; margin: 0 auto 14px; border-radius: 50%; border: 3px solid var(--accent-soft); border-top-color: var(--accent); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ai-spinner { animation-duration: 3s; } }
+.ai-summary { font-size: 13px; color: var(--text-2); background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 12px 14px; margin-top: 4px; }
+.thumb-card textarea { font-size: 12px; padding: 7px 10px; margin-bottom: 8px; min-height: 64px; resize: vertical; line-height: 1.5; }
+
 .btn-primary {
   width: 100%; padding: 14px; background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff;
   border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 14px; cursor: pointer;
@@ -266,6 +281,13 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
   min-height: 44px; resize: vertical; background: var(--surface);
 }
 
+.concept-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.concept-toolbar .subject-filter { margin-bottom: 0; flex: 0 1 160px; }
+.search-input { flex: 1 1 180px; min-width: 0; width: auto; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); font-size: 14px; }
+.search-input:focus { outline: none; border-color: var(--accent); }
+.search-count { font-size: 12px; font-weight: 700; color: var(--text-3); margin-bottom: 10px; }
+.g-caption mark { background: #fde68a; color: inherit; border-radius: 3px; padding: 0 1px; }
+
 .lightbox-overlay {
   position: fixed; inset: 0; z-index: 220;
   background: rgba(8,9,13,.85);
@@ -273,6 +295,91 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
   padding: 20px; cursor: zoom-out;
 }
 .lightbox-overlay img { max-height: 100%; border-radius: 10px; }
+
+/* ── stats ── */
+.stat-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 18px; margin-bottom: 14px; }
+.stat-title { font-size: 12px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 12px; }
+.streak-hero { display: flex; align-items: center; gap: 18px; }
+.flame-wrap { width: 112px; height: 124px; display: flex; align-items: flex-end; justify-content: center; flex-shrink: 0; }
+.flame { transform-origin: 50% 100%; animation: flicker 1.6s ease-in-out infinite; }
+@keyframes flicker { 0%,100% { transform: scale(1,1) rotate(0deg); } 30% { transform: scale(1.03,.97) rotate(-1.5deg); } 65% { transform: scale(.97,1.04) rotate(1.5deg); } }
+@media (prefers-reduced-motion: reduce) { .flame { animation: none; } }
+.streak-num { font-size: 44px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.streak-num small { font-size: 16px; font-weight: 700; margin-left: 4px; color: var(--text-2); }
+.streak-tier { font-size: 13px; font-weight: 700; margin-top: 6px; }
+.streak-note { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.week-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 16px; }
+.week-day { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-3); }
+.week-dot { width: 26px; height: 26px; border-radius: 50%; margin: 5px auto 0; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
+.week-dot svg { width: 14px; height: 14px; }
+.week-day.on .week-dot { background: #ffedd5; }
+.week-day.today { color: var(--accent); }
+.mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.mini-stat { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 14px 16px; }
+.mini-stat .v { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.mini-stat .l { font-size: 12px; color: var(--text-2); font-weight: 600; }
+.acc-row { display: grid; grid-template-columns: 78px 1fr auto; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+.acc-row:last-child { margin-bottom: 0; }
+.acc-name { font-weight: 700; }
+.acc-track { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.acc-fill { height: 100%; border-radius: 999px; }
+.acc-val { font-variant-numeric: tabular-nums; color: var(--text-2); font-size: 12px; min-width: 76px; text-align: right; }
+.due-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 130px; }
+.due-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+.due-bar { width: 100%; max-width: 34px; border-radius: 8px 8px 4px 4px; background: linear-gradient(180deg, var(--accent), var(--accent-2)); min-height: 3px; }
+.due-bar.zero { background: var(--surface-2); }
+.due-n { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.due-d { font-size: 11px; color: var(--text-3); font-weight: 600; }
+.stat-empty { font-size: 13px; color: var(--text-3); }
+
+.heat-wrap { overflow-x: auto; padding-bottom: 4px; }
+.heat-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 14px); grid-auto-columns: 14px; gap: 3px; width: max-content; }
+.heat-cell { border-radius: 3px; background: var(--surface-2); }
+.heat-cell.l1 { background: #dcdcfb; }
+.heat-cell.l2 { background: #b3b5f8; }
+.heat-cell.l3 { background: #8588f2; }
+.heat-cell.l4 { background: #6366f1; }
+.heat-cell.today { outline: 1.5px solid var(--text-2); outline-offset: 1px; }
+.heat-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; font-size: 11px; color: var(--text-3); font-weight: 600; flex-wrap: wrap; }
+.heat-legend { display: flex; align-items: center; gap: 3px; }
+.heat-legend .heat-cell { width: 12px; height: 12px; }
+.mature-bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--surface-2); }
+.mature-seg { height: 100%; }
+.mature-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 14px; font-size: 13px; }
+.mature-legend span.k { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+.mature-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.mature-legend b { font-variant-numeric: tabular-nums; margin-left: 4px; }
+.weak-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
+.weak-row:first-of-type { border-top: none; padding-top: 0; }
+.weak-thumb { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: var(--surface-2); cursor: zoom-in; flex-shrink: 0; }
+.weak-body { min-width: 0; flex: 1; }
+.weak-subj { font-size: 11px; font-weight: 700; }
+.weak-text { font-size: 13px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weak-count { font-size: 12px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border-radius: 999px; padding: 3px 10px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+.exam-hero {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 16px 18px; border-radius: var(--radius-lg); color: #fff; cursor: pointer;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 20px rgba(139,140,246,.3);
+}
+.exam-hero.exam-empty { background: var(--surface); color: var(--text-2); box-shadow: none; border: 1.5px dashed var(--border); font-size: 13px; font-weight: 600; }
+.exam-edit-hint { font-weight: 800; color: var(--accent); }
+.exam-main { min-width: 0; }
+.exam-name { font-size: 13px; font-weight: 700; opacity: .9; }
+.exam-date { font-size: 12px; opacity: .8; font-variant-numeric: tabular-nums; }
+.exam-dnum { font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.exam-others { flex-basis: 100%; display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; font-weight: 700; }
+.exam-others span { background: rgba(255,255,255,.22); border-radius: 999px; padding: 2px 10px; }
+.exam-line { font-size: 13px; color: var(--text-2); margin: 10px 4px 16px; line-height: 1.6; }
+.exam-line b { color: var(--text); font-variant-numeric: tabular-nums; }
+.exam-line-sub { font-size: 11px; color: var(--text-3); }
+.exam-editor { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 14px; margin: 10px 0 14px; display: flex; flex-direction: column; gap: 10px; }
+.exam-edit-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.exam-edit-row .exam-input { flex: 1 1 130px; min-width: 0; width: auto; }
+input[type=date].exam-input { padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); font-size: 14px; }
+
+.stat-warn { background: var(--danger-soft); color: var(--danger); font-size: 13px; font-weight: 600; }
 
 .toast {
   position: fixed;
@@ -304,6 +411,10 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
         <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
         모아보기
       </button>
+      <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        통계
+      </button>
     </nav>
   </aside>
 
@@ -322,6 +433,10 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
       <button class="tab-btn" data-tab="concepts" onclick="switchTab('concepts')">
         <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
         모아보기
+      </button>
+      <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        통계
       </button>
     </nav>
   </div>
@@ -352,7 +467,11 @@ function subjectGradient(subjectId) {
   return subj ? ('linear-gradient(120deg, ' + subj.c1 + ', ' + subj.c2 + ')') : 'var(--surface-2)';
 }
 
-var db = null, assets = null;
+var db = null, assets = null, sampleFn = null, mcpFn = null;
+var aiBackend = null;      // 'claude' (sample, if this account allows images) | 'gemini' (custom connector) | null
+var GEMINI_SERVERS = ['개념노트 Gemini', 'Gemini'];   // connector display names we accept (claude.ai may shorten a Korean name)
+var GEMINI_SERVER = GEMINI_SERVERS[0];             // name shown in messages; updated to whichever one answers
+var aiImageReady = null; // null = still checking, true/false once sample.limits() answers
 var currentTab = 'review';
 
 // review tab state
@@ -365,12 +484,28 @@ var reviewBusy = false;
 var reviewHasCompletedAny = false;
 var reviewWaitTimer = null;
 
+// exam (D-day) state
+var examList = [];            // [{ name, date: 'YYYY-MM-DD' }] stored in settings/exams
+var examEditing = false;
+var examProjection = null;    // { total, days, perConcept } for the nearest exam
+var cardShownId = null, cardShownAt = 0; // when the current card appeared, for time stats
+
 // upload tab state
-var uploadStage = 'idle'; // idle | pdf-crop | review | saving | done
+var uploadStage = 'idle'; // idle | pdf-crop | ai | review | saving | done
 var uploadSubject = SUBJECTS[0].id;
 var pendingUploads = []; // { localId, file, url, caption, included }
 var uploadSeq = 0;
 var savedCount = 0;
+
+// AI auto-extract state
+var aiCtl = null;            // AbortController for the running sample call
+var aiProgress = '';         // line shown while analyzing
+var aiSkipped = 0;           // problems with no red/blue ink
+var aiScanSkipped = 0;       // of those, scanned pages without a handwriting layer
+var aiPlanPages = 0;         // pages split by the PDF text layer (no AI position call)
+var aiGateSkipped = 0;       // pages skipped by the local colour gate (no AI call)
+var aiFailed = 0;            // pages/images the AI couldn't read
+var aiLastError = '';        // most recent AI/connector error text, shown on the review screen
 
 // pdf manual-crop state
 var pdfDoc = null;
@@ -383,11 +518,14 @@ var cropDragStartX = 0, cropDragStartY = 0, cropDragStartBounds = null;
 // concepts tab state
 var allConcepts = null;
 var conceptsSubjectFilter = '';
+var conceptsSearch = '';
 var editingConceptId = null;
 
 async function initCapabilities() {
   try { db = await window.claude.use('db'); } catch (e) { db = null; }
   try { assets = await window.claude.use('assets'); } catch (e) { assets = null; }
+  checkAiAvailability();
+  if (db) await loadExams();
   renderCurrentTab();
   if (db) pruneOldReviewLogs(); // fire-and-forget, doesn't block the UI
 }
@@ -404,6 +542,7 @@ function renderCurrentTab() {
   if (currentTab === 'review') renderReviewTab();
   else if (currentTab === 'upload') renderUploadTab();
   else if (currentTab === 'concepts') renderConceptsTab();
+  else if (currentTab === 'stats') renderStatsTab();
 }
 
 function showToast(msg) {
@@ -497,6 +636,7 @@ var SRS_CONFIG = {
   leechThreshold: 8,
   reviewLogRetentionDays: 30,
   fuzzEnabled: true,
+  examDay: null,                   // ankiDay number of the nearest upcoming exam, set at runtime
 };
 
 function localDayNumber(d) {
@@ -522,8 +662,20 @@ function ankiDayKey(date, cfg) {
   return y + '-' + m + '-' + dd;
 }
 
+// With an exam coming, never schedule a review past the exam day, and in the last
+// 14 days keep every card within 4 days so nothing sits unseen right before it.
+function examCapFor(left, cfg) {
+  var cap = left <= 14 ? Math.min(4, left - 1) : left - 1;
+  return Math.max(cfg.minimumInterval, Math.min(cfg.maxInterval, cap));
+}
+function examIntervalCap(cfg) {
+  if (cfg.examDay == null) return cfg.maxInterval;
+  var left = cfg.examDay - ankiDay(new Date(), cfg);
+  return left <= 0 ? cfg.maxInterval : examCapFor(left, cfg);
+}
+
 function clampInterval(ivl, cfg) {
-  return Math.min(Math.max(Math.round(ivl), cfg.minimumInterval), cfg.maxInterval);
+  return Math.min(Math.max(Math.round(ivl), cfg.minimumInterval), examIntervalCap(cfg));
 }
 
 function fuzzInterval(ivl, cfg, rand) {
@@ -548,6 +700,7 @@ function computeReviewIntervals(ivl, ease, delay, cfg) {
 }
 
 function graduateCard(ivl, now, cfg) {
+  ivl = Math.max(cfg.minimumInterval, Math.min(ivl, examIntervalCap(cfg)));
   return {
     state: 'review', step: 0, intervalDays: ivl,
     nextReviewDate: startOfAnkiDay(ankiDay(now, cfg) + ivl, cfg).toISOString(),
@@ -727,17 +880,23 @@ async function loadDailyStats(key) {
     var snap = await db.doc('dailyStats/' + key).get();
     if (snap && snap.exists) {
       var data = snap.data();
-      return { newIntroduced: data.newIntroduced || 0, reviewsDone: data.reviewsDone || 0 };
+      return { newIntroduced: data.newIntroduced || 0, reviewsDone: data.reviewsDone || 0, studyMs: data.studyMs || 0, answered: data.answered || 0 };
     }
   } catch (e) {}
-  return { newIntroduced: 0, reviewsDone: 0 };
+  return { newIntroduced: 0, reviewsDone: 0, studyMs: 0, answered: 0 };
 }
 
-async function bumpDailyStats(field, delta) {
-  dailyStatsToday[field] = Math.max(0, (dailyStatsToday[field] || 0) + delta);
+async function bumpDailyStats(field, delta, extra) {
+  if (field) dailyStatsToday[field] = Math.max(0, (dailyStatsToday[field] || 0) + delta);
+  if (extra) {
+    dailyStatsToday.studyMs = (dailyStatsToday.studyMs || 0) + extra.studyMs;
+    dailyStatsToday.answered = (dailyStatsToday.answered || 0) + extra.answered;
+  }
   await db.doc('dailyStats/' + dailyStatsKey).set({
     newIntroduced: dailyStatsToday.newIntroduced,
     reviewsDone: dailyStatsToday.reviewsDone,
+    studyMs: dailyStatsToday.studyMs || 0,
+    answered: dailyStatsToday.answered || 0,
   });
 }
 
@@ -754,6 +913,148 @@ document.addEventListener('keydown', function (e) {
     undoLast();
   }
 });
+
+/* ───────────────── D-day: 시험일 ───────────────── */
+
+function examDayNumber(dateStr) {
+  var p = String(dateStr).split('-');
+  return localDayNumber(new Date(+p[0], +p[1] - 1, +p[2], 12));
+}
+
+function nearestExam() {
+  var today = ankiDay(new Date(), SRS_CONFIG);
+  var upcoming = examList
+    .filter(function (x) { return x.date && !isNaN(examDayNumber(x.date)) && examDayNumber(x.date) >= today; })
+    .map(function (x) { return { exam: x, day: examDayNumber(x.date), left: examDayNumber(x.date) - today }; })
+    .sort(function (a, b) { return a.day - b.day; });
+  return upcoming;
+}
+
+function syncExamConfig() {
+  var up = nearestExam();
+  SRS_CONFIG.examDay = up.length ? up[0].day : null;
+}
+
+async function loadExams() {
+  try {
+    var snap = await db.doc('settings/exams').get();
+    if (snap && snap.exists) examList = (snap.data().list || []).filter(function (x) { return x && x.date; });
+  } catch (e) {}
+  syncExamConfig();
+}
+
+async function saveExams() {
+  syncExamConfig();
+  examProjection = null;
+  try { await db.doc('settings/exams').set({ list: examList }); } catch (e) { showToast('시험일 저장 실패'); }
+  renderExamBanner();
+  loadExamProjection();
+}
+
+// Reviews each concept would get before the exam if every answer were 좋음.
+async function loadExamProjection() {
+  var up = nearestExam();
+  if (!up.length || !db) { examProjection = null; renderExamBanner(); return; }
+  var examDay = up[0].day;
+  var concepts = [];
+  try {
+    var snap = await db.collection('concepts').limit(1000).get();
+    concepts = snap.docs.map(function (d) { return normalizeCard(Object.assign({ id: d.id }, d.data()), SRS_CONFIG); });
+  } catch (e) {}
+  var today = ankiDay(new Date(), SRS_CONFIG);
+  var total = 0;
+  concepts.forEach(function (c) {
+    var ivl, day, ease = c.easeFactor;
+    if (c.state === 'review') {
+      ivl = c.intervalDays;
+      day = Math.max(today, ankiDay(new Date(c.nextReviewDate), SRS_CONFIG));
+    } else {
+      ivl = SRS_CONFIG.graduatingInterval;   // the first pass counts as one review today
+      day = today;
+    }
+    while (day <= examDay) {
+      total++;
+      var next = Math.max(Math.round(ivl * ease), ivl + 1);
+      var left = examDay - day;
+      ivl = left > 0 ? Math.min(next, examCapFor(left, SRS_CONFIG)) : next;
+      day += ivl;
+    }
+  });
+  var days = Math.max(1, examDay - today + 1);
+  examProjection = { total: total, days: days, count: concepts.length };
+  renderExamBanner();
+}
+
+function fmtExamDate(dateStr) {
+  var p = dateStr.split('-');
+  var wd = ['일', '월', '화', '수', '목', '금', '토'][new Date(+p[0], +p[1] - 1, +p[2]).getDay()];
+  return p[0] + '.' + p[1] + '.' + p[2] + ' (' + wd + ')';
+}
+
+function renderExamBanner() {
+  var hero = document.getElementById('examHero');
+  var line = document.getElementById('examLine');
+  if (!hero || !line) return;
+  var up = nearestExam();
+  if (!up.length) {
+    hero.className = 'exam-hero exam-empty';
+    hero.innerHTML = '<span>시험일을 등록하면 D-day가 나와요</span><span class="exam-edit-hint">등록</span>';
+    line.innerHTML = '';
+    return;
+  }
+  var n = up[0];
+  hero.className = 'exam-hero';
+  hero.innerHTML =
+    '<div class="exam-main"><div class="exam-name">' + escapeHtml(n.exam.name || '시험') + '</div>' +
+    '<div class="exam-date">' + fmtExamDate(n.exam.date) + '</div></div>' +
+    '<div class="exam-dnum">' + (n.left === 0 ? 'D-DAY' : 'D-' + n.left) + '</div>' +
+    (up.length > 1 ? '<div class="exam-others">' + up.slice(1, 4).map(function (o) {
+      return '<span>' + escapeHtml(o.exam.name || '시험') + ' D-' + o.left + '</span>';
+    }).join('') + '</div>' : '');
+  var parts = [];
+  if (reviewQueue) parts.push('오늘 복습 <b>' + (reviewQueue.length + waitingQueue.length) + '개</b> 남음');
+  if (examProjection && examProjection.count > 0 && n.left > 0) {
+    var perDay = Math.round(examProjection.total / examProjection.days * 10) / 10;
+    var perConcept = Math.round(examProjection.total / examProjection.count * 10) / 10;
+    parts.push('시험까지 하루 평균 <b>' + (perDay < 1 ? '1개 미만' : perDay + '개') + '</b>, 개념당 <b>' + perConcept + '회</b> 복습 예정');
+  }
+  line.innerHTML = parts.join('<br>') + (parts.length > 1 ? '<div class="exam-line-sub">모두 "좋음"을 눌렀을 때 기준이에요.</div>' : '');
+}
+
+function toggleExamEditor() {
+  examEditing = !examEditing;
+  renderExamEditor();
+}
+
+function renderExamEditor() {
+  var box = document.getElementById('examEditor');
+  if (!box) return;
+  if (!examEditing) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="exam-editor">' + examList.map(function (x, i) {
+    return '<div class="exam-edit-row">' +
+      '<input type="text" class="exam-input" id="examName' + i + '" value="' + escapeHtml(x.name || '') + '" placeholder="시험 이름" onchange="onExamEdit(' + i + ', \'name\', this.value)">' +
+      '<input type="date" class="exam-input" id="examDate' + i + '" value="' + escapeHtml(x.date || '') + '" onchange="onExamEdit(' + i + ', \'date\', this.value)">' +
+      '<button class="btn-icon" onclick="removeExam(' + i + ')" aria-label="삭제"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
+    '</div>';
+  }).join('') +
+  '<button class="btn-secondary" onclick="addExam()">시험 추가</button></div>';
+}
+
+function onExamEdit(i, field, value) {
+  if (!examList[i]) return;
+  examList[i][field] = value;
+  if (field === 'date' && !value) return;
+  saveExams();
+}
+function addExam() {
+  examList.push({ name: '', date: '' });
+  renderExamEditor();
+}
+function removeExam(i) {
+  examList.splice(i, 1);
+  renderExamEditor();
+  saveExams();
+}
 
 /* ───────────────── review tab ───────────────── */
 
@@ -842,8 +1143,17 @@ function renderWaitingScreen(el) {
 }
 
 async function renderReviewTab() {
-  var el = document.getElementById('content');
   if (currentTab !== 'review') return;
+  var content = document.getElementById('content');
+  if (!document.getElementById('reviewBody')) {
+    content.innerHTML =
+      '<div id="examBanner"><div id="examHero" class="exam-hero" onclick="toggleExamEditor()"></div>' +
+      '<div id="examLine" class="exam-line"></div><div id="examEditor"></div></div>' +
+      '<div id="reviewBody"></div>';
+    renderExamEditor();
+  }
+  var el = document.getElementById('reviewBody');
+  renderExamBanner();
   if (!db) {
     el.innerHTML = '<div class="empty-state">' + ICONS.moon + '<p>데이터 저장 기능을 사용할 수 없어요.</p></div>';
     return;
@@ -852,6 +1162,8 @@ async function renderReviewTab() {
     el.innerHTML = '<div class="loading">불러오는 중...</div>';
     await loadReviewQueue();
     if (currentTab !== 'review') return;
+    renderExamBanner();
+    loadExamProjection();
   }
   clearInterval(reviewWaitTimer);
   tryPromoteFromWaiting();
@@ -874,6 +1186,7 @@ async function renderReviewTab() {
   }
 
   var item = reviewQueue[0];
+  if (cardShownId !== item.id) { cardShownId = item.id; cardShownAt = Date.now(); }
   var counts = queueCounts();
   var preview = previewIntervals(item, new Date(), SRS_CONFIG);
   var imgUrl = item.imageId ? ('/_blob/' + item.imageId) : '';
@@ -918,11 +1231,13 @@ async function rateCurrent(rating) {
     reviewedAt: now.toISOString(), ankiDay: ankiDay(now, SRS_CONFIG),
   };
   var statsField = before.state === 'new' ? 'newIntroduced' : (before.state === 'review' ? 'reviewsDone' : null);
+  // time on this card, capped so a card left open doesn't inflate the total
+  var spentMs = cardShownAt ? Math.min(Date.now() - cardShownAt, 120000) : 0;
 
   try {
     await db.doc('concepts/' + before.id).update(updated);
     await db.doc('reviewLog/' + logId).set(logEntry);
-    if (statsField) await bumpDailyStats(statsField, 1);
+    await bumpDailyStats(statsField, statsField ? 1 : 0, { studyMs: spentMs, answered: 1 });
   } catch (e) {
     reviewBusy = false;
     showToast('저장 실패, 다시 눌러주세요');
@@ -931,6 +1246,7 @@ async function rateCurrent(rating) {
   }
 
   reviewHasCompletedAny = true;
+  cardShownId = null;
   reviewQueue.shift();
   undoStack.push({ conceptId: before.id, beforeCard: before, logId: logId, statsField: statsField });
   if (undoStack.length > 30) undoStack.shift();
@@ -975,6 +1291,8 @@ function renderUploadTab() {
           return '<option value="' + s.id + '"' + (s.id === uploadSubject ? ' selected' : '') + '>' + s.name + '</option>';
         }).join('') +
       '</select>' +
+      renderAiZones() +
+      (aiImageReady ? '<div class="section-label">직접 자르기</div>' : '') +
       '<div class="dropzone-group">' +
         '<label class="dropzone">' +
           ICONS.pdf +
@@ -986,7 +1304,17 @@ function renderUploadTab() {
           '이미 잘라낸 사진/스크린샷 업로드' +
           '<input type="file" accept="image/*" multiple onchange="onImagesPicked(this.files)">' +
         '</label>' +
-      '</div>';
+      '</div>' +
+      (aiImageReady === false ? '<p class="ai-note">이 화면에서는 AI 자동 추출을 쓸 수 없어요. (Claude 앱 안에서 열어야 해요)</p>' :
+        (aiBackend === 'gemini' ? '<p class="ai-note">AI 추출은 Gemini 커넥터("' + GEMINI_SERVER + '")로 동작해요. 처음 쓸 때 허용 창이 떠요.</p>' : ''));
+    return;
+  }
+
+  if (uploadStage === 'ai') {
+    el.innerHTML =
+      '<div class="ai-progress"><div class="ai-spinner"></div>' + escapeHtml(aiProgress) +
+      '<div class="sub">빨강·파랑 손글씨를 읽는 중이에요. 페이지당 수십 초 걸릴 수 있어요.</div></div>' +
+      '<button class="btn-secondary" onclick="stopAi()">중지하고 지금까지 결과 보기</button>';
     return;
   }
 
@@ -1007,8 +1335,22 @@ function renderUploadTab() {
     return;
   }
 
-  // review stage — plain confirm-before-save, no AI involved
-  var html = '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
+  // review stage — confirm before save (captions may come from the AI pass)
+  var summary = (aiSkipped || aiFailed || aiGateSkipped || aiPlanPages)
+    ? '<div class="ai-summary">' +
+        (aiPlanPages ? aiPlanPages + '페이지는 글자 위치로 문제를 나눠 AI 위치 호출을 줄였어요. ' : '') +
+        (aiGateSkipped ? '빨강·파랑 메모가 없는 ' + aiGateSkipped + '페이지는 AI를 쓰지 않고 건너뛰었어요' + (aiScanSkipped ? '(스캔 쪽 ' + aiScanSkipped + '쪽은 필기 그림층이 없어서 제외)' : '') + '. ' : '') +
+        (aiSkipped ? '빨강·파랑 손글씨가 없는 문제 ' + aiSkipped + '개는 제외했어요. ' : '') +
+        (aiFailed ? aiFailed + '개는 AI가 읽지 못했어요. 필요하면 직접 잘라서 추가해 주세요.' : '') +
+        (aiLastError ? '<div style="margin-top:6px;font-size:12px;color:var(--danger);word-break:break-all">원인: ' + escapeHtml(aiLastError) + '</div>' : '') +
+      '</div>'
+    : '';
+  if (pendingUploads.length === 0) {
+    el.innerHTML = (summary || '<div class="empty-state">' + ICONS.empty + '<p>담긴 개념이 없어요.</p></div>') +
+      '<div style="margin-top:14px"><button class="btn-primary" onclick="resetUploadFlow()">새로 업로드</button></div>';
+    return;
+  }
+  var html = summary + '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
     '<div class="save-bar"><button class="btn-primary" onclick="saveAllUploads()">전체 저장 (' +
     pendingUploads.filter(function (i) { return i.included; }).length + '개)</button></div>';
   el.innerHTML = html;
@@ -1017,7 +1359,7 @@ function renderUploadTab() {
 function renderThumbCard(item) {
   return '<div class="thumb-card">' +
     '<img src="' + item.url + '" onclick="openLightbox(\'' + item.url + '\')" alt="개념">' +
-    '<input type="text" placeholder="메모 (선택)" value="' + escapeHtml(item.caption) + '" oninput="onCaptionInput(\'' + item.localId + '\', this.value)">' +
+    '<textarea placeholder="메모 (선택)" oninput="onCaptionInput(\'' + item.localId + '\', this.value)">' + escapeHtml(item.caption) + '</textarea>' +
     '<div class="thumb-card-foot">' +
       '<label><input type="checkbox" ' + (item.included ? 'checked' : '') + ' onchange="onIncludedChange(\'' + item.localId + '\', this.checked)"> 포함</label>' +
       '<button class="btn-icon" onclick="removePendingUpload(\'' + item.localId + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
@@ -1262,6 +1604,9 @@ function resetUploadFlow() {
   uploadStage = 'idle';
   pendingUploads = [];
   savedCount = 0;
+  aiSkipped = 0;
+  aiFailed = 0;
+  aiLastError = '';
   renderUploadTab();
 }
 
@@ -1302,6 +1647,921 @@ async function saveAllUploads() {
   renderUploadTab();
 }
 
+/* ───────────────── AI auto-extract (sample capability) ─────────────────
+   The page asks Claude directly, on the viewer's own Claude plan. Only shown when
+   sample.limits() reports image support. Pass 1 finds each problem's box on a PDF
+   page; pass 2 reads only the red/blue handwriting on the cropped problems. */
+
+var AI_PAGE_SCALE = 2.5;   // render scale for AI pages — crops keep enough detail for handwriting
+var AI_BOX_PAD = 12;       // padding added around each problem box, in 0-1000 units
+
+async function checkAiAvailability() {
+  aiBackend = null;
+  try { sampleFn = await window.claude.use('sample'); } catch (e) { sampleFn = null; }
+  var lim = null;
+  if (sampleFn && sampleFn.limits) {
+    try { lim = await sampleFn.limits(); } catch (e) { lim = null; }
+  }
+  if (lim && lim.images) {
+    aiBackend = 'claude';
+    aiMaxImages = Math.max(1, lim.images.maxCount || 1);
+  } else {
+    try { mcpFn = await window.claude.use('mcp'); } catch (e) { mcpFn = null; }
+    if (mcpFn) aiBackend = 'gemini';
+  }
+  aiImageReady = !!aiBackend;
+  if (currentTab === 'upload' && uploadStage === 'idle') renderUploadTab();
+}
+var aiMaxImages = 1;
+
+function renderAiZones() {
+  if (!aiImageReady) return '';
+  return '<div class="dropzone-group">' +
+    '<label class="dropzone ai-zone">' + ICONS.pdf +
+      '<span><span class="ai-badge">AI</span> PDF 자동 추출</span>' +
+      '<span class="ai-sub">문제별로 자르고 빨강·파랑 손글씨를 개념으로 정리해요</span>' +
+      '<input type="file" accept="application/pdf" onchange="onAiPdfPicked(this.files[0])">' +
+    '</label>' +
+    '<label class="dropzone ai-zone">' + ICONS.photos +
+      '<span><span class="ai-badge">AI</span> 사진/스크린샷 자동 정리</span>' +
+      '<span class="ai-sub">한 장에 문제 하나씩 잘린 이미지에서 손글씨를 읽어요</span>' +
+      '<input type="file" accept="image/*" multiple onchange="onAiImagesPicked(this.files)">' +
+    '</label>' +
+  '</div>';
+}
+
+var AI_READ_RULES =
+  '- 검정 잉크(문제 풀이 과정, 채점 표시, 계산)는 완전히 무시하세요.\n' +
+  '- 빨간색 또는 파란색 잉크로 쓴 손글씨만 읽으세요. 이것이 수험생이 이 문제에서 새로 얻은 개념/통찰입니다.\n' +
+  '- 읽은 내용을 핵심만 담은 짧은 한 줄 개념(한 문장, 가능하면 40자 안팎)으로 정리하세요. 여러 줄이나 목록으로 쓰지 마세요.\n' +
+  '- 약어·축약 표현은 회계·재무·세무·경제 지식으로 정확한 용어로 풀어 쓰되, 설명을 덧붙여 길게 늘이지 마세요.\n' +
+  '- 수험생이 쓰지 않은 새 주장·해석을 추가하지 말고, 의미를 바꾸지 마세요.\n' +
+  '- 빨강/파랑 잉크가 전혀 없으면 coloredInk를 false, text를 빈 문자열로 두세요.\n';
+
+function aiSubjectName() {
+  var subj = SUBJECTS.find(function (x) { return x.id === uploadSubject; });
+  return subj ? subj.name : '';
+}
+
+function aiPagePrompt() {
+  return '이미지는 한국 CPA 수험생이 푼 ' + aiSubjectName() + ' 문제집 PDF의 한 페이지입니다.\n' +
+    '굵은 글씨로 인쇄된 문제 번호를 기준으로 각 문제의 영역을 찾으세요. 한 문제의 영역은 그 문제 번호가 시작하는 곳부터 ' +
+    '다음 문제 번호 직전(또는 페이지 끝)까지이며, 그 문제에 딸린 표·보기·여백의 손글씨를 모두 포함해야 합니다. ' +
+    '단이 나뉜 페이지면 단별로 따로 잡으세요.\n' +
+    'box_2d 는 [ymin, xmin, ymax, xmax] 순서이고, 이미지 전체를 0~1000 으로 정규화한 정수입니다 (왼쪽 위가 [0,0]).\n' +
+    '다른 말 없이 JSON만 답하세요: {"problems":[{"number":"12","box_2d":[ymin,xmin,ymax,xmax]}]}\n' +
+    '문제가 하나도 없으면 {"problems":[]}.';
+}
+
+function aiCropPrompt(n) {
+  return '이미지 ' + n + '장은 한국 CPA 수험생이 푼 ' + aiSubjectName() + ' 문제를 하나씩 잘라낸 것입니다.\n' +
+    '각 이미지에 대해:\n' + AI_READ_RULES +
+    '다른 말 없이 이미지 순서대로 ' + n + '개 원소를 가진 JSON 배열만 답하세요: [{"coloredInk":true,"text":"짧은 한 줄 개념"}]';
+}
+
+function canvasToBlob(canvas, quality) {
+  return new Promise(function (resolve) { canvas.toBlob(resolve, 'image/jpeg', quality || 0.88); });
+}
+
+async function renderPdfPageCanvas(doc, n, scale) {
+  var page = await doc.getPage(n);
+  var viewport = page.getViewport({ scale: scale });
+  var canvas = document.createElement('canvas');
+  canvas.width = Math.round(viewport.width);
+  canvas.height = Math.round(viewport.height);
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+  return canvas;
+}
+
+// Local colour gate. Counts red/blue pen pixels (HSV) on a half-size copy of the page, after removing printed colour:
+//  - connected pieces that sit (≥85%) inside text-layer boxes are printed text (e.g. blue problem numbers),
+//  - solid blocks, hollow frames and thin straight rules are printed shapes (tabs, boxes, bullets).
+// Pages with almost no pen ink left are skipped without any AI call (recall first: the threshold is low).
+var GATE_MIN_PX = 40;
+
+function penInk(canvas, textBoxes, layers) {
+  var w = Math.max(1, Math.round(canvas.width / 2)), h = Math.max(1, Math.round(canvas.height / 2));
+  var c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  var ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(canvas, 0, 0, w, h);
+  var d = ctx.getImageData(0, 0, w, h).data;
+  var mask = new Uint8Array(w * h), list = [], i;
+  // when the page carries separate overlay images (tablet export puts handwriting there), only look inside them
+  var zones = (layers || []).map(function (z) { return [Math.floor((z[0] - 0.01) * w), Math.floor((z[1] - 0.01) * h), Math.ceil((z[2] + 0.01) * w), Math.ceil((z[3] + 0.01) * h)]; });
+  for (i = 0; i < w * h; i++) {
+    if (zones.length) {
+      var zx = i % w, zy = (i / w) | 0, inZone = false;
+      for (var zi = 0; zi < zones.length; zi++) { var zz = zones[zi]; if (zx >= zz[0] && zx <= zz[2] && zy >= zz[1] && zy <= zz[3]) { inZone = true; break; } }
+      if (!inZone) continue;
+    }
+    if (isPenPx(d, i * 4)) { mask[i] = 1; list.push(i); }
+  }
+  if (layers && !layers.length) return { w: w, h: h, xs: [], ys: [], n: 0 }; // bare scan: printed colour lives in the image, no overlay = no handwriting
+  var boxes = (textBoxes || []).map(function (b) { return [b[0] * w, b[1] * h, b[2] * w, b[3] * h]; });
+  var inText = function (x, y) {
+    for (var k = 0; k < boxes.length; k++) { var b = boxes[k]; if (x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]) return true; }
+    return false;
+  };
+  var xs = [], ys = [];
+  for (var li = 0; li < list.length; li++) {
+    var start = list[li];
+    if (mask[start] !== 1) continue;
+    var stack = [start], comp = [];
+    mask[start] = 2;
+    while (stack.length) {
+      var cur = stack.pop(); comp.push(cur);
+      var cx = cur % w, cy = (cur / w) | 0;
+      for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
+        var nx = cx + dx, ny = cy + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        var ni = ny * w + nx;
+        if (mask[ni] === 1) { mask[ni] = 2; stack.push(ni); }
+      }
+    }
+    var x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, ins = 0, j;
+    for (j = 0; j < comp.length; j++) {
+      var px = comp[j] % w, py = (comp[j] / w) | 0;
+      if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py;
+      if (boxes.length && inText(px, py)) ins++;
+    }
+    var bw = x1 - x0 + 1, bh = y1 - y0 + 1, n = comp.length;
+    var printed = false;
+    if (n >= 6) {
+      if (ins / n >= 0.85) printed = true;                                            // printed coloured text
+      else if (Math.min(bw, bh) >= 6 && n / (bw * bh) >= 0.6) printed = true;         // solid block
+      else if (Math.min(bw, bh) <= 4 && Math.max(bw, bh) / Math.min(bw, bh) >= 12) printed = true; // straight rule
+      else if (bw >= 20 && bh >= 20) {                                                 // hollow frame
+        var edge = 0;
+        for (j = 0; j < comp.length; j++) {
+          var ex = comp[j] % w, ey = (comp[j] / w) | 0;
+          if (ex - x0 <= 3 || x1 - ex <= 3 || ey - y0 <= 3 || y1 - ey <= 3) edge++;
+        }
+        if (edge / n >= 0.85) printed = true;
+      }
+    }
+    if (printed) continue;
+    for (j = 0; j < comp.length; j++) { xs.push(comp[j] % w); ys.push((comp[j] / w) | 0); }
+  }
+  return { w: w, h: h, xs: xs, ys: ys, n: xs.length };
+}
+
+// Overlay images on the page (not the page-sized background), as page fractions. Tablet note apps
+// export handwriting as one image laid over the page (digital or scanned); null = no usable overlay info.
+async function pdfOverlayImages(page) {
+  var vp = page.getViewport({ scale: 1 });
+  var ol = await page.getOperatorList(), O = pdfjsLib.OPS, U = pdfjsLib.Util;
+  var ctm = vp.transform.slice(), stack = [], boxes = [];
+  var imgOps = [O.paintImageXObject, O.paintInlineImageXObject, O.paintImageMaskXObject, O.paintSolidColorImageMask, O.paintJpegXObject];
+  for (var i = 0; i < ol.fnArray.length; i++) {
+    var fn = ol.fnArray[i];
+    if (fn === O.save) stack.push(ctm.slice());
+    else if (fn === O.restore) { if (stack.length) ctm = stack.pop(); }
+    else if (fn === O.transform) ctm = U.transform(ctm, ol.argsArray[i]);
+    else if (imgOps.indexOf(fn) >= 0) {
+      var pts = [[0, 0], [1, 0], [0, 1], [1, 1]].map(function (pt) { return U.applyTransform(pt, ctm); });
+      var xs = pts.map(function (q) { return q[0]; }), ys = pts.map(function (q) { return q[1]; });
+      boxes.push([Math.max(0, Math.min.apply(null, xs) / vp.width), Math.max(0, Math.min.apply(null, ys) / vp.height),
+                  Math.min(1, Math.max.apply(null, xs) / vp.width), Math.min(1, Math.max.apply(null, ys) / vp.height)]);
+    }
+  }
+  var area = function (b) { return Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]); };
+  var big = boxes.filter(function (b) { return area(b) >= 0.7; });
+  var overlays = boxes.filter(function (b) { return area(b) < 0.7 && area(b) >= 0.002; });
+  // two page-sized images: could be background + a full-page ink layer, so no overlay shortcut
+  if (big.length > 1) return null;
+  if (!overlays.length) return big.length === 1 ? [] : null; // [] = bare page image, no overlay
+  return overlays;
+}
+
+function pageHasColoredInk(ink) { return ink.n >= GATE_MIN_PX; }
+
+// Text-layer boxes as page fractions, used to recognise printed text.
+async function pdfTextBoxes(page) {
+  var vp = page.getViewport({ scale: 1 });
+  var content = await page.getTextContent();
+  var out = [];
+  content.items.forEach(function (it) {
+    if (!it.str || !it.str.trim()) return;
+    var tr = pdfjsLib.Util.transform(vp.transform, it.transform);
+    var fs = Math.hypot(tr[2], tr[3]) || 10;
+    out.push([(tr[4] - 1) / vp.width, (tr[5] - fs - 1) / vp.height, (tr[4] + (it.width || 0) + 1) / vp.width, (tr[5] + fs * 0.25 + 1) / vp.height]);
+  });
+  return out;
+}
+
+// ── Phase 2: split a digital PDF page into problems from its text layer (no AI call) ──
+function isPenPx(d, i) {
+  var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+  var mx = Math.max(r, g, b), df = mx - Math.min(r, g, b);
+  if (mx < 0.25 || df / mx < 0.35) return false;
+  var hue;
+  if (mx === r) hue = ((g - b) / df + 6) % 6; else if (mx === g) hue = (b - r) / df + 2; else hue = (r - g) / df + 4;
+  hue *= 60;
+  return hue < 20 || hue > 335 || (hue > 190 && hue < 260);
+}
+
+// Fade everything that is not red/blue pen (black solving ink, printed text) so the AI only sees the memo.
+// Uses a looser saturation than the gate so anti-aliased pen edges survive.
+function inkFocus(canvas) {
+  var ctx = canvas.getContext('2d', { willReadFrequently: true });
+  var img = ctx.getImageData(0, 0, canvas.width, canvas.height), d = img.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+    var mx = Math.max(r, g, b), df = mx - Math.min(r, g, b), keep = false;
+    if (mx >= 0.25 && df / mx >= 0.15 && df > 0.05) {
+      var hue;
+      if (mx === r) hue = ((g - b) / df + 6) % 6; else if (mx === g) hue = (b - r) / df + 2; else hue = (r - g) / df + 4;
+      hue *= 60;
+      keep = hue < 25 || hue > 330 || (hue > 185 && hue < 265);
+    }
+    if (!keep) { d[i] = 255 - (255 - d[i]) * 0.2; d[i + 1] = 255 - (255 - d[i + 1]) * 0.2; d[i + 2] = 255 - (255 - d[i + 2]) * 0.2; }
+  }
+  ctx.putImageData(img, 0, 0);
+  return canvas;
+}
+
+// Memo regions as page fractions {x0,y0,x1,y1}: pen pixels → 6px cells → merge nearby cells.
+function memoRegions(ink) {
+  var CELL = 6, GROW = 2;
+  var w = ink.w, h = ink.h;
+  var cw = Math.ceil(w / CELL), ch = Math.ceil(h / CELL), cnt = new Uint16Array(cw * ch);
+  for (var pi = 0; pi < ink.n; pi++) cnt[((ink.ys[pi] / CELL) | 0) * cw + ((ink.xs[pi] / CELL) | 0)]++;
+  var on = new Uint8Array(cw * ch), dil = new Uint8Array(cw * ch), i, cx, cy;
+  for (i = 0; i < on.length; i++) on[i] = cnt[i] >= 2 ? 1 : 0;
+  for (cy = 0; cy < ch; cy++) for (cx = 0; cx < cw; cx++) {
+    if (!on[cy * cw + cx]) continue;
+    for (var dy = -GROW; dy <= GROW; dy++) for (var dx = -GROW; dx <= GROW; dx++) {
+      var ny = cy + dy, nx = cx + dx;
+      if (ny >= 0 && ny < ch && nx >= 0 && nx < cw) dil[ny * cw + nx] = 1;
+    }
+  }
+  var lab = new Int32Array(cw * ch), regions = [], k = 0;
+  for (i = 0; i < dil.length; i++) {
+    if (!dil[i] || lab[i]) continue;
+    k++;
+    var stack = [i], box = { x0: 1e9, y0: 1e9, x1: -1, y1: -1, mass: 0 };
+    lab[i] = k;
+    while (stack.length) {
+      var cur = stack.pop(), qx = cur % cw, qy = (cur / cw) | 0;
+      if (on[cur]) { box.mass += cnt[cur]; box.x0 = Math.min(box.x0, qx); box.y0 = Math.min(box.y0, qy); box.x1 = Math.max(box.x1, qx + 1); box.y1 = Math.max(box.y1, qy + 1); }
+      for (var ddy = -1; ddy <= 1; ddy++) for (var ddx = -1; ddx <= 1; ddx++) {
+        var my = qy + ddy, mx = qx + ddx;
+        if (my < 0 || my >= ch || mx < 0 || mx >= cw) continue;
+        var ni = my * cw + mx;
+        if (dil[ni] && !lab[ni]) { lab[ni] = k; stack.push(ni); }
+      }
+    }
+    if (box.x1 > 0 && box.mass >= 25) regions.push({ x0: box.x0 * CELL / w, y0: box.y0 * CELL / h, x1: Math.min(1, box.x1 * CELL / w), y1: Math.min(1, box.y1 * CELL / h) });
+  }
+  return regions;
+}
+
+// Problem ranges per column from the PDF text layer. Returns null when the page has no usable text layer.
+async function pdfProblemRanges(page) {
+  var vp = page.getViewport({ scale: 1 }), W = vp.width, H = vp.height;
+  var content = await page.getTextContent();
+  var items = [];
+  content.items.forEach(function (it) {
+    if (!it.str || !it.str.trim()) return;
+    var tr = pdfjsLib.Util.transform(vp.transform, it.transform);
+    var fs = Math.hypot(tr[2], tr[3]) || 10;
+    items.push({ s: it.str.trim(), x0: tr[4], x1: tr[4] + (it.width || 0), top: tr[5] - fs, bot: tr[5] + fs * 0.25, fs: fs });
+  });
+  if (items.length < 8) return null;
+  // column split: widest run of x-bins near the centre that almost no text crosses
+  var BINS = 100, cover = new Array(BINS).fill(0);
+  items.forEach(function (it) {
+    for (var b = Math.max(0, Math.floor(it.x0 / W * BINS)); b <= Math.min(BINS - 1, Math.floor(it.x1 / W * BINS)); b++) cover[b]++;
+  });
+  var limit = Math.max(2, items.length * 0.01), bestLen = 0, bestMid = -1, runStart = -1;
+  for (var b = 30; b <= 70; b++) {
+    if (cover[b] <= limit) { if (runStart < 0) runStart = b; var len = b - runStart + 1; if (len > bestLen) { bestLen = len; bestMid = (runStart + b + 1) / 2; } }
+    else runStart = -1;
+  }
+  var split = bestLen >= 2 ? bestMid / BINS * W : W + 1;
+  var cols = split <= W ? [[0, split], [split, W]] : [[0, W]];
+  var out = [];
+  var fsAll = items.map(function (it) { return it.fs; }).sort(function (a, b2) { return a - b2; }), medFs = fsAll[fsAll.length >> 1];
+  cols.forEach(function (cr, ci) {
+    var ci_items = items.filter(function (it) { var m = (it.x0 + it.x1) / 2; return m >= cr[0] && m < cr[1]; });
+    if (!ci_items.length) return;
+    var left = Math.min.apply(null, ci_items.filter(function (it) { return it.s.length >= 3; }).map(function (it) { return it.x0; }).concat([1e9]));
+    var colX0 = Math.min.apply(null, ci_items.map(function (it) { return it.x0; })), colX1 = Math.max.apply(null, ci_items.map(function (it) { return it.x1; }));
+    var sorted = ci_items.slice().sort(function (a, b2) { return a.top - b2.top || a.x0 - b2.x0; });
+    var lines = [];
+    sorted.forEach(function (it) {
+      var ln = lines[lines.length - 1];
+      if (ln && Math.abs(it.top - ln.top) < it.fs * 0.6) ln.items.push(it); else lines.push({ top: it.top, items: [it] });
+    });
+    var starts = [];
+    lines.forEach(function (ln) {
+      ln.items.sort(function (a, b2) { return a.x0 - b2.x0; });
+      var f = ln.items[0];
+      var numOnly = /^\d{1,2}$/.test(f.s) && f.fs >= medFs * 1.25 && ln.items.length <= 2; // books with big bare numbers (12, 13…)
+      if ((/^\d{1,2}\.(?!\d)/.test(f.s) || numOnly) && f.x0 <= left + W * 0.03) starts.push(ln.top);
+    });
+    var cx0 = Math.max(0, colX0 - 6) / W, cx1 = Math.min(W, colX1 + 6) / W;
+    var colFrom = cr[0] / W, colTo = cr[1] / W;
+    var bounds = [0].concat(starts.map(function (t) { return Math.max(0, t - 6); })).concat([H]);
+    bounds.forEach(function (y0, bi) {
+      if (bi === bounds.length - 1) return;
+      var y1 = bounds[bi + 1];
+      var inRange = ci_items.filter(function (it) { return it.top >= y0 - 1 && it.top < y1; });
+      out.push({
+        problem: bi > 0, colFrom: colFrom, colTo: colTo, x0: cx0, x1: cx1, y0: y0 / H, y1: y1 / H,
+        textBottom: inRange.length ? Math.max.apply(null, inRange.filter(function (it) { return it.top < H * 0.92; }).map(function (it) { return it.bot; }).concat([y0])) / H : y0 / H
+      });
+    });
+  });
+  return out.some(function (r) { return r.problem; }) ? out : null;
+}
+
+// Plan one page: memo regions assigned to text-layer problems. fallback=true when anything cannot be placed.
+async function aiPlanPage(page, pageCanvas, ink) {
+  var ranges = await pdfProblemRanges(page);
+  if (!ranges) return { fallback: true, problems: [] };
+  var memos = memoRegions(ink);
+  if (!memos.length) return { fallback: true, problems: [] };
+  var byRange = new Map();
+  for (var i = 0; i < memos.length; i++) {
+    var m = memos[i], cx = (m.x0 + m.x1) / 2, cy = (m.y0 + m.y1) / 2, hit = null;
+    for (var j = 0; j < ranges.length; j++) {
+      var r = ranges[j];
+      if (cx >= r.colFrom && cx < r.colTo && cy >= r.y0 && cy < r.y1) { hit = r; break; }
+    }
+    if (!hit || !hit.problem) return { fallback: true, problems: [] };
+    if (!byRange.has(hit)) byRange.set(hit, []);
+    byRange.get(hit).push(m);
+  }
+  var problems = [];
+  byRange.forEach(function (ms, r) {
+    var u = { x0: 1, y0: 1, x1: 0, y1: 0 };
+    ms.forEach(function (m) { u.x0 = Math.min(u.x0, m.x0); u.y0 = Math.min(u.y0, m.y0); u.x1 = Math.max(u.x1, m.x1); u.y1 = Math.max(u.y1, m.y1); });
+    var bottom = Math.min(1, Math.max(r.textBottom, u.y1) + 0.01);
+    problems.push({
+      top: r.y0,
+      card: [r.x0 * 1000, r.y0 * 1000, r.x1 * 1000, bottom * 1000],
+      read: [u.x0 * 1000, u.y0 * 1000, u.x1 * 1000, u.y1 * 1000]
+    });
+  });
+  problems.sort(function (a, b) { return a.top - b.top; });
+  return { fallback: false, problems: problems };
+}
+
+function cropCanvas(src, box) {
+  var clamp = function (v) { return Math.min(1000, Math.max(0, v)); };
+  var x0 = clamp(Math.min(box[0], box[2]) - AI_BOX_PAD), y0 = clamp(Math.min(box[1], box[3]) - AI_BOX_PAD);
+  var x1 = clamp(Math.max(box[0], box[2]) + AI_BOX_PAD), y1 = clamp(Math.max(box[1], box[3]) + AI_BOX_PAD);
+  var px = Math.round(x0 / 1000 * src.width), py = Math.round(y0 / 1000 * src.height);
+  var pw = Math.max(1, Math.round((x1 - x0) / 1000 * src.width)), ph = Math.max(1, Math.round((y1 - y0) / 1000 * src.height));
+  var c = document.createElement('canvas');
+  c.width = pw; c.height = ph;
+  c.getContext('2d').drawImage(src, px, py, pw, ph, 0, 0, pw, ph);
+  return c;
+}
+
+// box_2d comes as [ymin, xmin, ymax, xmax]; the crop code wants [x0, y0, x1, y1]
+function problemBox(p) {
+  var b = p && p.box_2d;
+  if (!Array.isArray(b) || b.length !== 4 || !b.every(function (v) { return typeof v === 'number' && isFinite(v); })) return null;
+  if (Math.abs(b[2] - b[0]) < 20 || Math.abs(b[3] - b[1]) < 20) return null;
+  return [b[1], b[0], b[3], b[2]];
+}
+
+function blobToBase64(blob) {
+  return new Promise(function (resolve, reject) {
+    var r = new FileReader();
+    r.onload = function () { resolve(String(r.result).split(',')[1] || ''); };
+    r.onerror = function () { reject(r.error); };
+    r.readAsDataURL(blob);
+  });
+}
+
+// Gemini sometimes wraps arrays/objects differently than asked; accept the common shapes.
+function asProblemList(found) {
+  if (Array.isArray(found)) return found;
+  if (!found || typeof found !== 'object') return [];
+  var k = ['problems', 'questions', 'items', 'results', 'boxes'];
+  for (var i = 0; i < k.length; i++) if (Array.isArray(found[k[i]])) return found[k[i]];
+  var keys = Object.keys(found);
+  for (var j = 0; j < keys.length; j++) if (Array.isArray(found[keys[j]])) return found[keys[j]];
+  return [];
+}
+function asReadList(res, n) {
+  if (Array.isArray(res)) return res;
+  if (!res || typeof res !== 'object') return null;
+  var list = asProblemList(res);
+  if (list.length) return list;
+  return n === 1 && ('text' in res || 'coloredInk' in res) ? [res] : null;
+}
+
+// One AI call that reads images and returns parsed JSON, whichever backend is active.
+// Gemini rate limits (429) and brief overloads (503) come back as tool_error text; wait and retry a few times
+// instead of dropping the page. Daily-quota errors fail again quickly and then surface as usual.
+async function aiAsk(prompt, blobs) {
+  for (var attempt = 0; ; attempt++) {
+    try {
+      return await aiAskOnce(prompt, blobs);
+    } catch (e) {
+      var msg = String((e && e.message) || '');
+      var transient = e && e.code === 'tool_error' && /429|RESOURCE_EXHAUSTED|rate.?limit|quota|503|UNAVAILABLE|overload/i.test(msg);
+      if (!transient || attempt >= 3 || !aiCtl || aiCtl.signal.aborted) throw e;
+      var m = msg.match(/retryDelay\D{0,6}(\d+(?:\.\d+)?)\s*s/i) || msg.match(/retry in\s+(\d+(?:\.\d+)?)\s*s/i);
+      var wait = Math.min(65, Math.max(5, m ? Math.ceil(parseFloat(m[1])) + 1 : 15 * (attempt + 1)));
+      var before = aiProgress;
+      for (var left = wait; left > 0; left--) {
+        if (aiCtl.signal.aborted) throw { code: 'cancelled', message: 'cancelled' };
+        aiProgress = 'Gemini 한도 때문에 ' + left + '초 기다리는 중 (' + (attempt + 1) + '/3)';
+        renderUploadTab();
+        await new Promise(function (r) { setTimeout(r, 1000); });
+      }
+      aiProgress = before;
+    }
+  }
+}
+
+async function aiAskOnce(prompt, blobs) {
+  if (aiBackend === 'claude') {
+    return sampleFn.json(prompt, { images: blobs.length === 1 ? blobs[0] : blobs, signal: aiCtl.signal });
+  }
+  var images = [];
+  for (var i = 0; i < blobs.length; i++) images.push(await blobToBase64(blobs[i]));
+  var res = null, lastErr = null;
+  var order = GEMINI_SERVERS.slice();
+  order.sort(function (a, b) { return (a === GEMINI_SERVER ? 0 : 1) - (b === GEMINI_SERVER ? 0 : 1); });
+  for (var si = 0; si < order.length; si++) {
+    try {
+      res = await mcpFn.callTool(order[si], 'gemini_vision', { prompt: prompt, images: images, mimeType: 'image/jpeg' }, { signal: aiCtl.signal, cache: false });
+      GEMINI_SERVER = order[si];
+      lastErr = null;
+      break;
+    } catch (e) {
+      lastErr = e;
+      var c = e && e.code;
+      // only a missing/unselected connector justifies trying the other name
+      if (c !== 'server_not_connected' && c !== 'not_in_manifest' && c !== 'server_not_found' && c !== 'selection_required') break;
+    }
+  }
+  if (lastErr) throw lastErr;
+  var payload = res && res.payload;
+  if (typeof payload === 'string') {
+    try { payload = JSON.parse(payload); }
+    catch (e) {
+      var m = payload.match(/[\[{][\s\S]*[\]}]/);
+      try { payload = m ? JSON.parse(m[0]) : null; } catch (e2) { payload = null; }
+    }
+  }
+  if (payload == null || typeof payload !== 'object') throw { code: 'invalid_json', message: 'AI 응답을 읽지 못했어요' };
+  return payload;
+}
+
+// Split blobs into calls that stay under the per-call input limit (1 MiB of JSON for the connector).
+function aiChunks(blobs) {
+  var maxCount = aiBackend === 'claude' ? aiMaxImages : 10;
+  var maxBytes = aiBackend === 'claude' ? Infinity : 650000; // base64 grows bytes by 4/3
+  var chunks = [], cur = [], size = 0;
+  blobs.forEach(function (b) {
+    if (cur.length && (cur.length >= maxCount || size + b.size > maxBytes)) { chunks.push(cur); cur = []; size = 0; }
+    cur.push(b); size += b.size;
+  });
+  if (cur.length) chunks.push(cur);
+  return chunks;
+}
+
+// Read the red/blue handwriting on a list of image blobs, in chunks the view allows.
+// Returns one {coloredInk, text} (or null when that chunk failed) per blob.
+async function aiReadCrops(blobs, progressLabel) {
+  var out = [], done = 0;
+  var chunks = aiChunks(blobs);
+  for (var c = 0; c < chunks.length; c++) {
+    var chunk = chunks[c];
+    aiProgress = progressLabel + (chunks.length > 1 ? ' (' + done + '/' + blobs.length + ')' : '');
+    renderUploadTab();
+    var res = null;
+    try {
+      res = await aiAsk(aiCropPrompt(chunk.length), chunk);
+    } catch (e) {
+      if (handleAiError(e)) throw e;
+    }
+    var list = asReadList(res, chunk.length);
+    if (!list && res !== null) aiLastError = 'AI 응답 형식을 알 수 없어요: ' + JSON.stringify(res).slice(0, 200);
+    for (var j = 0; j < chunk.length; j++) {
+      var r = list ? list[j] : null;
+      out.push(r && typeof r === 'object' ? { coloredInk: r.coloredInk !== false, text: String(r.text || r.concept || '').trim() } : null);
+    }
+    done += chunk.length;
+  }
+  return out;
+}
+
+// Returns true when the whole run should stop (cancelled, or the feature is unusable/limited).
+function handleAiError(e) {
+  var code = e && e.code;
+  if (code !== 'cancelled') aiLastError = (code ? code + ': ' : '') + String((e && e.message) || e || '').slice(0, 300);
+  if (code === 'cancelled') return true;
+  if (code === 'not_granted' || code === 'sampling_disabled' || code === 'not_declared' ||
+      code === 'capability_disabled' || code === 'capability_removed' || code === 'images_unavailable') {
+    aiImageReady = false;
+    showToast('AI 사용이 허용되지 않아 자동 추출을 멈췄어요');
+    return true;
+  }
+  if (code === 'server_not_connected' || code === 'selection_required' || code === 'server_not_found') {
+    showToast('Claude 설정 → 커넥터에 "' + GEMINI_SERVER + '" 커넥터를 먼저 추가해 주세요');
+    return true;
+  }
+  if (code === 'needs_reauth') { showToast('"' + GEMINI_SERVER + '" 커넥터를 다시 연결해 주세요'); return true; }
+  if (code === 'not_in_manifest' || code === 'blocked_by_policy' || code === 'approval_required') {
+    showToast('이 커넥터 사용이 허용되지 않았어요'); return true;
+  }
+  if (code === 'tool_error') { showToast('Gemini 오류: ' + String(e.message || '').slice(0, 80)); return false; }
+  if (code === 'rate_limited') { showToast('Claude 사용량 한도에 걸렸어요. 잠시 뒤 다시 해 주세요'); return true; }
+  if (code === 'session_expired') { showToast('다시 로그인해 주세요'); return true; }
+  return false; // per-item failure (invalid_json, refused, upstream_error...) — count it and continue
+}
+
+function pushPending(blob, caption, included) {
+  pendingUploads.push({
+    localId: 'p' + (uploadSeq++),
+    file: blob,
+    url: URL.createObjectURL(blob),
+    caption: caption,
+    included: included,
+  });
+}
+
+function startAiRun() {
+  aiCtl = new AbortController();
+  aiSkipped = 0;
+  aiGateSkipped = 0;
+  aiPlanPages = 0;
+  aiScanSkipped = 0;
+  aiFailed = 0;
+  aiLastError = '';
+  uploadStage = 'ai';
+}
+
+function finishAiRun() {
+  aiCtl = null;
+  uploadStage = 'review';
+  renderUploadTab();
+}
+
+function stopAi() {
+  if (aiCtl) aiCtl.abort();
+}
+
+async function onAiPdfPicked(file) {
+  if (!file || !aiBackend) return;
+  var doc;
+  try {
+    doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  } catch (e) {
+    showToast('PDF를 여는 중 문제가 생겼어요');
+    return;
+  }
+  startAiRun();
+  var planned = [];   // text-layer pages: {card, read} blobs, read together at the end
+  try {
+    for (var n = 1; n <= doc.numPages; n++) {
+      if (aiCtl.signal.aborted) break;
+      aiProgress = n + ' / ' + doc.numPages + '페이지에서 문제 찾는 중';
+      renderUploadTab();
+      var pageCanvas = await renderPdfPageCanvas(doc, n, AI_PAGE_SCALE);
+      var textPage = await doc.getPage(n), boxes = [];
+      try { boxes = await pdfTextBoxes(textPage); } catch (e) { boxes = []; }
+      var layers = null;
+      try { layers = await pdfOverlayImages(textPage); } catch (e) { layers = null; }
+      var bareScan = false;
+      if (layers && !layers.length) { if (boxes.length) layers = null; else bareScan = true; } // pages with a text layer keep the colour rules
+      var ink = penInk(pageCanvas, boxes, layers);
+      if (!pageHasColoredInk(ink)) { aiGateSkipped++; if (bareScan) aiScanSkipped++; continue; }
+      var plan = null;
+      try { plan = await aiPlanPage(textPage, pageCanvas, ink); } catch (e) { plan = null; }
+      if (plan && !plan.fallback && plan.problems.length) {
+        aiPlanPages++;
+        for (var pi = 0; pi < plan.problems.length; pi++) {
+          planned.push({
+            card: await canvasToBlob(cropCanvas(pageCanvas, plan.problems[pi].card), 0.9),
+            read: await canvasToBlob(inkFocus(cropCanvas(pageCanvas, plan.problems[pi].read)), 0.9)
+          });
+        }
+        continue;
+      }
+      var pageBlob = await canvasToBlob(pageCanvas, 0.85);
+      // the connector takes at most ~1 MiB of JSON per call, so shrink big pages
+      for (var q = 0.7; aiBackend === 'gemini' && pageBlob.size > 650000 && q >= 0.4; q -= 0.15) pageBlob = await canvasToBlob(pageCanvas, q);
+      var found = null;
+      try {
+        found = await aiAsk(aiPagePrompt(), [pageBlob]);
+      } catch (e) {
+        if (handleAiError(e)) break;
+        aiFailed++;
+        continue;
+      }
+      var rawProblems = asProblemList(found);
+      var problems = rawProblems.map(function (p) {
+        var box = problemBox(p);
+        return box ? { box: box } : null;
+      }).filter(Boolean);
+      if (rawProblems.length && !problems.length) { aiFailed++; aiLastError = '문제 위치(box_2d)를 읽지 못했어요: ' + JSON.stringify(rawProblems[0]).slice(0, 200); }
+      // the page-level ink guess is unreliable, so every found problem is read; the crop pass decides
+      var inked = problems;
+      if (!inked.length) continue;
+      inked.sort(function (a, b) { return Math.min(a.box[1], a.box[3]) - Math.min(b.box[1], b.box[3]); });
+      var crops = inked.map(function (p) { return cropCanvas(pageCanvas, p.box); });
+      var blobs = [];
+      for (var k = 0; k < crops.length; k++) blobs.push(await canvasToBlob(crops[k], 0.9));
+      var reads = await aiReadCrops(blobs, n + ' / ' + doc.numPages + '페이지 손글씨 읽는 중');
+      reads.forEach(function (r, i) {
+        if (!r) { aiFailed++; pushPending(blobs[i], '', true); return; }
+        if (!r.coloredInk || !r.text) { aiSkipped++; return; }
+        pushPending(blobs[i], r.text, true);
+      });
+    }
+    if (planned.length && !aiCtl.signal.aborted) {
+      var preads = await aiReadCrops(planned.map(function (p) { return p.read; }), '메모 ' + planned.length + '개 읽는 중');
+      preads.forEach(function (r, i) {
+        if (!r) { aiFailed++; pushPending(planned[i].card, '', true); return; }
+        if (!r.coloredInk || !r.text) { aiSkipped++; return; }
+        pushPending(planned[i].card, r.text, true);
+      });
+    }
+  } catch (e) {
+    // a stop-the-run error from aiReadCrops; keep what was collected
+  }
+  finishAiRun();
+}
+
+async function onAiImagesPicked(fileList) {
+  var files = Array.prototype.slice.call(fileList || []);
+  if (!files.length || !aiBackend) return;
+  startAiRun();
+  var reads = [];
+  try {
+    reads = await aiReadCrops(files, files.length + '장에서 손글씨 읽는 중');
+  } catch (e) {}
+  files.forEach(function (f, i) {
+    var r = reads[i];
+    if (r === undefined) { pushPending(f, '', true); return; } // stopped before this one was read
+    if (!r) { aiFailed++; pushPending(f, '', true); return; }
+    // keep ink-less screenshots visible but unchecked, since the viewer picked them on purpose
+    if (!r.coloredInk || !r.text) { aiSkipped++; pushPending(f, '', false); return; }
+    pushPending(f, r.text, true);
+  });
+  finishAiRun();
+}
+
+/* ───────────────── stats tab ───────────────── */
+
+function shiftDay(key, n) {
+  var p = key.split('-');
+  var d = new Date(+p[0], +p[1] - 1, +p[2] + n);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// flame grows and shifts from orange toward blue as the streak gets longer
+var FLAME_TIERS = [
+  { min: 0,  size: 64,  label: '불씨가 꺼졌어요',    c1: '#c7c7cc', c2: '#e5e5ea', core: '#f2f2f7', glow: 0 },
+  { min: 1,  size: 70,  label: '작은 불씨',          c1: '#fb923c', c2: '#fdba74', core: '#fef3c7', glow: 2 },
+  { min: 3,  size: 84,  label: '타오르는 중',        c1: '#f97316', c2: '#fbbf24', core: '#fef9c3', glow: 5 },
+  { min: 7,  size: 98,  label: '활활 타오르는 불꽃', c1: '#ea580c', c2: '#f59e0b', core: '#fef08a', glow: 9 },
+  { min: 14, size: 110, label: '맹렬한 불꽃',        c1: '#dc2626', c2: '#f97316', core: '#fde047', glow: 14 },
+  { min: 30, size: 122, label: '푸른 불꽃',          c1: '#2563eb', c2: '#06b6d4', core: '#e0f2fe', glow: 20 },
+];
+function flameTier(streak) {
+  var t = FLAME_TIERS[0];
+  FLAME_TIERS.forEach(function (x) { if (streak >= x.min) t = x; });
+  return t;
+}
+
+function flameSvg(tier) {
+  var h = Math.round(tier.size * 1.25);
+  var glow = tier.glow ? 'filter:drop-shadow(0 0 ' + tier.glow + 'px ' + tier.c1 + ');' : '';
+  return '<svg class="flame" viewBox="0 0 64 80" width="' + tier.size + '" height="' + h + '" style="' + glow + '" aria-hidden="true">' +
+    '<defs><linearGradient id="flameGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="' + tier.c1 + '"/><stop offset="1" stop-color="' + tier.c2 + '"/></linearGradient></defs>' +
+    '<path fill="url(#flameGrad)" d="M32 4C34 18 50 26 50 46C50 62 42 76 32 76C22 76 14 62 14 46C14 38 18 32 22 28C22 36 26 40 28 40C26 28 28 14 32 4Z"/>' +
+    '<path fill="' + tier.core + '" d="M32 38C33 46 40 50 40 58C40 66 36 72 32 72C28 72 24 66 24 58C24 50 30 46 32 38Z"/>' +
+  '</svg>';
+}
+
+function computeStreaks(daySet, today) {
+  var current = 0;
+  var cursor = daySet[today] ? today : shiftDay(today, -1);
+  while (daySet[cursor]) { current++; cursor = shiftDay(cursor, -1); }
+  var days = Object.keys(daySet).sort();
+  var longest = 0, run = 0, prev = null;
+  days.forEach(function (d) {
+    run = (prev && shiftDay(prev, 1) === d) ? run + 1 : 1;
+    if (run > longest) longest = run;
+    prev = d;
+  });
+  return { current: current, longest: longest };
+}
+
+async function renderStatsTab() {
+  var el = document.getElementById('content');
+  if (!db) {
+    el.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>데이터 저장 기능을 사용할 수 없어요.</p></div>';
+    return;
+  }
+  el.innerHTML = '<div class="loading">불러오는 중...</div>';
+  // each source loads on its own so one failing query can't blank the whole page (page size max is 1000)
+  var failed = [];
+  async function loadDocs(label, query) {
+    try {
+      var snap = await query.get();
+      return snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+    } catch (e) {
+      failed.push(label);
+      return [];
+    }
+  }
+  var loaded = await Promise.all([
+    loadDocs('학습 기록', db.collection('dailyStats').limit(1000)),
+    loadDocs('복습 로그', db.collection('reviewLog').orderBy('reviewedAt', 'desc').limit(1000)),
+    loadDocs('개념', db.collection('concepts').limit(1000)),
+  ]);
+  var dailyDocs = loaded[0], logDocs = loaded[1], concepts = loaded[2];
+  if (currentTab !== 'stats') return;
+
+  var now = new Date();
+  var today = ankiDayKey(now, SRS_CONFIG);
+
+  // a day counts as studied if dailyStats logged any review, or a concept's last review fell on it
+  var daySet = {};
+  var dayCounts = {};
+  dailyDocs.forEach(function (d) {
+    var n = Math.max(d.answered || 0, (d.newIntroduced || 0) + (d.reviewsDone || 0));
+    if (n > 0) { daySet[d.id] = true; dayCounts[d.id] = n; }
+  });
+  concepts.forEach(function (c) { if (c.lastReviewedAt) daySet[ankiDayKey(new Date(c.lastReviewedAt), SRS_CONFIG)] = true; });
+  var streaks = computeStreaks(daySet, today);
+  var tier = flameTier(streaks.current);
+  var note = streaks.current === 0 ? '오늘 복습하면 불꽃이 켜져요.'
+    : daySet[today] ? '오늘 복습 완료. 내일도 이어가요.'
+    : '오늘 복습하면 ' + (streaks.current + 1) + '일째가 돼요.';
+
+  var WD = ['일', '월', '화', '수', '목', '금', '토'];
+  function weekdayOf(key) { var p = key.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]).getDay(); }
+  var week = '';
+  for (var i = 6; i >= 0; i--) {
+    var k = shiftDay(today, -i);
+    var on = !!daySet[k];
+    week += '<div class="week-day' + (on ? ' on' : '') + (i === 0 ? ' today' : '') + '">' + WD[weekdayOf(k)] +
+      '<div class="week-dot">' + (on ? '<svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') + '</div></div>';
+  }
+
+  // recall rate per subject over the retained review log (좋음/쉬움 = recalled)
+  var subjectOf = {};
+  concepts.forEach(function (c) { subjectOf[c.id] = c.subjectId; });
+  var bySubject = {};
+  logDocs.forEach(function (r) {
+    var sid = subjectOf[r.conceptId];
+    if (!sid) return;
+    var b = bySubject[sid] || (bySubject[sid] = { total: 0, ok: 0 });
+    b.total++;
+    if (r.rating === 'good' || r.rating === 'easy') b.ok++;
+  });
+  var accRows = SUBJECTS.filter(function (s) { return bySubject[s.id]; }).map(function (s) {
+    var b = bySubject[s.id];
+    var pct = Math.round(b.ok / b.total * 100);
+    return '<div class="acc-row"><span class="acc-name">' + s.name + '</span>' +
+      '<div class="acc-track"><div class="acc-fill" style="width:' + pct + '%;background:' + subjectGradient(s.id) + '"></div></div>' +
+      '<span class="acc-val">' + pct + '% · ' + b.total + '회</span></div>';
+  }).join('');
+
+  // reviews due per day for the next 7 days; overdue and learning cards count toward today
+  var dueKeys = [0, 1, 2, 3, 4, 5, 6].map(function (i) { return shiftDay(today, i); });
+  var due = [0, 0, 0, 0, 0, 0, 0];
+  concepts.forEach(function (c) {
+    if (!c.nextReviewDate) return;
+    var dk = ankiDayKey(new Date(c.nextReviewDate), SRS_CONFIG);
+    if (dk < today) dk = today;
+    var idx = dueKeys.indexOf(dk);
+    if (idx >= 0) due[idx]++;
+  });
+  var maxDue = Math.max.apply(null, due.concat([1]));
+  var dueCols = due.map(function (n, i) {
+    var label = i === 0 ? '오늘' : i === 1 ? '내일' : WD[weekdayOf(dueKeys[i])];
+    return '<div class="due-col"><span class="due-n">' + n + '</span>' +
+      '<div class="due-bar' + (n === 0 ? ' zero' : '') + '" style="height:' + Math.round(n / maxDue * 86) + 'px"></div>' +
+      '<span class="due-d">' + label + '</span></div>';
+  }).join('');
+
+  // heatmap: last 16 weeks, one column per week starting Sunday
+  var todayWd = weekdayOf(today);
+  var heatStart = shiftDay(today, -(15 * 7 + todayWd));
+  var heatCells = '', heatTotal = 0;
+  for (var hk = heatStart; hk <= today; hk = shiftDay(hk, 1)) {
+    var hn = dayCounts[hk] || (daySet[hk] ? 1 : 0);
+    heatTotal += hn;
+    var lvl = hn === 0 ? 0 : hn < 5 ? 1 : hn < 15 ? 2 : hn < 30 ? 3 : 4;
+    var hp = hk.split('-');
+    heatCells += '<div class="heat-cell' + (lvl ? ' l' + lvl : '') + (hk === today ? ' today' : '') + '" title="' + (+hp[1]) + '월 ' + (+hp[2]) + '일 · ' + hn + '회"></div>';
+  }
+  var heatCard = '<div class="stat-card"><h2 class="stat-title">학습 달력 (최근 16주)</h2>' +
+    '<div class="heat-wrap" id="heatWrap"><div class="heat-grid">' + heatCells + '</div></div>' +
+    '<div class="heat-foot"><span>' + heatTotal + '회 복습</span><span class="heat-legend">적음 ' +
+    '<div class="heat-cell"></div><div class="heat-cell l1"></div><div class="heat-cell l2"></div><div class="heat-cell l3"></div><div class="heat-cell l4"></div> 많음</span></div></div>';
+
+  // study time: today, per-card average over days that recorded time, and the last 7 days
+  function fmtDuration(ms) {
+    var sec = Math.round(ms / 1000);
+    if (sec < 60) return sec + '초';
+    var min = Math.round(sec / 60);
+    return min < 60 ? min + '분' : Math.floor(min / 60) + '시간 ' + (min % 60) + '분';
+  }
+  var msByDay = {}, timedMs = 0, timedCards = 0;
+  dailyDocs.forEach(function (d) {
+    if (d.studyMs > 0) {
+      msByDay[d.id] = d.studyMs;
+      if (d.id >= shiftDay(today, -6)) { timedMs += d.studyMs; timedCards += d.answered || 0; }
+    }
+  });
+  var timeKeys = [6, 5, 4, 3, 2, 1, 0].map(function (i) { return shiftDay(today, -i); });
+  var maxMs = Math.max.apply(null, timeKeys.map(function (k) { return msByDay[k] || 0; }).concat([1]));
+  var timeCols = timeKeys.map(function (k, i) {
+    var ms = msByDay[k] || 0;
+    return '<div class="due-col"><span class="due-n">' + (ms ? Math.max(1, Math.round(ms / 60000)) : 0) + '</span>' +
+      '<div class="due-bar' + (ms ? '' : ' zero') + '" style="height:' + Math.round(ms / maxMs * 86) + 'px"></div>' +
+      '<span class="due-d">' + (i === 6 ? '오늘' : WD[weekdayOf(k)]) + '</span></div>';
+  }).join('');
+  var timeCard =
+    '<div class="mini-stats">' +
+      '<div class="mini-stat"><div class="v">' + (msByDay[today] ? fmtDuration(msByDay[today]) : '0분') + '</div><div class="l">오늘 학습 시간</div></div>' +
+      '<div class="mini-stat"><div class="v">' + (timedCards ? fmtDuration(timedMs / timedCards) : '-') + '</div><div class="l">카드당 평균 (최근 7일)</div></div>' +
+    '</div>' +
+    '<div class="stat-card"><h2 class="stat-title">하루 학습 시간 (분)</h2><div class="due-chart">' + timeCols + '</div>' +
+    (Object.keys(msByDay).length ? '' : '<div class="stat-empty" style="margin-top:10px">시간 기록은 이번 업데이트 이후 복습부터 쌓여요.</div>') + '</div>';
+
+  // maturity: how settled the concepts are (young = interval under 21 days)
+  var mat = { newC: 0, learning: 0, young: 0, mature: 0 };
+  concepts.forEach(function (c) {
+    var n = normalizeCard(c, SRS_CONFIG);
+    if (n.state === 'new') mat.newC++;
+    else if (n.state === 'learning' || n.state === 'relearning') mat.learning++;
+    else if (n.intervalDays < 21) mat.young++;
+    else mat.mature++;
+  });
+  var matDefs = [
+    { key: 'newC', label: '새 카드', color: '#3b82f6' },
+    { key: 'learning', label: '학습 중', color: '#f87171' },
+    { key: 'young', label: '어린 카드', color: '#fbbf24' },
+    { key: 'mature', label: '숙성 카드', color: '#22c55e' },
+  ];
+  var matCard = '<div class="stat-card"><h2 class="stat-title">개념 성숙도</h2>' +
+    (concepts.length
+      ? '<div class="mature-bar">' + matDefs.map(function (m) {
+          return mat[m.key] ? '<div class="mature-seg" style="width:' + (mat[m.key] / concepts.length * 100) + '%;background:' + m.color + '"></div>' : '';
+        }).join('') + '</div>' +
+        '<div class="mature-legend">' + matDefs.map(function (m) {
+          return '<span class="k"><i style="background:' + m.color + '"></i>' + m.label + '<b>' + mat[m.key] + '</b></span>';
+        }).join('') + '</div>'
+      : '<div class="stat-empty">개념을 추가하면 성숙도가 나타나요.</div>') +
+    '</div>';
+
+  // weak concepts: most lapses (pressed 다시 on a review card)
+  var weak = concepts.map(function (c) { return { c: c, lapses: c.lapses || 0 }; })
+    .filter(function (w) { return w.lapses > 0; })
+    .sort(function (a, b) { return b.lapses - a.lapses; })
+    .slice(0, 5);
+  var weakCard = '<div class="stat-card"><h2 class="stat-title">자주 틀리는 개념 TOP 5</h2>' +
+    (weak.length ? weak.map(function (w) {
+      var subj = SUBJECTS.find(function (x) { return x.id === w.c.subjectId; });
+      var url = w.c.imageId ? '/_blob/' + w.c.imageId : '';
+      return '<div class="weak-row">' +
+        (url ? '<img class="weak-thumb" src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')">' : '<div class="weak-thumb"></div>') +
+        '<div class="weak-body"><div class="weak-subj" style="color:' + (subj ? subj.c1 : 'var(--text-3)') + '">' + (subj ? subj.name : '') + '</div>' +
+        '<div class="weak-text">' + (w.c.text ? escapeHtml(w.c.text) : '메모 없음') + '</div></div>' +
+        '<span class="weak-count">다시 ' + w.lapses + '회</span></div>';
+    }).join('') : '<div class="stat-empty">복습 중 "다시"를 누른 개념이 아직 없어요.</div>') +
+    '</div>';
+
+  var warn = failed.length ? '<div class="stat-card stat-warn">' + failed.join(', ') + '을(를) 불러오지 못했어요. 잠시 뒤 통계 탭을 다시 열어 주세요.</div>' : '';
+  el.innerHTML = warn +
+    '<div class="stat-card">' +
+      '<div class="streak-hero">' +
+        '<div class="flame-wrap">' + flameSvg(tier) + '</div>' +
+        '<div><div class="streak-num">' + streaks.current + '<small>일 연속</small></div>' +
+        '<div class="streak-tier" style="color:' + tier.c1 + '">' + tier.label + '</div>' +
+        '<div class="streak-note">' + note + '</div></div>' +
+      '</div>' +
+      '<div class="week-row">' + week + '</div>' +
+    '</div>' +
+    '<div class="mini-stats">' +
+      '<div class="mini-stat"><div class="v">' + streaks.longest + '일</div><div class="l">최장 연속</div></div>' +
+      '<div class="mini-stat"><div class="v">' + concepts.length + '개</div><div class="l">저장한 개념</div></div>' +
+    '</div>' +
+    heatCard + timeCard + matCard +
+    '<div class="stat-card"><h2 class="stat-title">과목별 기억률 (최근 30일)</h2>' +
+      (accRows || '<div class="stat-empty">복습을 시작하면 과목별 기억률(좋음·쉬움 비율)이 나타나요.</div>') +
+    '</div>' +
+    '<div class="stat-card"><h2 class="stat-title">앞으로 7일 복습 예정</h2><div class="due-chart">' + dueCols + '</div></div>' + weakCard;
+  var heatEl = document.getElementById('heatWrap');
+  if (heatEl) heatEl.scrollLeft = heatEl.scrollWidth;
+}
+
 /* ───────────────── concepts tab (모아보기) ───────────────── */
 
 async function renderConceptsTab() {
@@ -1323,12 +2583,18 @@ async function renderConceptsTab() {
   if (currentTab !== 'concepts') return;
 
   el.innerHTML =
+    '<div class="concept-toolbar">' +
+    '<input type="search" id="conceptSearch" class="search-input" placeholder="메모 검색" value="' + escapeHtml(conceptsSearch) + '" autocomplete="off">' +
     '<div class="subject-filter"><select id="subjectFilterSelect">' +
       '<option value="">전체 과목</option>' +
       SUBJECTS.map(function (s) {
         return '<option value="' + s.id + '"' + (s.id === conceptsSubjectFilter ? ' selected' : '') + '>' + s.name + '</option>';
       }).join('') +
-    '</select></div><div id="galleryResults"></div>';
+    '</select></div></div><div id="galleryResults"></div>';
+  document.getElementById('conceptSearch').addEventListener('input', function (e) {
+    conceptsSearch = e.target.value;
+    renderGalleryResults();
+  });
   document.getElementById('subjectFilterSelect').addEventListener('change', function (e) {
     conceptsSubjectFilter = e.target.value;
     renderGalleryResults();
@@ -1336,18 +2602,28 @@ async function renderConceptsTab() {
   renderGalleryResults();
 }
 
+// Wraps each search word found in the raw text in <mark>, escaping everything else.
+function highlightText(text, tokens) {
+  if (!tokens.length) return escapeHtml(text);
+  var re = new RegExp('(' + tokens.map(function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')', 'gi');
+  return text.split(re).map(function (part, i) { return i % 2 ? '<mark>' + escapeHtml(part) + '</mark>' : escapeHtml(part); }).join('');
+}
+
 function renderGalleryResults() {
   var resultsEl = document.getElementById('galleryResults');
   if (!resultsEl) return;
-  var filtered = conceptsSubjectFilter
-    ? allConcepts.filter(function (c) { return c.subjectId === conceptsSubjectFilter; })
-    : allConcepts;
+  var tokens = conceptsSearch.toLowerCase().split(/\s+/).filter(Boolean);
+  var filtered = allConcepts.filter(function (c) {
+    if (conceptsSubjectFilter && c.subjectId !== conceptsSubjectFilter) return false;
+    var text = (c.text || '').toLowerCase();
+    return tokens.every(function (t) { return text.indexOf(t) !== -1; });
+  });
 
   if (filtered.length === 0) {
-    resultsEl.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>저장된 개념이 없어요.</p></div>';
+    resultsEl.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>' + (tokens.length ? '검색 결과가 없어요.' : '저장된 개념이 없어요.') + '</p></div>';
     return;
   }
-  resultsEl.innerHTML = '<div class="gallery-grid">' + filtered.map(function (c) {
+  resultsEl.innerHTML = (tokens.length ? '<div class="search-count">검색 결과 ' + filtered.length + '개</div>' : '') + '<div class="gallery-grid">' + filtered.map(function (c) {
     var url = c.imageId ? ('/_blob/' + c.imageId) : '';
     return '<div class="gallery-item">' +
       '<div class="accent-stripe" style="background:' + subjectGradient(c.subjectId) + '"></div>' +
@@ -1358,7 +2634,7 @@ function renderGalleryResults() {
         '</div>' +
         (editingConceptId === c.id
           ? '<textarea class="g-caption-edit" onblur="saveEditCaption(\'' + c.id + '\', this.value)">' + escapeHtml(c.text || '') + '</textarea>'
-          : '<div class="g-caption" onclick="startEditCaption(\'' + c.id + '\')">' + (c.text ? escapeHtml(c.text) : '메모 추가...') + '</div>') +
+          : '<div class="g-caption" onclick="startEditCaption(\'' + c.id + '\')">' + (c.text ? highlightText(c.text, tokens) : '메모 추가...') + '</div>') +
       '</div>' +
     '</div>';
   }).join('') + '</div>';
@@ -1384,3 +2660,5 @@ async function deleteConcept(id) {
 
 initCapabilities();
 </script>
+
+</body></html>
