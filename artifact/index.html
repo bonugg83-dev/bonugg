@@ -349,6 +349,13 @@ select:focus, textarea:focus, input:focus { border-color: var(--accent); }
 .filter-chip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .filter-chip i { width: 8px; height: 8px; border-radius: 3px; display: inline-block; }
 .filter-chip.on { color: var(--bg); background: var(--text); border-color: var(--text); }
+.backlog-note { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: var(--radius); background: var(--warn-soft); color: var(--warn); font-size: 12px; line-height: 1.5; }
+.backlog-note b { font-size: 13px; }
+.old-recall { display: flex; align-items: center; gap: 18px; }
+.old-pct { font-family: var(--font-num); font-size: 40px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.old-pct small { font-size: 18px; color: var(--text-3); margin-left: 2px; }
+.old-desc { font-size: 14px; }
+.old-sub { font-size: 12px; color: var(--text-3); margin-top: 4px; }
 .sort-hint { font-size: 12px; color: var(--text-3); font-weight: 600; }
 .search-count { font-size: 12px; font-weight: 600; color: var(--text-3); margin-bottom: 10px; }
 .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
@@ -552,6 +559,7 @@ var undoStack = [];           // [{ conceptId, beforeCard, logId, statsField }]
 var reviewBusy = false;
 var reviewHasCompletedAny = false;
 var reviewWaitTimer = null;
+var backlogInfo = null;       // 밀린 복습 정리 모드일 때 { overdue, shown, held, newHeld }
 
 // exam (D-day) state
 var examList = [];            // [{ name, date: 'YYYY-MM-DD' }] stored in settings/exams
@@ -721,6 +729,8 @@ var SRS_CONFIG = {
   maxInterval: 180,                // 일
   newCardsPerDay: 20,
   reviewsPerDay: 200,
+  backlogThreshold: 30,            // 기한이 하루 이상 지난 복습 카드가 이 개수 이상이면 '밀린 복습 정리' 모드
+  backlogDailyReviews: 60,         // 정리 모드에서 하루에 내는 복습 카드 수 (새 카드는 멈춤)
   dayRolloverHour: 4,
   learnAheadMinutes: 20,
   leechThreshold: 8,
@@ -1146,6 +1156,19 @@ async function loadReviewQueue() {
   reviewCards.sort(function (a, b) { return a.nextReviewDate.localeCompare(b.nextReviewDate); });
   newCards.sort(function (a, b) { return (a.createdAt || '').localeCompare(b.createdAt || ''); });
 
+  // 밀린 복습 정리: 기한이 지난 복습 카드가 많이 쌓이면 새 카드를 멈추고, 가장 오래 밀린 것(같으면 간격이 짧은 것)부터 하루 분량만 낸다
+  var overdue = reviewCards.filter(function (c) { return ankiDay(new Date(c.nextReviewDate), SRS_CONFIG) < today; });
+  backlogInfo = null;
+  if (overdue.length >= SRS_CONFIG.backlogThreshold) {
+    reviewCards.sort(function (a, b) {
+      return (a.nextReviewDate.slice(0, 10) !== b.nextReviewDate.slice(0, 10) ? a.nextReviewDate.localeCompare(b.nextReviewDate) : 0) ||
+        (a.intervalDays - b.intervalDays) || (a.easeFactor - b.easeFactor);
+    });
+    reviewLeft = Math.max(0, Math.min(reviewLeft, SRS_CONFIG.backlogDailyReviews - dailyStatsToday.reviewsDone));
+    newLeft = 0;
+    backlogInfo = { overdue: overdue.length, shown: Math.min(reviewLeft, reviewCards.length), held: Math.max(0, reviewCards.length - reviewLeft), newHeld: newCards.length };
+  }
+
   reviewQueue = learningDueNow.concat(reviewCards.slice(0, reviewLeft), newCards.slice(0, newLeft));
   waitingQueue = learningAhead;
 }
@@ -1182,6 +1205,14 @@ function queueCounts() {
     else counts.reviewCount++;
   });
   return counts;
+}
+
+function backlogBanner() {
+  if (!backlogInfo) return '';
+  var b = backlogInfo;
+  return '<div class="backlog-note"><b>밀린 복습 정리 중</b>' +
+    '<span>기한이 지난 복습 ' + b.overdue + '개 · 오래 밀린 것부터 오늘 ' + SRS_CONFIG.backlogDailyReviews + '개까지만 보여요.' +
+    (b.newHeld ? ' 새 카드 ' + b.newHeld + '개는 정리가 끝나면 나와요.' : '') + '</span></div>';
 }
 
 function renderWaitingScreen(el) {
@@ -1221,9 +1252,9 @@ async function renderReviewTab() {
       }, 5000);
       return;
     }
-    el.innerHTML = reviewHasCompletedAny
-      ? '<div class="done-banner">' + ICONS.done + '<p>오늘 밤 복습을 다 마쳤어요.</p></div>'
-      : '<div class="empty-state">' + ICONS.moon + '<p>오늘 밤 복습할 개념이 없어요.</p></div>';
+    el.innerHTML = backlogBanner() + (reviewHasCompletedAny
+      ? '<div class="done-banner">' + ICONS.done + '<p>' + (backlogInfo && backlogInfo.held ? '오늘 분량을 마쳤어요. 밀린 ' + backlogInfo.held + '개는 내일 이어서 나와요.' : '오늘 밤 복습을 다 마쳤어요.') + '</p></div>'
+      : '<div class="empty-state">' + ICONS.moon + '<p>오늘 밤 복습할 개념이 없어요.</p></div>');
     return;
   }
 
@@ -1256,6 +1287,7 @@ async function renderReviewTab() {
           '<span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? subj.name : '과목 없음') + '</span>' +
           (item.leech ? '<span class="leech-badge">자주 틀림</span>' : (item.reps ? '<span class="card-meta">복습 ' + item.reps + '회</span>' : '<span class="card-meta">새 카드</span>')) +
         '</div>' +
+        backlogBanner() +
         '<div class="progress-line">' + pills + '</div>' +
         (item.text ? '<div class="review-caption">' + escapeHtml(item.text) + '</div>' : '') +
         '<div class="rating-bar"><div class="rating-grid">' +
@@ -2317,6 +2349,23 @@ async function renderStatsTab() {
       '<span class="acc-val">' + pct + '% · ' + b.total + '회</span></div>';
   }).join('');
 
+  // 오래된 카드 기억률: 복습 직전 간격이 21일 이상이었던 복습만 따로 센다 (좋음·쉬움 = 기억함)
+  var oldTotal = 0, oldOk = 0, allRevTotal = 0, allRevOk = 0;
+  logDocs.forEach(function (r) {
+    if (r.stateBefore !== 'review') return;
+    var ok = r.rating === 'good' || r.rating === 'easy';
+    allRevTotal++; if (ok) allRevOk++;
+    if ((r.intervalBefore || 0) >= 21) { oldTotal++; if (ok) oldOk++; }
+  });
+  var matureCount = concepts.filter(function (c) { return c.state === 'review' && (c.intervalDays || 0) >= 21; }).length;
+  var oldCard = '<div class="stat-card"><h2 class="stat-title">오래된 카드 기억률 (간격 3주 이상, 최근 30일)</h2>' +
+    (oldTotal
+      ? '<div class="old-recall"><div class="old-pct">' + Math.round(oldOk / oldTotal * 100) + '<small>%</small></div>' +
+        '<div class="old-desc"><div>' + oldTotal + '번 복습 중 ' + oldOk + '번 기억했어요</div>' +
+        '<div class="old-sub">복습 카드 전체 기억률 ' + Math.round(allRevOk / allRevTotal * 100) + '% · 지금 3주 이상 간격 카드 ' + matureCount + '개</div></div></div>'
+      : '<div class="stat-empty">간격이 3주 이상 벌어진 카드를 복습하면 기억률이 나타나요. 지금 3주 이상 간격 카드는 ' + matureCount + '개예요.</div>') +
+    '</div>';
+
   // reviews due per day for the next 7 days; overdue and learning cards count toward today
   var dueKeys = [0, 1, 2, 3, 4, 5, 6].map(function (i) { return shiftDay(today, i); });
   var due = [0, 0, 0, 0, 0, 0, 0];
@@ -2440,7 +2489,7 @@ async function renderStatsTab() {
       '<div class="mini-stat"><div class="v">' + streaks.longest + '일</div><div class="l">최장 연속</div></div>' +
       '<div class="mini-stat"><div class="v">' + concepts.length + '개</div><div class="l">저장한 개념</div></div>' +
     '</div>' +
-    heatCard + timeCard + matCard +
+    heatCard + timeCard + matCard + oldCard +
     '<div class="stat-card"><h2 class="stat-title">과목별 기억률 (최근 30일)</h2>' +
       (accRows || '<div class="stat-empty">복습을 시작하면 과목별 기억률(좋음·쉬움 비율)이 나타나요.</div>') +
     '</div>' +
