@@ -488,6 +488,100 @@ input[type=date].exam-input { padding: 10px 12px; border: 1px solid var(--border
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 @media (min-width: 820px) { .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); } }
+
+/* ───────────── neon layer: faint glow + springy toggles ───────────── */
+:root {
+  --neon-1: #4f6bff; --neon-2: #8b5cf6; --neon-rgb: 79, 107, 255;
+  --glow: 0 0 0 1px rgba(var(--neon-rgb), .35), 0 0 14px rgba(var(--neon-rgb), .26);
+  --glow-soft: 0 0 22px rgba(var(--neon-rgb), .14);
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ambient: radial-gradient(520px 360px at 8% -6%, rgba(139, 92, 246, .10), transparent 70%), radial-gradient(560px 380px at 100% 108%, rgba(79, 107, 255, .10), transparent 70%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0e14; --surface: #121722; --surface-2: #1b2130; --border: #252d3d;
+    --neon-1: #6f8cff; --neon-2: #b07cff; --neon-rgb: 125, 148, 255;
+    --glow: 0 0 0 1px rgba(var(--neon-rgb), .5), 0 0 18px rgba(var(--neon-rgb), .38);
+    --glow-soft: 0 0 28px rgba(var(--neon-rgb), .2);
+    --ambient: radial-gradient(560px 380px at 8% -6%, rgba(176, 124, 255, .20), transparent 70%), radial-gradient(620px 420px at 100% 108%, rgba(111, 140, 255, .18), transparent 70%);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0e14; --surface: #121722; --surface-2: #1b2130; --border: #252d3d;
+  --neon-1: #6f8cff; --neon-2: #b07cff; --neon-rgb: 125, 148, 255;
+  --glow: 0 0 0 1px rgba(var(--neon-rgb), .5), 0 0 18px rgba(var(--neon-rgb), .38);
+  --glow-soft: 0 0 28px rgba(var(--neon-rgb), .2);
+  --ambient: radial-gradient(560px 380px at 8% -6%, rgba(176, 124, 255, .20), transparent 70%), radial-gradient(620px 420px at 100% 108%, rgba(111, 140, 255, .18), transparent 70%);
+}
+body::before { content: ""; position: fixed; inset: 0; background: var(--ambient); pointer-events: none; z-index: 0; }
+#app { position: relative; z-index: 1; }
+
+@keyframes pop { 0% { transform: scale(.9); } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-3px) rotate(-6deg); } 70% { transform: translateY(0) rotate(4deg); } }
+@keyframes bar-in { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes breathe { 0%, 100% { box-shadow: 0 0 0 1px rgba(var(--neon-rgb), .35), 0 0 12px rgba(var(--neon-rgb), .22); } 50% { box-shadow: 0 0 0 1px rgba(var(--neon-rgb), .5), 0 0 20px rgba(var(--neon-rgb), .36); } }
+
+.brand-mark { background: linear-gradient(135deg, var(--neon-1), var(--neon-2)); color: #fff; box-shadow: var(--glow); }
+
+/* sidebar tabs */
+.tab-btn { position: relative; transition: color .2s, background .2s, transform .25s var(--spring); }
+.tab-btn:active { transform: scale(.94); }
+.tab-btn.active .icn { animation: bob .6s var(--spring); filter: drop-shadow(0 0 5px rgba(var(--neon-rgb), .6)); }
+@media (min-width: 820px) {
+  .sidebar .tab-btn.active { background: linear-gradient(90deg, rgba(var(--neon-rgb), .16), rgba(var(--neon-rgb), .04)); }
+  .sidebar .tab-btn.active::before { content: ""; position: absolute; left: -10px; top: 20%; bottom: 20%; width: 3px; border-radius: 0 3px 3px 0; background: linear-gradient(var(--neon-1), var(--neon-2)); box-shadow: 0 0 10px rgba(var(--neon-rgb), .8); transform-origin: center; animation: bar-in .35s var(--spring); }
+}
+.nav-toggle { transition: background .2s, color .2s, transform .25s var(--spring), box-shadow .25s; }
+.nav-toggle:hover { box-shadow: var(--glow); }
+.nav-toggle:active { transform: scale(.88); }
+.nav-toggle svg { transition: transform .5s var(--spring); }
+.sidebar { transition: width .35s var(--spring); }
+
+/* sliding segmented switch */
+.seg { position: relative; }
+.seg button { position: relative; z-index: 1; transition: color .25s, transform .2s var(--spring); }
+.seg button:active { transform: scale(.94); }
+.seg button.on { background: transparent; color: #fff; }
+.seg-pill { position: absolute; top: 2px; bottom: 2px; left: 0; width: 0; border-radius: 6px; background: linear-gradient(135deg, var(--neon-1), var(--neon-2)); box-shadow: var(--glow); transition: transform .4s var(--spring), width .4s var(--spring); z-index: 0; }
+
+/* chips */
+.filter-chip, .subject-chip { transition: background .2s, border-color .2s, color .2s, box-shadow .25s, transform .25s var(--spring); }
+.filter-chip:active, .subject-chip:active { transform: scale(.93); }
+.filter-chip.on, .subject-chip.on { color: var(--text); background: rgba(var(--neon-rgb), .12); border-color: rgba(var(--neon-rgb), .7); box-shadow: var(--glow); animation: pop .4s var(--spring); }
+.subject-chip.on { box-shadow: var(--glow); }
+
+/* cute switch for checkboxes */
+input[type=checkbox] { appearance: none; -webkit-appearance: none; position: relative; width: 38px; height: 22px; margin: 0; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); cursor: pointer; flex-shrink: 0; transition: background .25s, border-color .25s, box-shadow .25s; }
+input[type=checkbox]::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); transition: transform .35s var(--spring), width .2s; }
+input[type=checkbox]:active::after { width: 21px; }
+input[type=checkbox]:checked { background: linear-gradient(135deg, var(--neon-1), var(--neon-2)); border-color: transparent; box-shadow: var(--glow); }
+input[type=checkbox]:checked::after { transform: translateX(16px); }
+input[type=checkbox]:checked:active::after { transform: translateX(11px); }
+
+/* buttons */
+.btn-primary { background: linear-gradient(135deg, var(--neon-1), var(--neon-2)); color: #fff; border-color: transparent; box-shadow: 0 0 16px rgba(var(--neon-rgb), .3); transition: transform .25s var(--spring), box-shadow .25s; }
+.btn-primary:not(:disabled):hover { box-shadow: var(--glow); transform: translateY(-1px); }
+.btn-primary:not(:disabled):active { transform: scale(.96); }
+.btn-secondary, .btn-icon, .stage-btn { transition: transform .25s var(--spring), box-shadow .25s, color .2s, background .2s; }
+.btn-secondary:active, .btn-icon:active, .stage-btn:active { transform: scale(.93); }
+.stage-btn:hover { box-shadow: var(--glow); }
+.rate-btn { transition: transform .3s var(--spring), box-shadow .25s; }
+.rate-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 0 0 1px currentColor, 0 0 18px color-mix(in srgb, currentColor 40%, transparent); }
+.rate-btn:not(:disabled):active { transform: scale(.95); }
+
+/* surfaces */
+.review-stage { border-color: rgba(var(--neon-rgb), .28); box-shadow: var(--glow-soft); }
+.exam-hero:not(.exam-empty) { box-shadow: 0 0 0 1px rgba(var(--neon-rgb), .4), 0 0 26px rgba(var(--neon-rgb), .25); }
+.stat-card, .gallery-item, .thumb-card { transition: box-shadow .3s, border-color .3s; }
+.gallery-item:hover, .thumb-card:hover, .stat-card:hover { border-color: rgba(var(--neon-rgb), .4); box-shadow: var(--glow-soft); }
+.stat-pill i { box-shadow: 0 0 7px currentColor; }
+.dot-new { color: var(--accent); } .dot-learning { color: var(--danger); } .dot-review { color: var(--good); }
+.acc-fill, .mature-seg { box-shadow: 0 0 10px rgba(var(--neon-rgb), .35); }
+input:focus, textarea:focus, select:focus { box-shadow: 0 0 0 3px rgba(var(--neon-rgb), .18); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
 </style>
 
 <div id="app">
@@ -2556,21 +2650,40 @@ async function renderConceptsTab() {
 function renderConceptControls() {
   var seg = document.getElementById('sortSeg'), chips = document.getElementById('subjectChips');
   if (!seg || !chips) return;
-  seg.innerHTML = [['new', '최신순'], ['hard', '어려운 순']].map(function (o) {
-    return '<button class="' + (conceptsSort === o[0] ? 'on' : '') + '" aria-pressed="' + (conceptsSort === o[0]) + '" onclick="setConceptsSort(\'' + o[0] + '\')">' + o[1] + '</button>';
-  }).join('');
-  var dirSeg = document.getElementById('dirSeg');
-  if (dirSeg) dirSeg.innerHTML = [['desc', '내림차순 ↓'], ['asc', '오름차순 ↑']].map(function (o) {
-    return '<button class="' + (conceptsDir === o[0] ? 'on' : '') + '" aria-pressed="' + (conceptsDir === o[0]) + '" onclick="setConceptsDir(\'' + o[0] + '\')">' + o[1] + '</button>';
-  }).join('');
+  renderSeg(seg, [['new', '최신순'], ['hard', '어려운 순']], conceptsSort, 'setConceptsSort');
+  renderSeg(document.getElementById('dirSeg'), [['desc', '내림차순 ↓'], ['asc', '오름차순 ↑']], conceptsDir, 'setConceptsDir');
   var hint = document.getElementById('sortHint');
   if (hint) hint.textContent = conceptsSort === 'new'
     ? (conceptsDir === 'desc' ? '가장 최근에 올린 것부터' : '가장 오래전에 올린 것부터')
     : (conceptsDir === 'desc' ? '다시·어려움을 많이 누른 것부터' : '다시·어려움을 적게 누른 것부터');
+  if (chips.dataset.sel === conceptsSubjectFilter && chips.children.length) return;   // 과목이 안 바뀌면 칩을 다시 그리지 않아 애니메이션이 한 번만 나옴
+  chips.dataset.sel = conceptsSubjectFilter;
   chips.innerHTML = '<button class="filter-chip' + (conceptsSubjectFilter === '' ? ' on' : '') + '" onclick="setConceptsSubject(\'\')">전체</button>' +
     SUBJECTS.map(function (sj) {
       return '<button class="filter-chip' + (conceptsSubjectFilter === sj.id ? ' on' : '') + '" onclick="setConceptsSubject(\'' + sj.id + '\')"><i style="background:' + sj.c1 + '"></i>' + sj.name + '</button>';
     }).join('');
+}
+// 버튼은 한 번만 만들고 .on 과 슬라이드 알약만 옮겨서, 전환이 부드럽게 미끄러지게 한다
+function renderSeg(seg, opts, current, handler) {
+  if (!seg) return;
+  if (!seg.querySelector('button')) {
+    seg.innerHTML = '<span class="seg-pill"></span>' + opts.map(function (o) {
+      return '<button data-v="' + o[0] + '" onclick="' + handler + '(\'' + o[0] + '\')">' + o[1] + '</button>';
+    }).join('');
+  }
+  seg.querySelectorAll('button').forEach(function (b) {
+    var on = b.dataset.v === current;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on);
+  });
+  var place = function () {
+    var on = seg.querySelector('button.on'), pill = seg.querySelector('.seg-pill');
+    if (!on || !pill) return;
+    pill.style.width = on.offsetWidth + 'px';
+    pill.style.transform = 'translateX(' + on.offsetLeft + 'px)';
+  };
+  place();
+  requestAnimationFrame(place);
 }
 function setConceptsSort(v) {
   conceptsSort = v;
