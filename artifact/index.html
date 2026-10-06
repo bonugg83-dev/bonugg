@@ -349,6 +349,7 @@ select:focus, textarea:focus, input:focus { border-color: var(--accent); }
 .filter-chip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .filter-chip i { width: 8px; height: 8px; border-radius: 3px; display: inline-block; }
 .filter-chip.on { color: var(--bg); background: var(--text); border-color: var(--text); }
+.sort-hint { font-size: 12px; color: var(--text-3); font-weight: 600; }
 .search-count { font-size: 12px; font-weight: 600; color: var(--text-3); margin-bottom: 10px; }
 .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
 .gallery-item { border-radius: var(--radius); overflow: hidden; background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; }
@@ -588,8 +589,9 @@ var cropDragStartX = 0, cropDragStartY = 0, cropDragStartBounds = null;
 var allConcepts = null;
 var conceptsSubjectFilter = '';
 var conceptsSearch = '';
+var conceptsDir = 'desc';       // 'desc' | 'asc' — 정렬 방향
 var conceptsSort = 'new';       // 'new' (최신 업로드순) | 'hard' (자주 어려워한 순)
-try { var savedSort = localStorage.getItem('conceptsSort'); if (savedSort === 'new' || savedSort === 'hard') conceptsSort = savedSort; } catch (e) {}
+try { var savedSort = localStorage.getItem('conceptsSort'); if (savedSort === 'new' || savedSort === 'hard') conceptsSort = savedSort; var savedDir = localStorage.getItem('conceptsDir'); if (savedDir === 'asc' || savedDir === 'desc') conceptsDir = savedDir; } catch (e) {}
 var editingConceptId = null;
 
 async function initCapabilities() {
@@ -1310,6 +1312,7 @@ async function rateCurrent(rating) {
   }
 
   reviewHasCompletedAny = true;
+  allConcepts = null;   // 모아보기 정렬(어려움 횟수)이 방금 한 복습을 반영하도록 다시 불러오게 함
   cardShownId = null;
   reviewQueue.shift();
   undoStack.push({ conceptId: before.id, beforeCard: before, logId: logId, statsField: statsField });
@@ -1335,6 +1338,7 @@ async function undoLast() {
     showToast('되돌리기 실패, 다시 눌러주세요');
     return;
   }
+  allConcepts = null;
   waitingQueue = waitingQueue.filter(function (w) { return w.card.id !== entry.conceptId; });
   reviewQueue = reviewQueue.filter(function (c) { return c.id !== entry.conceptId; });
   reviewQueue.unshift(entry.beforeCard);
@@ -2464,6 +2468,20 @@ async function renderConceptsTab() {
     } catch (e) {
       allConcepts = [];
     }
+    // 카운터가 생기기 전 복습도 반영: 복습 기록의 다시/어려움 횟수와 카운터 중 큰 값을 쓴다
+    try {
+      var logSnap = await db.collection('reviewLog').limit(1000).get();
+      var again = {}, hard = {};
+      logSnap.docs.forEach(function (d) {
+        var r = d.data();
+        if (r.rating === 'again') again[r.conceptId] = (again[r.conceptId] || 0) + 1;
+        else if (r.rating === 'hard') hard[r.conceptId] = (hard[r.conceptId] || 0) + 1;
+      });
+      allConcepts.forEach(function (c) {
+        c._again = Math.max(c.againCount !== undefined ? c.againCount : (c.lapses || 0), again[c.id] || 0);
+        c._hard = Math.max(c.hardCount || 0, hard[c.id] || 0);
+      });
+    } catch (e) {}
   }
   if (currentTab !== 'concepts') return;
 
@@ -2471,7 +2489,9 @@ async function renderConceptsTab() {
     '<div class="concept-toolbar">' +
       '<div class="toolbar-row">' +
         '<input type="search" id="conceptSearch" class="search-input" placeholder="메모 검색" value="' + escapeHtml(conceptsSearch) + '" autocomplete="off">' +
-        '<div class="seg" id="sortSeg" role="group" aria-label="정렬"></div>' +
+        '<div class="seg" id="sortSeg" role="group" aria-label="정렬 기준"></div>' +
+        '<div class="seg" id="dirSeg" role="group" aria-label="정렬 방향"></div>' +
+        '<span class="sort-hint" id="sortHint"></span>' +
       '</div>' +
       '<div class="chip-scroll" id="subjectChips" role="group" aria-label="과목"></div>' +
     '</div><div id="galleryResults"></div>';
@@ -2487,9 +2507,17 @@ async function renderConceptsTab() {
 function renderConceptControls() {
   var seg = document.getElementById('sortSeg'), chips = document.getElementById('subjectChips');
   if (!seg || !chips) return;
-  seg.innerHTML = [['new', '최신순'], ['hard', '자주 어려워한 순']].map(function (o) {
+  seg.innerHTML = [['new', '최신순'], ['hard', '어려운 순']].map(function (o) {
     return '<button class="' + (conceptsSort === o[0] ? 'on' : '') + '" aria-pressed="' + (conceptsSort === o[0]) + '" onclick="setConceptsSort(\'' + o[0] + '\')">' + o[1] + '</button>';
   }).join('');
+  var dirSeg = document.getElementById('dirSeg');
+  if (dirSeg) dirSeg.innerHTML = [['desc', '내림차순 ↓'], ['asc', '오름차순 ↑']].map(function (o) {
+    return '<button class="' + (conceptsDir === o[0] ? 'on' : '') + '" aria-pressed="' + (conceptsDir === o[0]) + '" onclick="setConceptsDir(\'' + o[0] + '\')">' + o[1] + '</button>';
+  }).join('');
+  var hint = document.getElementById('sortHint');
+  if (hint) hint.textContent = conceptsSort === 'new'
+    ? (conceptsDir === 'desc' ? '가장 최근에 올린 것부터' : '가장 오래전에 올린 것부터')
+    : (conceptsDir === 'desc' ? '다시·어려움을 많이 누른 것부터' : '다시·어려움을 적게 누른 것부터');
   chips.innerHTML = '<button class="filter-chip' + (conceptsSubjectFilter === '' ? ' on' : '') + '" onclick="setConceptsSubject(\'\')">전체</button>' +
     SUBJECTS.map(function (sj) {
       return '<button class="filter-chip' + (conceptsSubjectFilter === sj.id ? ' on' : '') + '" onclick="setConceptsSubject(\'' + sj.id + '\')"><i style="background:' + sj.c1 + '"></i>' + sj.name + '</button>';
@@ -2501,6 +2529,12 @@ function setConceptsSort(v) {
   renderConceptControls();
   renderGalleryResults();
 }
+function setConceptsDir(v) {
+  conceptsDir = v;
+  try { localStorage.setItem('conceptsDir', v); } catch (e) {}
+  renderConceptControls();
+  renderGalleryResults();
+}
 function setConceptsSubject(v) {
   conceptsSubjectFilter = v;
   renderConceptControls();
@@ -2508,7 +2542,9 @@ function setConceptsSubject(v) {
 }
 
 // 다시 + 어려움 presses; cards from before the counters existed fall back to their lapses
-function hardScore(c) { return (c.againCount !== undefined ? c.againCount : (c.lapses || 0)) + (c.hardCount || 0); }
+function againOf(c) { return c._again !== undefined ? c._again : (c.againCount !== undefined ? c.againCount : (c.lapses || 0)); }
+function hardOf(c) { return c._hard !== undefined ? c._hard : (c.hardCount || 0); }
+function hardScore(c) { return againOf(c) + hardOf(c); }
 
 // Wraps each search word found in the raw text in <mark>, escaping everything else.
 function highlightText(text, tokens) {
@@ -2528,11 +2564,13 @@ function renderGalleryResults() {
   });
   // subject filter and sort work together: filter first, then order what is left
   filtered = filtered.slice().sort(function (a, b) {
+    var sign = conceptsDir === 'asc' ? -1 : 1;
     if (conceptsSort === 'hard') {
       var d = hardScore(b) - hardScore(a);
-      if (d) return d;
+      if (d) return d * sign;
+      return (b.createdAt || '').localeCompare(a.createdAt || '');   // 같은 횟수면 최신 먼저
     }
-    return (b.createdAt || '').localeCompare(a.createdAt || '');
+    return (b.createdAt || '').localeCompare(a.createdAt || '') * sign;
   });
 
   if (filtered.length === 0) {
@@ -2544,7 +2582,7 @@ function renderGalleryResults() {
     return '<div class="gallery-item">' +
       (url ? '<div class="g-img"><img src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')"></div>' : '') +
       '<div class="g-body">' +
-        (hardScore(c) > 0 ? '<div class="g-hard">다시 ' + (c.againCount !== undefined ? c.againCount : (c.lapses || 0)) + '회 · 어려움 ' + (c.hardCount || 0) + '회</div>' : '') +
+        (hardScore(c) > 0 ? '<div class="g-hard">다시 ' + againOf(c) + '회 · 어려움 ' + hardOf(c) + '회</div>' : '') +
         '<div class="g-top">' + subjectEditor(c.id, c.subjectId) +
           '<button class="btn-icon" onclick="deleteConcept(\'' + c.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
         '</div>' +
