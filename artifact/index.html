@@ -190,22 +190,37 @@ svg { display: block; }
 .dot-learning { background: var(--danger); }
 .dot-review { background: var(--good); }
 
-.review-card {
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  margin-bottom: 14px;
-}
-.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
-.subj-tag { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); }
+.review-split { display: flex; flex-direction: column; gap: 12px; }
+.review-stage { position: relative; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: auto; display: flex; padding: 10px; -webkit-overflow-scrolling: touch; }
+.review-stage img { display: block; margin: auto; max-width: 100%; max-height: max(300px, calc(100dvh - 330px)); width: auto; height: auto; object-fit: contain; background: var(--paper); border-radius: 4px; box-shadow: var(--shadow-sm); cursor: zoom-in; }
+.review-stage.wide img { width: 100%; max-height: none; margin: 0 auto auto; cursor: zoom-out; }
+.stage-empty { margin: auto; color: var(--text-3); font-size: 13px; }
+.stage-tools { position: absolute; right: 12px; top: 12px; margin: 0; height: auto; width: auto; }
+.stage-btn { border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow-sm); }
+.stage-btn:hover { color: var(--text); }
+.review-side { display: flex; flex-direction: column; gap: 12px; }
+.side-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.subj-tag { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--text); }
 .subj-tag i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
 .leech-badge { padding: 2px 10px; border-radius: 999px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 700; }
 .card-meta { font-size: 11px; color: var(--text-3); font-family: var(--font-num); }
-.card-sheet { background: var(--surface-2); padding: 12px; display: flex; justify-content: center; }
-.card-sheet img { display: block; width: auto; height: auto; max-width: 100%; max-height: max(260px, calc(100vh - 420px)); max-height: max(260px, calc(100dvh - 420px)); object-fit: contain; background: var(--paper); border-radius: 4px; box-shadow: var(--shadow-sm); cursor: zoom-in; }
-.review-caption { padding: 14px 16px; font-size: 15px; white-space: pre-wrap; border-top: 1px solid var(--border); }
+.review-caption { padding: 12px 14px; font-size: 15px; white-space: pre-wrap; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+@media (min-width: 820px) {
+  .content.review-mode { max-width: none; padding: 14px 16px; overflow: hidden; }
+  .content.review-mode #reviewBody { height: 100%; }
+  .content.review-mode .review-split { flex-direction: row; height: 100%; gap: 14px; }
+  .content.review-mode .review-stage { flex: 1 1 0; min-width: 0; }
+  .content.review-mode .review-stage img { max-height: 100%; }
+  .content.review-mode .review-stage.wide img { max-height: none; }
+  .content.review-mode .review-side { flex: 0 0 280px; overflow-y: auto; }
+  .content.review-mode .progress-line { flex-direction: column; align-items: stretch; margin: 0; gap: 6px; justify-content: flex-start; }
+  .content.review-mode .stat-pill b { margin-left: auto; }
+  .content.review-mode .stat-pill { justify-content: flex-start; border-radius: var(--radius-sm); padding: 7px 12px; }
+  .content.review-mode .rating-bar { margin-top: auto; position: static; background: none; padding: 0; }
+  .content.review-mode .rating-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .content.review-mode .rate-btn { padding: 22px 4px 16px; font-size: 17px; }
+}
+@media (min-width: 1180px) { .content.review-mode .review-side { flex-basis: 320px; } }
 
 .rating-bar { position: sticky; bottom: 0; padding: 4px 0 2px; background: var(--bg); }
 .rating-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -435,6 +450,7 @@ select:focus, textarea:focus, input:focus { border-color: var(--accent); }
 .weak-count { font-family: var(--font-num); font-size: 12px; font-weight: 600; color: var(--danger); background: var(--danger-soft); border-radius: 999px; padding: 3px 10px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
 
 .exam-hero {
+  margin-bottom: 12px;
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   padding: 14px 18px; border-radius: var(--radius-lg); background: var(--text); color: var(--bg); cursor: pointer;
 }
@@ -446,10 +462,7 @@ select:focus, textarea:focus, input:focus { border-color: var(--accent); }
 .exam-dnum { font-family: var(--font-num); font-size: 30px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .exam-others { flex-basis: 100%; display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; font-weight: 700; }
 .exam-others span { background: rgba(127,127,127,.28); border-radius: 999px; padding: 2px 10px; }
-.exam-line { font-size: 13px; color: var(--text-2); margin: 10px 4px 16px; line-height: 1.6; }
-.exam-line b { color: var(--text); font-family: var(--font-num); font-variant-numeric: tabular-nums; font-weight: 600; }
-.exam-line-sub { font-size: 11px; color: var(--text-3); }
-.exam-editor { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px; margin: 10px 0 14px; display: flex; flex-direction: column; gap: 10px; }
+.exam-editor { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px; margin: -2px 0 12px; display: flex; flex-direction: column; gap: 10px; }
 .exam-edit-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .exam-edit-row .exam-input { flex: 1 1 130px; min-width: 0; width: auto; }
 input[type=date].exam-input { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 14px; }
@@ -542,7 +555,6 @@ var reviewWaitTimer = null;
 // exam (D-day) state
 var examList = [];            // [{ name, date: 'YYYY-MM-DD' }] stored in settings/exams
 var examEditing = false;
-var examProjection = null;    // { total, days, perConcept } for the nearest exam
 var cardShownId = null, cardShownAt = 0; // when the current card appeared, for time stats
 
 // upload tab state
@@ -612,6 +624,7 @@ function switchTab(tab) {
 }
 
 function renderCurrentTab() {
+  document.getElementById('content').classList.toggle('review-mode', currentTab === 'review');
   if (currentTab === 'review') renderReviewTab();
   else if (currentTab === 'upload') renderUploadTab();
   else if (currentTab === 'concepts') renderConceptsTab();
@@ -1025,43 +1038,7 @@ async function loadExams() {
 
 async function saveExams() {
   syncExamConfig();
-  examProjection = null;
   try { await db.doc('settings/exams').set({ list: examList }); } catch (e) { showToast('시험일 저장 실패'); }
-  renderExamBanner();
-  loadExamProjection();
-}
-
-// Reviews each concept would get before the exam if every answer were 좋음.
-async function loadExamProjection() {
-  var up = nearestExam();
-  if (!up.length || !db) { examProjection = null; renderExamBanner(); return; }
-  var examDay = up[0].day;
-  var concepts = [];
-  try {
-    var snap = await db.collection('concepts').limit(1000).get();
-    concepts = snap.docs.map(function (d) { return normalizeCard(Object.assign({ id: d.id }, d.data()), SRS_CONFIG); });
-  } catch (e) {}
-  var today = ankiDay(new Date(), SRS_CONFIG);
-  var total = 0;
-  concepts.forEach(function (c) {
-    var ivl, day, ease = c.easeFactor;
-    if (c.state === 'review') {
-      ivl = c.intervalDays;
-      day = Math.max(today, ankiDay(new Date(c.nextReviewDate), SRS_CONFIG));
-    } else {
-      ivl = SRS_CONFIG.graduatingInterval;   // the first pass counts as one review today
-      day = today;
-    }
-    while (day <= examDay) {
-      total++;
-      var next = Math.max(Math.round(ivl * ease), ivl + 1);
-      var left = examDay - day;
-      ivl = left > 0 ? Math.min(next, examCapFor(left, SRS_CONFIG)) : next;
-      day += ivl;
-    }
-  });
-  var days = Math.max(1, examDay - today + 1);
-  examProjection = { total: total, days: days, count: concepts.length };
   renderExamBanner();
 }
 
@@ -1073,13 +1050,11 @@ function fmtExamDate(dateStr) {
 
 function renderExamBanner() {
   var hero = document.getElementById('examHero');
-  var line = document.getElementById('examLine');
-  if (!hero || !line) return;
+  if (!hero) return;
   var up = nearestExam();
   if (!up.length) {
     hero.className = 'exam-hero exam-empty';
     hero.innerHTML = '<span>시험일을 등록하면 D-day가 나와요</span><span class="exam-edit-hint">등록</span>';
-    line.innerHTML = '';
     return;
   }
   var n = up[0];
@@ -1091,14 +1066,6 @@ function renderExamBanner() {
     (up.length > 1 ? '<div class="exam-others">' + up.slice(1, 4).map(function (o) {
       return '<span>' + escapeHtml(o.exam.name || '시험') + ' D-' + o.left + '</span>';
     }).join('') + '</div>' : '');
-  var parts = [];
-  if (reviewQueue) parts.push('오늘 복습 <b>' + (reviewQueue.length + waitingQueue.length) + '개</b> 남음');
-  if (examProjection && examProjection.count > 0 && n.left > 0) {
-    var perDay = Math.round(examProjection.total / examProjection.days * 10) / 10;
-    var perConcept = Math.round(examProjection.total / examProjection.count * 10) / 10;
-    parts.push('시험까지 하루 평균 <b>' + (perDay < 1 ? '1개 미만' : perDay + '개') + '</b>, 개념당 <b>' + perConcept + '회</b> 복습 예정');
-  }
-  line.innerHTML = parts.join('<br>') + (parts.length > 1 ? '<div class="exam-line-sub">모두 "좋음"을 눌렀을 때 기준이에요.</div>' : '');
 }
 
 function toggleExamEditor() {
@@ -1226,14 +1193,9 @@ async function renderReviewTab() {
   if (currentTab !== 'review') return;
   var content = document.getElementById('content');
   if (!document.getElementById('reviewBody')) {
-    content.innerHTML =
-      '<div id="examBanner"><div id="examHero" class="exam-hero" onclick="toggleExamEditor()"></div>' +
-      '<div id="examLine" class="exam-line"></div><div id="examEditor"></div></div>' +
-      '<div id="reviewBody"></div>';
-    renderExamEditor();
+    content.innerHTML = '<div id="reviewBody"></div>';
   }
   var el = document.getElementById('reviewBody');
-  renderExamBanner();
   if (!db) {
     el.innerHTML = '<div class="empty-state">' + ICONS.moon + '<p>데이터 저장 기능을 사용할 수 없어요.</p></div>';
     return;
@@ -1242,8 +1204,6 @@ async function renderReviewTab() {
     el.innerHTML = '<div class="loading">불러오는 중...</div>';
     await loadReviewQueue();
     if (currentTab !== 'review') return;
-    renderExamBanner();
-    loadExamProjection();
   }
   clearInterval(reviewWaitTimer);
   tryPromoteFromWaiting();
@@ -1276,22 +1236,43 @@ async function renderReviewTab() {
     return '<button class="rate-btn ' + cls + '" onclick="rateCurrent(\'' + rating + '\')"' + dis + '><span class="rate-key">' + key + '</span>' + label +
       '<span class="rate-preview">' + preview[rating] + '</span></button>';
   }
+  var pills =
+    '<span class="stat-pill"><i class="dot-new"></i>새 카드 <b>' + counts.newCount + '</b></span>' +
+    '<span class="stat-pill"><i class="dot-learning"></i>학습 중 <b>' + counts.learningCount + '</b></span>' +
+    '<span class="stat-pill"><i class="dot-review"></i>복습 <b>' + counts.reviewCount + '</b></span>';
   el.innerHTML =
-    '<div class="progress-line">' +
-      '<span class="stat-pill"><i class="dot-new"></i>새 카드 <b>' + counts.newCount + '</b></span>' +
-      '<span class="stat-pill"><i class="dot-learning"></i>학습 중 <b>' + counts.learningCount + '</b></span>' +
-      '<span class="stat-pill"><i class="dot-review"></i>복습 <b>' + counts.reviewCount + '</b></span>' +
-    '</div>' +
-    '<div class="review-card">' +
-      '<div class="card-head"><span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? subj.name : '과목 없음') + '</span>' +
-        (item.leech ? '<span class="leech-badge">자주 틀림</span>' : (item.reps ? '<span class="card-meta">복습 ' + item.reps + '회</span>' : '<span class="card-meta">새 카드</span>')) + '</div>' +
-      (imgUrl ? '<div class="card-sheet"><img src="' + imgUrl + '" alt="개념" onclick="openLightbox(\'' + imgUrl + '\')"></div>' : '') +
-      (item.text ? '<div class="review-caption">' + escapeHtml(item.text) + '</div>' : '') +
-    '</div>' +
-    '<div class="rating-bar"><div class="rating-grid">' +
-      rateBtn('1', 'rate-again', '다시', 'again') + rateBtn('2', 'rate-hard', '어려움', 'hard') +
-      rateBtn('3', 'rate-good', '좋음', 'good') + rateBtn('4', 'rate-easy', '쉬움', 'easy') +
-    '</div>' + (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '') + '</div>';
+    '<div class="review-split">' +
+      '<div class="review-stage' + (reviewZoom === 'wide' ? ' wide' : '') + '" id="reviewStage">' +
+        (imgUrl ? '<img src="' + imgUrl + '" alt="개념" onclick="toggleReviewZoom()">' +
+          '<div class="stage-tools">' +
+            '<button class="stage-btn" id="zoomBtn" onclick="toggleReviewZoom()">' + (reviewZoom === 'wide' ? '전체 보기' : '가로 채우기') + '</button>' +
+            '<button class="stage-btn" onclick="openLightbox(\'' + imgUrl + '\')">확대</button>' +
+          '</div>' : '<div class="stage-empty">이미지 없음</div>') +
+      '</div>' +
+      '<aside class="review-side">' +
+        '<div class="side-top">' +
+          '<span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? subj.name : '과목 없음') + '</span>' +
+          (item.leech ? '<span class="leech-badge">자주 틀림</span>' : (item.reps ? '<span class="card-meta">복습 ' + item.reps + '회</span>' : '<span class="card-meta">새 카드</span>')) +
+        '</div>' +
+        '<div class="progress-line">' + pills + '</div>' +
+        (item.text ? '<div class="review-caption">' + escapeHtml(item.text) + '</div>' : '') +
+        '<div class="rating-bar"><div class="rating-grid">' +
+          rateBtn('1', 'rate-again', '다시', 'again') + rateBtn('2', 'rate-hard', '어려움', 'hard') +
+          rateBtn('3', 'rate-good', '좋음', 'good') + rateBtn('4', 'rate-easy', '쉬움', 'easy') +
+        '</div>' + (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '') + '</div>' +
+      '</aside>' +
+    '</div>';
+}
+
+var reviewZoom = 'fit';
+function toggleReviewZoom() {
+  reviewZoom = reviewZoom === 'fit' ? 'wide' : 'fit';
+  var st = document.getElementById('reviewStage');
+  if (!st) return;
+  st.classList.toggle('wide', reviewZoom === 'wide');
+  st.scrollTop = 0;
+  var b = document.getElementById('zoomBtn');
+  if (b) b.textContent = reviewZoom === 'wide' ? '전체 보기' : '가로 채우기';
 }
 
 async function rateCurrent(rating) {
@@ -2441,6 +2422,7 @@ async function renderStatsTab() {
 
   var warn = failed.length ? '<div class="stat-card stat-warn">' + failed.join(', ') + '을(를) 불러오지 못했어요. 잠시 뒤 통계 탭을 다시 열어 주세요.</div>' : '';
   el.innerHTML = warn +
+    '<div id="examBanner"><div id="examHero" class="exam-hero" onclick="toggleExamEditor()"></div><div id="examEditor"></div></div>' +
     '<div class="stat-card">' +
       '<div class="streak-hero">' +
         '<div class="flame-wrap">' + flameSvg(tier) + '</div>' +
@@ -2459,6 +2441,8 @@ async function renderStatsTab() {
       (accRows || '<div class="stat-empty">복습을 시작하면 과목별 기억률(좋음·쉬움 비율)이 나타나요.</div>') +
     '</div>' +
     '<div class="stat-card"><h2 class="stat-title">앞으로 7일 복습 예정</h2><div class="due-chart">' + dueCols + '</div></div>' + weakCard;
+  renderExamEditor();
+  renderExamBanner();
   var heatEl = document.getElementById('heatWrap');
   if (heatEl) heatEl.scrollLeft = heatEl.scrollWidth;
 }
