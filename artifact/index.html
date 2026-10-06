@@ -506,6 +506,9 @@ var aiPlanPages = 0;         // pages split by the PDF text layer (no AI positio
 var aiGateSkipped = 0;       // pages skipped by the local colour gate (no AI call)
 var aiFailed = 0;            // pages/images the AI couldn't read
 var aiLastError = '';        // most recent AI/connector error text, shown on the review screen
+var aiLocalMode = false;     // true once AI is unavailable or hits its limit: split locally, no captions
+var aiLimitHit = false;      // the run switched to local mode midway because of a limit or connector error
+var aiLocalCards = 0;        // problems added by local splitting, without AI text
 
 // pdf manual-crop state
 var pdfDoc = null;
@@ -1292,7 +1295,7 @@ function renderUploadTab() {
         }).join('') +
       '</select>' +
       renderAiZones() +
-      (aiImageReady ? '<div class="section-label">직접 자르기</div>' : '') +
+      (aiImageReady ? '<div class="section-label">직접 자르기</div>' : '') + // the no-AI zone adds its own label
       '<div class="dropzone-group">' +
         '<label class="dropzone">' +
           ICONS.pdf +
@@ -1305,7 +1308,7 @@ function renderUploadTab() {
           '<input type="file" accept="image/*" multiple onchange="onImagesPicked(this.files)">' +
         '</label>' +
       '</div>' +
-      (aiImageReady === false ? '<p class="ai-note">이 화면에서는 AI 자동 추출을 쓸 수 없어요. (Claude 앱 안에서 열어야 해요)</p>' :
+      (aiImageReady === false ? '<p class="ai-note">이 화면에서는 AI 글 정리를 쓸 수 없어서, 문제 나누기만 해요.</p>' :
         (aiBackend === 'gemini' ? '<p class="ai-note">AI 추출은 Gemini 커넥터("' + GEMINI_SERVER + '")로 동작해요. 처음 쓸 때 허용 창이 떠요.</p>' : ''));
     return;
   }
@@ -1313,7 +1316,9 @@ function renderUploadTab() {
   if (uploadStage === 'ai') {
     el.innerHTML =
       '<div class="ai-progress"><div class="ai-spinner"></div>' + escapeHtml(aiProgress) +
-      '<div class="sub">빨강·파랑 손글씨를 읽는 중이에요. 페이지당 수십 초 걸릴 수 있어요.</div></div>' +
+      '<div class="sub">' + (aiLocalMode
+        ? 'AI 없이 빨강·파랑 메모가 있는 문제만 잘라 담는 중이에요.'
+        : '빨강·파랑 손글씨를 읽는 중이에요. 페이지당 수십 초 걸릴 수 있어요.') + '</div></div>' +
       '<button class="btn-secondary" onclick="stopAi()">중지하고 지금까지 결과 보기</button>';
     return;
   }
@@ -1336,8 +1341,9 @@ function renderUploadTab() {
   }
 
   // review stage — confirm before save (captions may come from the AI pass)
-  var summary = (aiSkipped || aiFailed || aiGateSkipped || aiPlanPages)
+  var summary = (aiSkipped || aiFailed || aiGateSkipped || aiPlanPages || aiLocalCards)
     ? '<div class="ai-summary">' +
+        (aiLocalCards ? (aiLimitHit ? 'AI 한도에 걸려서 ' : '') + '문제 ' + aiLocalCards + '개는 AI 없이 잘라서 글 없이 담았어요. 글은 아래에 적거나 나중에 모아보기에서 고칠 수 있어요. ' : '') +
         (aiPlanPages ? aiPlanPages + '페이지는 글자 위치로 문제를 나눠 AI 위치 호출을 줄였어요. ' : '') +
         (aiGateSkipped ? '빨강·파랑 메모가 없는 ' + aiGateSkipped + '페이지는 AI를 쓰지 않고 건너뛰었어요' + (aiScanSkipped ? '(스캔 쪽 ' + aiScanSkipped + '쪽은 필기 그림층이 없어서 제외)' : '') + '. ' : '') +
         (aiSkipped ? '빨강·파랑 손글씨가 없는 문제 ' + aiSkipped + '개는 제외했어요. ' : '') +
@@ -1607,6 +1613,11 @@ function resetUploadFlow() {
   aiSkipped = 0;
   aiFailed = 0;
   aiLastError = '';
+  aiGateSkipped = 0;
+  aiScanSkipped = 0;
+  aiPlanPages = 0;
+  aiLocalCards = 0;
+  aiLimitHit = false;
   renderUploadTab();
 }
 
@@ -1675,7 +1686,16 @@ async function checkAiAvailability() {
 var aiMaxImages = 1;
 
 function renderAiZones() {
-  if (!aiImageReady) return '';
+  if (!aiImageReady) {
+    // no AI here: the PDF is still split into problems locally, keeping only those with red/blue memos
+    return '<div class="dropzone-group">' +
+      '<label class="dropzone ai-zone">' + ICONS.pdf +
+        '<span>PDF 자동 나누기</span>' +
+        '<span class="ai-sub">빨강·파랑 메모가 있는 문제만 잘라서 담아요. 글은 직접 적어요</span>' +
+        '<input type="file" accept="application/pdf" onchange="onAiPdfPicked(this.files[0])">' +
+      '</label>' +
+    '</div><div class="section-label">직접 자르기</div>';
+  }
   return '<div class="dropzone-group">' +
     '<label class="dropzone ai-zone">' + ICONS.pdf +
       '<span><span class="ai-badge">AI</span> PDF 자동 추출</span>' +
@@ -1961,7 +1981,8 @@ async function pdfProblemRanges(page) {
       var numOnly = /^\d{1,2}$/.test(f.s) && f.fs >= medFs * 1.25 && ln.items.length <= 2; // books with big bare numbers (12, 13…)
       if ((/^\d{1,2}\.(?!\d)/.test(f.s) || numOnly) && f.x0 <= left + W * 0.03) starts.push(ln.top);
     });
-    var cx0 = Math.max(0, colX0 - 6) / W, cx1 = Math.min(W, colX1 + 6) / W;
+    // clamp to the column so a wide page header in this column doesn't pull the next column into the crop
+    var cx0 = Math.max(cr[0], colX0 - 6) / W, cx1 = Math.min(cr[1], colX1 + 6) / W;
     var colFrom = cr[0] / W, colTo = cr[1] / W;
     var bounds = [0].concat(starts.map(function (t) { return Math.max(0, t - 6); })).concat([H]);
     bounds.forEach(function (y0, bi) {
@@ -2057,26 +2078,19 @@ function asReadList(res, n) {
 }
 
 // One AI call that reads images and returns parsed JSON, whichever backend is active.
-// Gemini rate limits (429) and brief overloads (503) come back as tool_error text; wait and retry a few times
-// instead of dropping the page. Daily-quota errors fail again quickly and then surface as usual.
+// A Gemini limit (429 / quota) is never waited out: it surfaces at once as 'ai_limit' and the run
+// switches to local splitting. A brief overload (503) gets one short retry first.
 async function aiAsk(prompt, blobs) {
   for (var attempt = 0; ; attempt++) {
     try {
       return await aiAskOnce(prompt, blobs);
     } catch (e) {
       var msg = String((e && e.message) || '');
-      var transient = e && e.code === 'tool_error' && /429|RESOURCE_EXHAUSTED|rate.?limit|quota|503|UNAVAILABLE|overload/i.test(msg);
-      if (!transient || attempt >= 3 || !aiCtl || aiCtl.signal.aborted) throw e;
-      var m = msg.match(/retryDelay\D{0,6}(\d+(?:\.\d+)?)\s*s/i) || msg.match(/retry in\s+(\d+(?:\.\d+)?)\s*s/i);
-      var wait = Math.min(65, Math.max(5, m ? Math.ceil(parseFloat(m[1])) + 1 : 15 * (attempt + 1)));
-      var before = aiProgress;
-      for (var left = wait; left > 0; left--) {
-        if (aiCtl.signal.aborted) throw { code: 'cancelled', message: 'cancelled' };
-        aiProgress = 'Gemini 한도 때문에 ' + left + '초 기다리는 중 (' + (attempt + 1) + '/3)';
-        renderUploadTab();
-        await new Promise(function (r) { setTimeout(r, 1000); });
-      }
-      aiProgress = before;
+      if (e && e.code === 'tool_error' && /429|RESOURCE_EXHAUSTED|rate.?limit|quota/i.test(msg)) throw { code: 'ai_limit', message: msg };
+      var overload = e && e.code === 'tool_error' && /503|UNAVAILABLE|overload/i.test(msg);
+      if (!overload || !aiCtl || aiCtl.signal.aborted) throw e;
+      if (attempt >= 1) throw { code: 'ai_limit', message: msg };
+      await new Promise(function (r) { setTimeout(r, 3000); });
     }
   }
 }
@@ -2136,13 +2150,15 @@ async function aiReadCrops(blobs, progressLabel) {
   var chunks = aiChunks(blobs);
   for (var c = 0; c < chunks.length; c++) {
     var chunk = chunks[c];
-    aiProgress = progressLabel + (chunks.length > 1 ? ' (' + done + '/' + blobs.length + ')' : '');
-    renderUploadTab();
     var res = null;
-    try {
-      res = await aiAsk(aiCropPrompt(chunk.length), chunk);
-    } catch (e) {
-      if (handleAiError(e)) throw e;
+    if (!aiLocalMode) {
+      aiProgress = progressLabel + (chunks.length > 1 ? ' (' + done + '/' + blobs.length + ')' : '');
+      renderUploadTab();
+      try {
+        res = await aiAsk(aiCropPrompt(chunk.length), chunk);
+      } catch (e) {
+        if (handleAiError(e) && !aiLocalMode) throw e; // cancelled; a limit just leaves the rest unread (null)
+      }
     }
     var list = asReadList(res, chunk.length);
     if (!list && res !== null) aiLastError = 'AI 응답 형식을 알 수 없어요: ' + JSON.stringify(res).slice(0, 200);
@@ -2155,11 +2171,19 @@ async function aiReadCrops(blobs, progressLabel) {
   return out;
 }
 
-// Returns true when the whole run should stop (cancelled, or the feature is unusable/limited).
+// Returns true when AI must stop for this run. Except for a cancel, the run then carries on
+// in local mode (aiLocalMode): problems are split without AI and saved without text.
 function handleAiError(e) {
+  var stop = handleAiErrorInner(e);
+  if (stop && !(e && e.code === 'cancelled') && !aiLocalMode) { aiLocalMode = true; aiLimitHit = true; }
+  return stop;
+}
+
+function handleAiErrorInner(e) {
   var code = e && e.code;
   if (code !== 'cancelled') aiLastError = (code ? code + ': ' : '') + String((e && e.message) || e || '').slice(0, 300);
   if (code === 'cancelled') return true;
+  if (code === 'ai_limit') { showToast('Gemini 한도에 걸려서 지금부터는 AI 없이 문제만 나눠 담아요'); return true; }
   if (code === 'not_granted' || code === 'sampling_disabled' || code === 'not_declared' ||
       code === 'capability_disabled' || code === 'capability_removed' || code === 'images_unavailable') {
     aiImageReady = false;
@@ -2175,7 +2199,7 @@ function handleAiError(e) {
     showToast('이 커넥터 사용이 허용되지 않았어요'); return true;
   }
   if (code === 'tool_error') { showToast('Gemini 오류: ' + String(e.message || '').slice(0, 80)); return false; }
-  if (code === 'rate_limited') { showToast('Claude 사용량 한도에 걸렸어요. 잠시 뒤 다시 해 주세요'); return true; }
+  if (code === 'rate_limited') { showToast('Claude 사용량 한도에 걸려서 지금부터는 AI 없이 문제만 나눠 담아요'); return true; }
   if (code === 'session_expired') { showToast('다시 로그인해 주세요'); return true; }
   return false; // per-item failure (invalid_json, refused, upstream_error...) — count it and continue
 }
@@ -2198,7 +2222,137 @@ function startAiRun() {
   aiScanSkipped = 0;
   aiFailed = 0;
   aiLastError = '';
+  aiLocalMode = !aiBackend;
+  aiLimitHit = false;
+  aiLocalCards = 0;
   uploadStage = 'ai';
+}
+
+function pushLocal(blob) {
+  pushPending(blob, '', true);
+  aiLocalCards++;
+}
+
+// Red/blue pen pixels from the gate that fall inside a 0-1000 box.
+function inkInBox(ink, box) {
+  var x0 = Math.min(box[0], box[2]) / 1000 * ink.w, x1 = Math.max(box[0], box[2]) / 1000 * ink.w;
+  var y0 = Math.min(box[1], box[3]) / 1000 * ink.h, y1 = Math.max(box[1], box[3]) / 1000 * ink.h;
+  var n = 0;
+  for (var i = 0; i < ink.n; i++) if (ink.xs[i] >= x0 && ink.xs[i] <= x1 && ink.ys[i] >= y0 && ink.ys[i] <= y1) n++;
+  return n;
+}
+
+// Problem ranges on a scanned page (no text layer), from the picture alone. Rows of printed ink form lines;
+// a problem number is a line at the column's left edge that stands out in at least two ways: taller, coloured
+// first glyph, outdented, alone on its line, or extra space above. Handwriting overlays are blanked first, and
+// only the left part of each column is read so checkboxes and side notes don't merge into lines.
+function scanProblemRanges(pageCanvas, layers) {
+  var W = 700, H = Math.round(pageCanvas.height * W / pageCanvas.width);
+  var c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  var ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(pageCanvas, 0, 0, W, H);
+  (layers || []).forEach(function (z) { ctx.fillRect(z[0] * W, z[1] * H, (z[2] - z[0]) * W, (z[3] - z[1]) * H); });
+  var d = ctx.getImageData(0, 0, W, H).data;
+  var ink = new Uint8Array(W * H), col = new Uint8Array(W * H);
+  var xL = Math.round(W * 0.04), xR = Math.round(W * 0.92), x, y, i;
+  var colCover = new Uint32Array(W);
+  for (y = 0; y < H; y++) for (x = xL; x < xR; x++) {
+    i = (y * W + x) * 4;
+    var mx = Math.max(d[i], d[i + 1], d[i + 2]), sat = mx - Math.min(d[i], d[i + 1], d[i + 2]);
+    var coloured = sat > 60 && mx < 245;
+    if (mx < 140 || coloured) { ink[y * W + x] = 1; colCover[x]++; if (coloured) col[y * W + x] = 1; }
+  }
+  // two columns when a near-empty vertical band runs through the middle
+  var best = 0, bestMid = -1, run = 0;
+  for (x = Math.round(W * 0.35); x <= Math.round(W * 0.65); x++) {
+    if (colCover[x] <= 2) { run++; if (run > best) { best = run; bestMid = x - run / 2; } } else run = 0;
+  }
+  var cols = best >= W * 0.015 ? [[xL, Math.round(bestMid)], [Math.round(bestMid), xR]] : [[xL, xR]];
+  var out = [];
+  cols.forEach(function (cr) {
+    var readTo = cr[0] + Math.round((cr[1] - cr[0]) * 0.55);
+    var lines = [], cur = null;
+    for (y = 0; y < H; y++) {
+      var lx0 = -1, lx1 = -1;
+      for (x = cr[0]; x < readTo; x++) if (ink[y * W + x]) { if (lx0 < 0) lx0 = x; lx1 = x; }
+      if (lx0 >= 0) {
+        if (!cur) cur = { y0: y, y1: y + 1, x0: lx0, x1: lx1 };
+        else { cur.y1 = y + 1; cur.x0 = Math.min(cur.x0, lx0); cur.x1 = Math.max(cur.x1, lx1); }
+      } else if (cur) { lines.push(cur); cur = null; }
+    }
+    if (cur) lines.push(cur);
+    lines = lines.filter(function (l) { return l.y1 - l.y0 >= 5; }); // underlines and table rules
+    if (lines.length < 3) return;
+    var hs = lines.map(function (l) { return l.y1 - l.y0; }).sort(function (a, b) { return a - b; }), med = hs[hs.length >> 1];
+    var xs0 = lines.map(function (l) { return l.x0; }).sort(function (a, b) { return a - b; }), body = xs0[xs0.length >> 1];
+    var starts = [];
+    lines.forEach(function (ln, k) {
+      var hgt = ln.y1 - ln.y0, gap = ln.y0 - (k ? lines[k - 1].y1 : 0);
+      if (ln.y0 < H * 0.08 || ln.y0 > H * 0.93 || hgt > med * 3 || ln.x0 > body + W * 0.02) return;
+      var gx1 = Math.min(readTo, ln.x0 + Math.round(med * 1.6)), gi = 0, gc = 0;
+      for (var yy = ln.y0; yy < ln.y1; yy++) for (var xx = ln.x0; xx < gx1; xx++) { var p = yy * W + xx; if (ink[p]) { gi++; if (col[p]) gc++; } }
+      var score = (hgt >= med * 1.25 ? 1 : 0) + (ln.x0 < body - W * 0.015 ? 1 : 0) + (gi && gc / gi > 0.3 ? 1 : 0) +
+        (ln.x1 - ln.x0 < med * 3 ? 1 : 0) + (gap >= med * 1.2 ? 1 : 0);
+      if (score >= 2) starts.push(ln.y0);
+    });
+    if (!starts.length) return;
+    var cx0 = W, cx1 = 0;
+    for (x = cr[0]; x < cr[1]; x++) if (colCover[x] > 2) { cx0 = Math.min(cx0, x); cx1 = Math.max(cx1, x); }
+    if (cx1 <= cx0) { cx0 = cr[0]; cx1 = cr[1]; }
+    var bounds = [0].concat(starts.map(function (t) { return Math.max(0, t - 6); })).concat([H]);
+    bounds.forEach(function (y0, bi) {
+      if (bi === bounds.length - 1) return;
+      var y1 = bounds[bi + 1];
+      var inRange = lines.filter(function (l) { return l.y0 >= y0 && l.y0 < y1 && l.y0 < H * 0.93; });
+      out.push({
+        problem: bi > 0, colFrom: cr[0] / W, colTo: cr[1] / W, x0: Math.max(0, cx0 - 4) / W, x1: Math.min(W, cx1 + 4) / W,
+        y0: y0 / H, y1: y1 / H, textBottom: (inRange.length ? inRange[inRange.length - 1].y1 : y0) / H
+      });
+    });
+  });
+  if (out.length && cols.length === 2) { // a column without numbers still needs a range for its memos
+    cols.forEach(function (cr) {
+      if (!out.some(function (r) { return r.colFrom === cr[0] / W; })) out.push({ problem: false, colFrom: cr[0] / W, colTo: cr[1] / W, x0: cr[0] / W, x1: cr[1] / W, y0: 0, y1: 1, textBottom: 0.93 });
+    });
+  }
+  return out.some(function (r) { return r.problem; }) ? out : null;
+}
+
+// One crop box (0-1000) per problem that has red/blue memos. Memos above a page's first number belong to a
+// problem carried over from the previous page, so that strip is cropped on its own. With no ranges at all,
+// nearby memos are grouped and cropped with some context above them.
+function localCardBoxes(ranges, memos) {
+  var groups = [];
+  memos.forEach(function (m) {
+    var cx = (m.x0 + m.x1) / 2, cy = (m.y0 + m.y1) / 2, hit = null;
+    (ranges || []).some(function (r) {
+      if (cx >= r.colFrom && cx < r.colTo && cy >= r.y0 && cy < r.y1) { hit = r; return true; }
+      return false;
+    });
+    var g = groups.find(function (q) { return hit ? q.r === hit : (!q.r && cy >= q.y0 - 0.08 && cy <= q.y1 + 0.08); });
+    if (!g) { g = { r: hit, x0: 1, y0: 1, x1: 0, y1: 0 }; groups.push(g); }
+    g.x0 = Math.min(g.x0, m.x0); g.y0 = Math.min(g.y0, m.y0); g.x1 = Math.max(g.x1, m.x1); g.y1 = Math.max(g.y1, m.y1);
+  });
+  return groups.map(function (g) {
+    var r = g.r, top, bottom, x0, x1;
+    if (r) { top = r.y0; bottom = Math.max(r.textBottom, g.y1) + 0.01; x0 = Math.min(r.x0, g.x0); x1 = Math.max(r.x1, g.x1); }
+    else { top = Math.max(0, g.y0 - 0.15); bottom = g.y1 + 0.03; x0 = Math.min(0.04, g.x0); x1 = Math.max(0.96, g.x1); }
+    return { top: top, box: [x0 * 1000, top * 1000, x1 * 1000, Math.min(1, bottom) * 1000] };
+  }).sort(function (a, b) { return a.top - b.top; }).map(function (b) { return b.box; });
+}
+
+// Split one page into problems without AI and add every problem that has red/blue memos, without text.
+async function pushLocalPage(page, pageCanvas, ink, layers) {
+  var memos = memoRegions(ink);
+  if (!memos.length) return;
+  var ranges = null;
+  try { ranges = await pdfProblemRanges(page); } catch (e) { ranges = null; }
+  if (!ranges) ranges = scanProblemRanges(pageCanvas, layers);
+  var boxes = localCardBoxes(ranges, memos);
+  for (var i = 0; i < boxes.length; i++) pushLocal(await canvasToBlob(cropCanvas(pageCanvas, boxes[i]), 0.9));
 }
 
 function finishAiRun() {
@@ -2212,7 +2366,7 @@ function stopAi() {
 }
 
 async function onAiPdfPicked(file) {
-  if (!file || !aiBackend) return;
+  if (!file) return;
   var doc;
   try {
     doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
@@ -2225,7 +2379,7 @@ async function onAiPdfPicked(file) {
   try {
     for (var n = 1; n <= doc.numPages; n++) {
       if (aiCtl.signal.aborted) break;
-      aiProgress = n + ' / ' + doc.numPages + '페이지에서 문제 찾는 중';
+      aiProgress = n + ' / ' + doc.numPages + (aiLocalMode ? '페이지 문제 나누는 중' : '페이지에서 문제 찾는 중');
       renderUploadTab();
       var pageCanvas = await renderPdfPageCanvas(doc, n, AI_PAGE_SCALE);
       var textPage = await doc.getPage(n), boxes = [];
@@ -2236,6 +2390,7 @@ async function onAiPdfPicked(file) {
       if (layers && !layers.length) { if (boxes.length) layers = null; else bareScan = true; } // pages with a text layer keep the colour rules
       var ink = penInk(pageCanvas, boxes, layers);
       if (!pageHasColoredInk(ink)) { aiGateSkipped++; if (bareScan) aiScanSkipped++; continue; }
+      if (aiLocalMode) { await pushLocalPage(textPage, pageCanvas, ink, layers); continue; }
       var plan = null;
       try { plan = await aiPlanPage(textPage, pageCanvas, ink); } catch (e) { plan = null; }
       if (plan && !plan.fallback && plan.problems.length) {
@@ -2255,7 +2410,11 @@ async function onAiPdfPicked(file) {
       try {
         found = await aiAsk(aiPagePrompt(), [pageBlob]);
       } catch (e) {
-        if (handleAiError(e)) break;
+        if (handleAiError(e)) {
+          if (!aiLocalMode) break; // cancelled
+          await pushLocalPage(textPage, pageCanvas, ink, layers);
+          continue;
+        }
         aiFailed++;
         continue;
       }
@@ -2274,6 +2433,10 @@ async function onAiPdfPicked(file) {
       for (var k = 0; k < crops.length; k++) blobs.push(await canvasToBlob(crops[k], 0.9));
       var reads = await aiReadCrops(blobs, n + ' / ' + doc.numPages + '페이지 손글씨 읽는 중');
       reads.forEach(function (r, i) {
+        if (!r && aiLocalMode) { // unread because of the limit: keep it only if it has red/blue pen
+          if (inkInBox(ink, inked[i].box) >= 20) pushLocal(blobs[i]); else aiSkipped++;
+          return;
+        }
         if (!r) { aiFailed++; pushPending(blobs[i], '', true); return; }
         if (!r.coloredInk || !r.text) { aiSkipped++; return; }
         pushPending(blobs[i], r.text, true);
@@ -2282,6 +2445,7 @@ async function onAiPdfPicked(file) {
     if (planned.length && !aiCtl.signal.aborted) {
       var preads = await aiReadCrops(planned.map(function (p) { return p.read; }), '메모 ' + planned.length + '개 읽는 중');
       preads.forEach(function (r, i) {
+        if (!r && aiLocalMode) { pushLocal(planned[i].card); return; } // built from memos, so it has pen ink
         if (!r) { aiFailed++; pushPending(planned[i].card, '', true); return; }
         if (!r.coloredInk || !r.text) { aiSkipped++; return; }
         pushPending(planned[i].card, r.text, true);
@@ -2304,6 +2468,7 @@ async function onAiImagesPicked(fileList) {
   files.forEach(function (f, i) {
     var r = reads[i];
     if (r === undefined) { pushPending(f, '', true); return; } // stopped before this one was read
+    if (!r && aiLocalMode) { pushLocal(f); return; }
     if (!r) { aiFailed++; pushPending(f, '', true); return; }
     // keep ink-less screenshots visible but unchecked, since the viewer picked them on purpose
     if (!r.coloredInk || !r.text) { aiSkipped++; pushPending(f, '', false); return; }
