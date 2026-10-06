@@ -1,0 +1,8 @@
+정답(12자): 재무정보는좋다오류가없다
+tesseract-kor 원본 psm6            CER=1.00 정답글자포함=0/11  '\\\\났녹슷아고'
+tesseract-kor 원본 psm11           CER=0.92 정답글자포함=1/11  '새보놈숫아고'
+tesseract-kor 0.5배 psm6          CER=0.92 정답글자포함=1/11  '객9보느슷아고비에'
+tesseract-kor 0.5배 psm11         CER=0.92 정답글자포함=1/11  '개%보느솜아고비에'
+tesseract-kor 두껍게 psm6           CER=0.83 정답글자포함=2/11  '겼보노속아오거'
+tesseract-kor 두껍게 psm11          CER=0.92 정답글자포함=1/11  '7보노슷아~'
+rapidocr(기본 중문모델)                CER=1.00 정답글자포함=0/11  ''

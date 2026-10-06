@@ -1,0 +1,2 @@
+p1-q1 글자레이어 479 자 / tesseract 494 자 CER=0.088
+p1-q2 글자레이어 602 자 / tesseract 569 자 CER=0.179
