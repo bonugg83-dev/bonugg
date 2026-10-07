@@ -2500,7 +2500,9 @@ function questionPrompt(list) {
     '사용자는 침대에 누워 자기 전에 이 카드를 본다.\n' +
     '사용자는 종이나 계산기를 사용하지 않고, 질문을 읽은 뒤 머릿속으로 답한다.\n' +
     '따라서 복잡한 계산 문제나 긴 풀이 문제를 만들면 안 된다.\n\n' +
-    '목표: 원본 문제와 개념 텍스트를 근거로, 사용자가 기억에서 핵심 개념을 꺼낼 수 있는 짧은 말문제를 만든다.\n\n' +
+    '목표: 사용자가 빨강·파랑 펜으로 직접 적은 개념 텍스트를 기억에서 꺼내게 하는 짧은 말문제를 만든다.\n' +
+    '질문의 주제와 정답은 반드시 개념 텍스트에서 나와야 한다. 원본 문제 텍스트는 개념 텍스트의 뜻과 맥락(무엇에 대한 말인지)을 이해하는 데만 쓰고, ' +
+    '원본 문제의 다른 보기·지문·쟁점(개념 텍스트에 적히지 않은 것)으로 질문을 만들지 않는다. 개념 텍스트가 짧아도 그 내용에 대해 묻는다.\n\n' +
     '질문 유형은 다음 중 하나만 선택한다. 핵심 판단 기준(judgment)을 먼저 고려한다.\n' +
     Object.keys(Q_TYPES).map(function (k) { return '- ' + k + ': ' + Q_TYPES[k]; }).join('\n') + '\n\n' +
     '규칙:\n' +
@@ -2515,7 +2517,7 @@ function questionPrompt(list) {
     '9. CPA 문제에서 중요한 판단 기준, 개념 간 차이, 적용 이유를 우선 고려한다.\n' +
     '10. 근거가 부족하거나 개념이 불명확하면 needsReview를 true로 한다.\n' +
     '11. 사용자는 질문을 볼 때 원본 문제를 보지 못한다. "이 문제에서", "위 문제", "위 자료", "보기 중" 처럼 원본을 가리키는 말을 쓰지 말고, 답하는 데 필요한 상황과 조건을 질문 안에 직접 넣어 질문만 읽어도 답할 수 있게 한다. 짧고 자연스러운 한국어로 쓴다.\n' +
-    '12. keyPoints는 모범 답변의 핵심 키워드 1~5개다.\n\n' +
+    '12. keyPoints는 모범 답변의 핵심 키워드 1~5개이고, 그중 적어도 하나는 개념 텍스트에 적힌 낱말을 그대로 쓴다.\n\n' +
     '좋은 질문의 예 (이런 모양으로 만든다):\n' +
     '- 사채의 할인발행 여부를 판단할 때 어떤 두 이자율을 비교하는가?\n' +
     '- 시장이자율이 표면이자율보다 높으면 사채는 어떤 형태로 발행되는가?\n' +
@@ -2533,7 +2535,7 @@ function questionPrompt(list) {
 }
 
 // Returns the fields to keep, or a short reason string ('needsReview' when Claude said the material is not enough).
-function checkQuestion(r) {
+function checkQuestion(r, conceptText) {
   if (!r || typeof r !== 'object') return '응답 형식이 맞지 않아요';
   if (r.needsReview === true || r.ok === false) return 'needsReview';
   var q = String(r.recallQuestion || '').trim(), a = String(r.recallAnswer || '').trim();
@@ -2542,6 +2544,9 @@ function checkQuestion(r) {
   if (!Q_TYPES[r.questionType]) return '질문 유형이 맞지 않아요';
   if (keys.length < 1 || keys.length > 5) return '핵심 키워드 수가 맞지 않아요';
   if ((q.match(/\?/g) || []).length > 1) return '한 번에 여러 가지를 묻는 질문이에요';
+  // the question must be about the user's own memo: at least one keyword has to appear in it
+  var memo = String(conceptText || '').replace(/\s+/g, '');
+  if (memo && !keys.some(function (k) { return memo.indexOf(k.replace(/\s+/g, '')) !== -1; })) return '내가 적은 개념과 관련 없는 질문이에요';
   if (/계산하|구하시오|산출하|금액은 얼마/.test(q)) return '계산을 요구하는 질문이에요';
   if (/(이|위|본|해당|다음)\s?(문제|자료|표|그림)|위의|보기\s?중|보기에서/.test(q)) return '원본 문제를 봐야 답할 수 있는 질문이에요';
   if (a.length > 300 || a.split(/[.!?](?:\s|$)|\n/).filter(function (x) { return x.trim(); }).length > 3) return '답이 너무 길어요';
@@ -2552,7 +2557,7 @@ function checkQuestion(r) {
 async function askQuestions(list) {
   var res = await sampleFn.json(questionPrompt(list), { cache: false });
   var arr = asList(res, list.length);
-  return list.map(function (x, i) { return checkQuestion(arr && arr[i]); });
+  return list.map(function (x, i) { return checkQuestion(arr && arr[i], x.conceptText); });
 }
 
 function questionFailNote(reason) {
