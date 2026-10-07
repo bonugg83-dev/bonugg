@@ -1,32 +1,70 @@
 <title>개념노트</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <style>
+/* Layout: collapsible sidebar (tablet) / tab bar (phone) + one working column; home → review → upload → collection → stats.
+   Flat surfaces, hairline borders, small radii; colour only where it carries meaning (subject, rating, state). */
 :root {
-  --bg: #f2f2f7;
+  --bg: #f3f5f8;
   --surface: #ffffff;
-  --surface-2: #edeef3;
-  --border: #e2e3ea;
-  --text: #1c1c1e;
-  --text-2: #6e6e73;
-  --text-3: #8e8e93;
-  --accent: #6366f1;
-  --accent-2: #a855f7;
-  --accent-soft: #eeeafd;
-  --danger: #d9463f;
-  --danger-soft: #fbeae9;
-  --warn: #b3790f;
-  --warn-soft: #faf1dc;
-  --good: #1f8a5f;
-  --good-soft: #e4f4ec;
-  --radius-lg: 20px;
-  --radius: 16px;
-  --radius-sm: 12px;
-  --shadow-sm: 0 1px 2px rgba(20,22,30,.05);
-  --shadow-md: 0 10px 26px rgba(20,22,30,.08);
+  --surface-2: #eaedf2;
+  --border: #dce0e8;
+  --text: #161a22;
+  --text-2: #546072;
+  --text-3: #8590a0;
+  --accent: #2648c8;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6ebfb;
+  --danger: #c2362c;
+  --danger-soft: #fbe9e7;
+  --warn: #946200;
+  --warn-soft: #f8efd7;
+  --good: #17744f;
+  --good-soft: #e1f3ea;
+  --paper: #ffffff;
+  --heat1: #d6defa;
+  --heat2: #aebcf3;
+  --heat3: #7a90e8;
+  --heat4: #2648c8;
+  --mark: #fde68a;
+  --toast-bg: #161a22;
+  --toast-fg: #f3f5f8;
+  --overlay: rgba(8, 10, 14, .92);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, .06);
+  --shadow-md: 0 8px 24px rgba(16, 24, 40, .08);
+  --radius-lg: 14px;
+  --radius: 10px;
+  --radius-sm: 8px;
   --sidebar-w: 232px;
+  --rail-w: 68px;
+  --font-ui: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  --font-num: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1217; --surface: #171b22; --surface-2: #212631; --border: #2b3240;
+    --text: #e7eaf0; --text-2: #a3acbc; --text-3: #7a8494;
+    --accent: #8ba2ff; --accent-ink: #0f1217; --accent-soft: #1d2542;
+    --danger: #ff8a7d; --danger-soft: #3a1f1d; --warn: #e5b04f; --warn-soft: #382d14;
+    --good: #55c995; --good-soft: #173225;
+    --heat1: #20294d; --heat2: #2f3d78; --heat3: #4a62c4; --heat4: #8ba2ff;
+    --mark: #6b5a12; --toast-bg: #e7eaf0; --toast-fg: #0f1217;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4); --shadow-md: 0 8px 24px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1217; --surface: #171b22; --surface-2: #212631; --border: #2b3240;
+  --text: #e7eaf0; --text-2: #a3acbc; --text-3: #7a8494;
+  --accent: #8ba2ff; --accent-ink: #0f1217; --accent-soft: #1d2542;
+  --danger: #ff8a7d; --danger-soft: #3a1f1d; --warn: #e5b04f; --warn-soft: #382d14;
+  --good: #55c995; --good-soft: #173225;
+  --heat1: #20294d; --heat2: #2f3d78; --heat3: #4a62c4; --heat4: #8ba2ff;
+  --mark: #6b5a12; --toast-bg: #e7eaf0; --toast-fg: #0f1217;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4); --shadow-md: 0 8px 24px rgba(0, 0, 0, .45);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -35,44 +73,45 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans KR', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 15px;
-  line-height: 1.65;
+  line-height: 1.6;
   -webkit-tap-highlight-color: transparent;
 }
-button, select, input, textarea { font-family: inherit; }
+button, select, input, textarea { font-family: inherit; color: inherit; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, label:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 img { max-width: 100%; }
 svg { display: block; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 
 #app { display: flex; flex-direction: column; height: 100%; }
+.main-area { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
 .topbar {
-  padding: 16px 20px 14px;
-  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 10px;
 }
-.topbar .brand-mark {
-  width: 30px; height: 30px; border-radius: 9px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff;
+.brand-mark {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--accent); color: var(--accent-ink);
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 14px; flex-shrink: 0;
 }
-.topbar h1 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+.topbar h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
 
 .content {
-  flex: 1;
+  flex: 1; min-height: 0;
   overflow-y: auto;
-  padding: 22px 18px 28px;
-  max-width: 640px;
+  padding: 20px 16px 28px;
   width: 100%;
+  max-width: 720px;
   margin: 0 auto;
 }
 
-/* phone bottom tab bar */
+/* phone: bottom tab bar */
 .tabbar {
   display: flex;
   border-top: 1px solid var(--border);
@@ -82,118 +121,177 @@ svg { display: block; }
 }
 .tab-btn {
   flex: 1; border: none; background: none;
-  padding: 11px 4px 9px;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 4px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
   color: var(--text-3); font-size: 11px; font-weight: 600; cursor: pointer;
 }
 .tab-btn.active { color: var(--accent); }
-.tab-btn .icn { width: 21px; height: 21px; }
+.tab-btn .icn { width: 21px; height: 21px; flex-shrink: 0; }
 
-/* ── tablet layout: sidebar instead of bottom bar ── */
+/* tablet / desktop: sidebar that folds into an icon rail */
 .sidebar { display: none; }
+.nav-toggle {
+  margin-left: auto; width: 32px; height: 32px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-2);
+  display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+}
+.nav-toggle:hover { background: var(--surface-2); color: var(--text); }
+.nav-toggle svg { width: 16px; height: 16px; transition: transform .2s; }
 
 @media (min-width: 820px) {
   #app { flex-direction: row; }
-  .topbar { display: none; }
-  .tabbar { display: none; }
+  .topbar, .tabbar { display: none; }
   .sidebar {
-    display: flex;
-    flex-direction: column;
-    width: var(--sidebar-w);
-    flex-shrink: 0;
+    display: flex; flex-direction: column;
+    width: var(--sidebar-w); flex-shrink: 0;
     background: var(--surface);
     border-right: 1px solid var(--border);
     height: 100%;
     padding-top: env(safe-area-inset-top, 0px);
+    transition: width .2s ease;
+    overflow: hidden;
   }
-  .sidebar .brand-row { display: flex; align-items: center; gap: 10px; padding: 22px 20px 20px; }
-  .sidebar .brand-mark { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; flex-shrink: 0; }
-  .sidebar h1 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
-  .sidebar nav { flex: 1; padding: 4px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .sidebar .brand-row { display: flex; align-items: center; gap: 10px; padding: 18px 14px 16px 18px; min-height: 68px; }
+  .sidebar h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
+  .sidebar nav { flex: 1; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
   .sidebar .tab-btn {
-    flex-direction: row; justify-content: flex-start; gap: 12px;
-    padding: 12px 14px; border-radius: var(--radius-sm);
-    font-size: 14px;
+    flex: 0 0 auto; flex-direction: row; justify-content: flex-start; gap: 12px;
+    padding: 11px 12px; border-radius: var(--radius-sm);
+    font-size: 14px; white-space: nowrap;
   }
+  .sidebar .tab-btn:hover { background: var(--surface-2); }
   .sidebar .tab-btn.active { background: var(--accent-soft); color: var(--accent); }
-  .sidebar .tab-btn .icn { width: 20px; height: 20px; flex-shrink: 0; }
-  .content { max-width: 760px; padding: 32px 40px 40px; }
-  .thumb-grid, .gallery-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  .sidebar .tab-btn .icn { width: 20px; height: 20px; }
+  #app.nav-collapsed .sidebar { width: var(--rail-w); }
+  #app.nav-collapsed .sidebar .brand-row { flex-direction: column; padding: 14px 0; gap: 12px; }
+  #app.nav-collapsed .sidebar h1, #app.nav-collapsed .sidebar .tab-label { display: none; }
+  #app.nav-collapsed .sidebar .nav-toggle { margin-left: 0; }
+  #app.nav-collapsed .sidebar .nav-toggle svg { transform: rotate(180deg); }
+  #app.nav-collapsed .sidebar .tab-btn { justify-content: center; padding: 12px 0; }
+  .content { max-width: 760px; padding: 28px 32px 40px; }
 }
 @media (min-width: 1180px) {
-  .content { max-width: 920px; }
-  .thumb-grid, .gallery-grid { grid-template-columns: repeat(4, 1fr) !important; }
+  .content { max-width: 960px; }
 }
 
 .empty-state { text-align: center; padding: 64px 16px; color: var(--text-3); }
-.empty-state .e-icn { width: 40px; height: 40px; margin: 0 auto 14px; color: var(--text-3); }
+.empty-state .e-icn { width: 36px; height: 36px; margin: 0 auto 12px; color: var(--text-3); }
 .loading { text-align: center; padding: 48px 16px; color: var(--text-3); font-size: 13px; }
 .done-banner { text-align: center; padding: 56px 16px; color: var(--text-2); }
-.done-banner .e-icn { width: 44px; height: 44px; margin: 0 auto 14px; color: var(--good); }
+.done-banner .e-icn { width: 40px; height: 40px; margin: 0 auto 12px; color: var(--good); }
 
 /* ── review ── */
-.progress-line { text-align: center; margin-bottom: 14px; font-size: 12px; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--text-3); }
-.progress-line .count-new { color: #2563eb; }
-.progress-line .count-learning { color: var(--danger); }
-.progress-line .count-review { color: var(--good); }
-.review-card {
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
-  margin-bottom: 18px;
+.progress-line { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.stat-pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text-2); }
+.stat-pill i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.stat-pill b { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text); }
+.dot-new { background: var(--accent); }
+.dot-learning { background: var(--danger); }
+.dot-review { background: var(--good); }
+
+.review-split { display: flex; flex-direction: column; gap: 12px; }
+.review-stage { position: relative; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: auto; display: flex; padding: 10px; -webkit-overflow-scrolling: touch; }
+.review-stage img { display: block; margin: auto; max-width: 100%; max-height: max(300px, calc(100dvh - 330px)); width: auto; height: auto; object-fit: contain; background: var(--paper); border-radius: 4px; box-shadow: var(--shadow-sm); cursor: zoom-in; }
+.review-stage.wide img { width: 100%; max-height: none; margin: 0 auto auto; cursor: zoom-out; }
+.stage-empty { margin: auto; color: var(--text-3); font-size: 13px; }
+.stage-tools { position: absolute; right: 12px; top: 12px; margin: 0; height: auto; width: auto; }
+.stage-btn { border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow-sm); }
+.stage-btn:hover { color: var(--text); }
+.review-side { display: flex; flex-direction: column; gap: 12px; }
+.side-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.subj-tag { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--text); }
+.subj-tag i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+.leech-badge { padding: 2px 10px; border-radius: 999px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 700; }
+.card-meta { font-size: 11px; color: var(--text-3); font-family: var(--font-num); }
+.review-caption { padding: 12px 14px; font-size: 15px; white-space: pre-wrap; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+@media (min-width: 820px) {
+  .content.review-mode { max-width: none; padding: 14px 16px; overflow: hidden; }
+  .content.review-mode #reviewBody { height: 100%; }
+  .content.review-mode .review-split { flex-direction: row; height: 100%; gap: 14px; }
+  .content.review-mode .review-stage { flex: 1 1 0; min-width: 0; }
+  .content.review-mode .review-stage img { max-height: 100%; }
+  .content.review-mode .review-stage.wide img { max-height: none; }
+  .content.review-mode .review-side { flex: 0 0 280px; overflow-y: auto; }
+  .content.review-mode .progress-line { flex-direction: column; align-items: stretch; margin: 0; gap: 6px; justify-content: flex-start; }
+  .content.review-mode .stat-pill b { margin-left: auto; }
+  .content.review-mode .stat-pill { justify-content: flex-start; border-radius: var(--radius-sm); padding: 7px 12px; }
+  .content.review-mode .rating-bar { margin-top: auto; position: static; background: none; padding: 0; }
+  .content.review-mode .rating-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .content.review-mode .rate-btn { padding: 22px 4px 16px; font-size: 17px; }
 }
-.accent-stripe { height: 4px; width: 100%; }
-.leech-badge {
-  display: inline-block; margin: 10px 14px 0; padding: 3px 10px;
-  border-radius: 999px; background: var(--danger-soft); color: var(--danger);
-  font-size: 11px; font-weight: 700;
-}
-.review-card img { width: 100%; display: block; max-height: 56vh; object-fit: contain; background: var(--surface-2); cursor: zoom-in; }
-.review-caption { padding: 16px 18px; font-size: 15px; white-space: pre-wrap; border-top: 1px solid var(--border); }
+@media (min-width: 1180px) { .content.review-mode .review-side { flex-basis: 320px; } }
+
+.rating-bar { position: sticky; bottom: 0; padding: 4px 0 2px; background: var(--bg); }
 .rating-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.rate-btn { border: none; border-radius: var(--radius-sm); padding: 14px 4px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow-sm); }
-.rate-btn:disabled { opacity: .5; }
+.rate-btn {
+  position: relative; border: 1px solid transparent; border-radius: var(--radius);
+  padding: 12px 4px 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.rate-btn:disabled { opacity: .5; cursor: default; }
+.rate-btn:not(:disabled):active { transform: translateY(1px); }
 .rate-again { background: var(--danger-soft); color: var(--danger); }
 .rate-hard { background: var(--warn-soft); color: var(--warn); }
 .rate-good { background: var(--good-soft); color: var(--good); }
 .rate-easy { background: var(--accent-soft); color: var(--accent); }
-.rate-preview { display: block; font-size: 10px; font-weight: 600; opacity: .75; margin-top: 3px; }
-.undo-btn { margin-top: 10px; }
+.rate-preview { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 500; opacity: .85; }
+.rate-key { position: absolute; top: 5px; right: 7px; font-family: var(--font-num); font-size: 10px; font-weight: 500; opacity: .5; }
+@media (hover: none) { .rate-key { display: none; } }
+.undo-btn { margin-top: 8px; }
 
 /* ── upload ── */
-.field-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 7px; text-transform: uppercase; letter-spacing: .04em; }
+.step-title { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-2); margin: 0 0 10px; }
+.step-title small { font-size: 12px; font-weight: 500; color: var(--text-3); }
+.field-label { display: block; font-size: 13px; font-weight: 700; color: var(--text-2); margin: 0 0 10px; }
 select, textarea, input[type=text] {
-  width: 100%; padding: 11px 13px;
-  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-  background: var(--surface-2); color: var(--text); font-size: 14px;
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text); font-size: 14px;
 }
-select:focus, textarea:focus, input:focus { outline: none; border-color: var(--accent); }
-.dropzone-group { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+select:focus, textarea:focus, input:focus { border-color: var(--accent); }
+.subject-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.subject-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: var(--radius-sm); padding: 9px 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.subject-chip i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+.subject-chip:hover { background: var(--surface-2); }
+.subject-chip.on { color: var(--text); border-color: var(--text); background: var(--surface); box-shadow: inset 0 0 0 1px var(--text); }
+.dropzone-group { display: grid; gap: 10px; margin-top: 0; }
+.dropzone-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 520px) { .dropzone-row { grid-template-columns: 1fr; } }
 .dropzone {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 32px 16px; gap: 10px;
+  text-align: center; padding: 24px 16px; gap: 6px;
   border: 1.5px dashed var(--border); border-radius: var(--radius-lg);
   color: var(--text-2); font-size: 14px; font-weight: 600; cursor: pointer;
   background: var(--surface);
 }
-.dropzone .e-icn { width: 30px; height: 30px; color: var(--accent); }
+.dropzone:hover { border-color: var(--text-3); }
+.dropzone .e-icn { width: 26px; height: 26px; color: var(--text-3); }
 .dropzone input { display: none; }
+.dropzone.ai-zone { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); padding: 34px 16px; }
+.dropzone.ai-zone .e-icn { color: var(--accent); width: 30px; height: 30px; }
+.ai-sub { font-size: 12px; font-weight: 500; color: var(--text-2); }
+.section-label { font-size: 12px; font-weight: 700; color: var(--text-3); margin: 22px 0 10px; letter-spacing: .02em; }
+.ai-progress { text-align: center; padding: 48px 16px 20px; color: var(--text-2); font-size: 14px; font-weight: 600; }
+.ai-progress .sub { font-size: 12px; color: var(--text-3); font-weight: 500; margin-top: 6px; }
+.ai-spinner { width: 26px; height: 26px; margin: 0 auto 14px; border-radius: 50%; border: 3px solid var(--accent-soft); border-top-color: var(--accent); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ai-spinner { animation-duration: 3s; } .sidebar, .nav-toggle svg { transition: none; } }
+.ai-summary { font-size: 13px; color: var(--text-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; }
 
 /* ── PDF manual crop ── */
 .pdf-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .pdf-nav .page-count { font-size: 13px; font-weight: 700; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .pdf-nav button {
-  border: none; background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
   padding: 8px 14px; border-radius: var(--radius-sm); font-weight: 600; font-size: 13px; cursor: pointer;
 }
 .pdf-nav button:disabled { opacity: .4; cursor: default; }
-.crop-stage { position: relative; width: 100%; touch-action: none; border-radius: var(--radius); overflow: hidden; }
+.crop-stage { position: relative; width: 100%; touch-action: none; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
 .crop-stage img { width: 100%; display: block; user-select: none; }
-.crop-box { position: absolute; border: 2px solid var(--accent); background: rgba(99,102,241,.14); cursor: move; }
+.crop-box { position: absolute; border: 2px solid var(--accent); background: rgba(38, 72, 200, .14); cursor: move; }
 .crop-handle {
   position: absolute; width: 24px; height: 24px;
-  background: var(--accent); border: 2px solid #fff; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--surface); border-radius: 50%;
   transform: translate(-50%, -50%); box-shadow: var(--shadow-sm);
 }
 .crop-handle[data-mode="nw"] { left: 0; top: 0; cursor: nwse-resize; }
@@ -204,125 +302,313 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
 .crop-count { text-align: center; font-size: 12px; color: var(--text-3); margin-top: 10px; }
 
 .btn-primary {
-  width: 100%; padding: 14px; background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff;
-  border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 14px; cursor: pointer;
-  box-shadow: 0 8px 20px rgba(139,140,246,.35);
+  width: 100%; padding: 13px; background: var(--accent); color: var(--accent-ink);
+  border: none; border-radius: var(--radius); font-weight: 700; font-size: 14px; cursor: pointer;
 }
+.btn-primary:hover { filter: brightness(1.08); }
 .btn-primary:disabled { opacity: .5; }
 .btn-secondary {
-  width: 100%; padding: 13px; background: var(--surface-2); color: var(--text-2);
-  border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 14px; cursor: pointer;
+  width: 100%; padding: 12px; background: var(--surface); color: var(--text-2);
+  border: 1px solid var(--border); border-radius: var(--radius); font-weight: 700; font-size: 14px; cursor: pointer;
   text-align: center;
 }
+.btn-secondary:hover { background: var(--surface-2); }
 .btn-icon {
-  width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
-  background: var(--surface-2); color: var(--text-2);
+  width: 30px; height: 30px; border-radius: var(--radius-sm); border: none; cursor: pointer;
+  background: transparent; color: var(--text-3);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.btn-icon svg { width: 15px; height: 15px; }
+.btn-icon svg { width: 16px; height: 16px; }
 .btn-icon:hover { background: var(--danger-soft); color: var(--danger); }
 
-.thumb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+/* upload review: cropped problems to confirm */
+.thumb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; margin: 14px 0; }
 .thumb-card {
-  border-radius: var(--radius); padding: 10px; background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border);
+  overflow: hidden; display: flex; flex-direction: column;
 }
-.thumb-card img { width: 100%; border-radius: var(--radius-sm); cursor: pointer; display: block; margin-bottom: 8px; aspect-ratio: 4/3; object-fit: cover; background: var(--surface-2); }
-.thumb-card input[type=text] { font-size: 12px; padding: 7px 10px; margin-bottom: 8px; }
+.thumb-card .thumb-img { background: var(--surface-2); height: 260px; display: flex; align-items: center; justify-content: center; padding: 8px; }
+.thumb-card img { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; background: var(--paper); border-radius: 3px; cursor: zoom-in; display: block; }
+.thumb-card .thumb-body { padding: 10px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+.thumb-card textarea { font-size: 13px; padding: 8px 10px; min-height: 52px; resize: vertical; line-height: 1.5; }
 .thumb-card-foot { display: flex; align-items: center; justify-content: space-between; }
-.thumb-card-foot label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); font-weight: 600; }
-.save-bar { position: sticky; bottom: 0; padding-top: 6px; }
+.thumb-card-foot label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); font-weight: 600; cursor: pointer; }
+.save-bar { position: sticky; bottom: 0; padding: 10px 0 2px; background: var(--bg); }
 
-/* ── concepts grid (모아보기) ── */
-.subject-filter { margin-bottom: 16px; max-width: 220px; }
-.gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.gallery-item {
-  border-radius: var(--radius); overflow: hidden; background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-.gallery-item img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; cursor: pointer; background: var(--surface-2); }
-.gallery-item .g-body { padding: 10px 12px 12px; }
-.gallery-item .g-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-/* the color dot sits over the select via a positioned wrapper, so the select itself stays plain text */
+/* ── collection (모아보기) ── */
+.concept-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.toolbar-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.search-input { flex: 1 1 200px; min-width: 0; width: auto; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 14px; }
+.search-input:focus { border-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); padding: 2px; gap: 2px; }
+.seg button { border: none; background: transparent; color: var(--text-2); padding: 7px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.seg button.on { background: var(--text); color: var(--bg); }
+.chip-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chip-scroll::-webkit-scrollbar { display: none; }
+.filter-chip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.filter-chip i { width: 8px; height: 8px; border-radius: 3px; display: inline-block; }
+.filter-chip.on { color: var(--bg); background: var(--text); border-color: var(--text); }
+.backlog-note { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: var(--radius); background: var(--warn-soft); color: var(--warn); font-size: 12px; line-height: 1.5; }
+.backlog-note b { font-size: 13px; }
+.old-recall { display: flex; align-items: center; gap: 18px; }
+.old-pct { font-family: var(--font-num); font-size: 40px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.old-pct small { font-size: 18px; color: var(--text-3); margin-left: 2px; }
+.old-desc { font-size: 14px; }
+.old-sub { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.sort-hint { font-size: 12px; color: var(--text-3); font-weight: 600; }
+.search-count { font-size: 12px; font-weight: 600; color: var(--text-3); margin-bottom: 10px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.gallery-item { border-radius: var(--radius); overflow: hidden; background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; }
+.gallery-item .g-img { background: var(--surface-2); height: 220px; display: flex; align-items: center; justify-content: center; padding: 8px; }
+.gallery-item img { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; background: var(--paper); border-radius: 3px; display: block; cursor: zoom-in; }
+.gallery-item .g-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+.gallery-item .g-top { display: flex; align-items: center; justify-content: space-between; }
 .subj-select-wrap { position: relative; display: inline-flex; align-items: center; }
 .subj-select-wrap select {
-  font: inherit; font-weight: 700; color: #fff;
+  font: inherit; font-size: 12px; font-weight: 700; color: #fff; width: auto;
   border: none; cursor: pointer;
-  padding: 3px 10px 3px 22px; border-radius: 999px; appearance: none; -webkit-appearance: none;
+  padding: 3px 10px 3px 24px; border-radius: 999px; appearance: none; -webkit-appearance: none;
 }
-/* the dropdown's own option list is native UI (white popup), so give options
-   their own dark-on-light colors instead of inheriting the select's white text */
-.subj-select-wrap select option { color: var(--text); background: var(--surface); font-weight: 500; }
+.subj-select-wrap select option { color: #161a22; background: #fff; font-weight: 500; }
 .subj-select-wrap .dot {
-  position: absolute; left: 3px; top: 50%; transform: translateY(-50%);
-  width: 16px; height: 16px; border-radius: 50%; color: #fff;
+  position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; border-radius: 50%; color: #fff; background: rgba(255,255,255,.25) !important;
   display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;
   pointer-events: none;
 }
-.gallery-item .g-caption { font-size: 12px; color: var(--text-2); white-space: pre-wrap; word-break: break-word; cursor: pointer; }
+.gallery-item .g-caption { font-size: 13px; color: var(--text-2); white-space: pre-wrap; word-break: break-word; cursor: pointer; }
 .gallery-item .g-caption-edit {
-  width: 100%; font-size: 12px; color: var(--text); line-height: 1.5;
-  border: 1.5px solid var(--accent); border-radius: 8px; padding: 6px 8px;
+  width: 100%; font-size: 13px; color: var(--text); line-height: 1.5;
+  border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 6px 8px;
   min-height: 44px; resize: vertical; background: var(--surface);
 }
+.g-hard { font-size: 11px; font-weight: 700; color: var(--danger); font-family: var(--font-num); }
+.g-caption mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
 
 .lightbox-overlay {
   position: fixed; inset: 0; z-index: 220;
-  background: rgba(8,9,13,.85);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px; cursor: zoom-out;
+  background: var(--overlay);
+  overflow: auto; -webkit-overflow-scrolling: touch;
+  padding: 12px; cursor: zoom-out; touch-action: pan-x pan-y pinch-zoom;
 }
-.lightbox-overlay img { max-height: 100%; border-radius: 10px; }
+.lightbox-overlay img { display: block; margin: 0 auto; width: 100%; max-width: 1400px; height: auto; border-radius: 6px; background: #fff; cursor: zoom-in; }
+.lightbox-overlay img.zoomed { width: 220%; max-width: none; margin: 0; cursor: zoom-out; }
+.lightbox-close { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: 14px; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,.92); color: #161a22; font-size: 18px; font-weight: 700; cursor: pointer; z-index: 221; }
+
+/* ── stats ── */
+.stat-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 18px; margin-bottom: 12px; }
+.stat-title { font-size: 12px; font-weight: 700; color: var(--text-2); letter-spacing: .02em; margin: 0 0 12px; }
+.streak-hero { display: flex; align-items: center; gap: 18px; }
+.flame-wrap { width: 100px; height: 112px; display: flex; align-items: flex-end; justify-content: center; flex-shrink: 0; }
+.flame { transform-origin: 50% 100%; animation: flicker 1.6s ease-in-out infinite; }
+@keyframes flicker { 0%,100% { transform: scale(1,1) rotate(0deg); } 30% { transform: scale(1.03,.97) rotate(-1.5deg); } 65% { transform: scale(.97,1.04) rotate(1.5deg); } }
+@media (prefers-reduced-motion: reduce) { .flame { animation: none; } }
+.streak-num { font-family: var(--font-num); font-size: 42px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.streak-num small { font-family: var(--font-ui); font-size: 15px; font-weight: 700; margin-left: 4px; color: var(--text-2); }
+.streak-tier { font-size: 13px; font-weight: 700; margin-top: 6px; }
+.streak-note { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.week-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 16px; }
+.week-day { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-3); }
+.week-dot { width: 26px; height: 26px; border-radius: 50%; margin: 5px auto 0; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
+.week-dot svg { width: 14px; height: 14px; }
+.week-day.on .week-dot { background: var(--warn-soft); }
+.week-day.today { color: var(--accent); }
+.mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.mini-stat { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px 16px; }
+.mini-stat .v { font-family: var(--font-num); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mini-stat .l { font-size: 12px; color: var(--text-2); font-weight: 600; }
+.acc-row { display: grid; grid-template-columns: 84px 1fr auto; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+.acc-row:last-child { margin-bottom: 0; }
+.acc-name { font-weight: 700; }
+.acc-track { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.acc-fill { height: 100%; border-radius: 999px; }
+.acc-val { font-family: var(--font-num); font-variant-numeric: tabular-nums; color: var(--text-2); font-size: 12px; min-width: 76px; text-align: right; }
+.due-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 130px; }
+.due-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+.due-bar { width: 100%; max-width: 34px; border-radius: 6px 6px 3px 3px; background: var(--accent); min-height: 3px; }
+.due-bar.zero { background: var(--surface-2); }
+.due-n { font-family: var(--font-num); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.due-d { font-size: 11px; color: var(--text-3); font-weight: 600; }
+.stat-empty { font-size: 13px; color: var(--text-3); }
+
+.heat-wrap { overflow-x: auto; padding-bottom: 4px; }
+.heat-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 14px); grid-auto-columns: 14px; gap: 3px; width: max-content; }
+.heat-cell { border-radius: 3px; background: var(--surface-2); }
+.heat-cell.l1 { background: var(--heat1); }
+.heat-cell.l2 { background: var(--heat2); }
+.heat-cell.l3 { background: var(--heat3); }
+.heat-cell.l4 { background: var(--heat4); }
+.heat-cell.today { outline: 1.5px solid var(--text-2); outline-offset: 1px; }
+.heat-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; font-size: 11px; color: var(--text-3); font-weight: 600; flex-wrap: wrap; }
+.heat-legend { display: flex; align-items: center; gap: 3px; }
+.heat-legend .heat-cell { width: 12px; height: 12px; }
+.mature-bar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--surface-2); }
+.mature-seg { height: 100%; }
+.mature-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 14px; font-size: 13px; }
+.mature-legend span.k { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+.mature-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.mature-legend b { font-family: var(--font-num); font-variant-numeric: tabular-nums; margin-left: 4px; font-weight: 600; }
+.weak-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
+.weak-row:first-of-type { border-top: none; padding-top: 0; }
+.weak-thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: var(--surface-2); cursor: zoom-in; flex-shrink: 0; }
+.weak-body { min-width: 0; flex: 1; }
+.weak-subj { font-size: 11px; font-weight: 700; }
+.weak-text { font-size: 13px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weak-count { font-family: var(--font-num); font-size: 12px; font-weight: 600; color: var(--danger); background: var(--danger-soft); border-radius: 999px; padding: 3px 10px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+.exam-hero {
+  margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 14px 18px; border-radius: var(--radius-lg); background: var(--text); color: var(--bg); cursor: pointer;
+}
+.exam-hero.exam-empty { background: var(--surface); color: var(--text-2); border: 1.5px dashed var(--border); font-size: 13px; font-weight: 600; }
+.exam-edit-hint { font-weight: 800; color: var(--accent); }
+.exam-main { min-width: 0; }
+.exam-name { font-size: 13px; font-weight: 700; opacity: .9; }
+.exam-date { font-size: 12px; opacity: .75; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.exam-dnum { font-family: var(--font-num); font-size: 30px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.exam-others { flex-basis: 100%; display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; font-weight: 700; }
+.exam-others span { background: rgba(127,127,127,.28); border-radius: 999px; padding: 2px 10px; }
+.exam-editor { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px; margin: -2px 0 12px; display: flex; flex-direction: column; gap: 10px; }
+.exam-edit-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.exam-edit-row .exam-input { flex: 1 1 130px; min-width: 0; width: auto; }
+input[type=date].exam-input { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 14px; }
+
+.stat-warn { background: var(--danger-soft); color: var(--danger); font-size: 13px; font-weight: 600; }
 
 .toast {
   position: fixed;
   bottom: calc(78px + env(safe-area-inset-bottom, 0px));
   left: 50%; transform: translateX(-50%) translateY(10px);
-  background: var(--text); color: var(--bg);
-  padding: 11px 20px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: var(--toast-bg); color: var(--toast-fg);
+  padding: 10px 18px; border-radius: 999px; font-size: 13px; font-weight: 600;
   opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
   z-index: 300; max-width: 86vw; text-align: center; box-shadow: var(--shadow-md);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 @media (min-width: 820px) { .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); } }
+
+/* ───────────── polish: one calm system (solid accent, short motion, no glow) ───────────── */
+:root { --ease: cubic-bezier(.2, .7, .2, 1); --t-fast: .12s; --t: .2s; }
+
+.page-h { margin: 0 0 16px; font-size: 21px; font-weight: 800; letter-spacing: -.02em; line-height: 1.3; }
+.page-h .page-sub { margin-left: 8px; font-size: 13px; font-weight: 600; color: var(--text-3); letter-spacing: 0; }
+.state-title { margin: 0 0 6px; font-size: 17px; font-weight: 800; color: var(--text); }
+.empty-state p, .done-banner p { margin: 0 0 18px; font-size: 14px; }
+.state-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.state-actions button { width: auto; padding: 11px 22px; }
+
+/* view + card transitions */
+@keyframes view-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes card-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.view-in { animation: view-in var(--t) var(--ease) both; }
+.card-in { animation: card-in var(--t) var(--ease) both; }
+.lightbox-overlay { animation: view-in var(--t) var(--ease) both; }
+
+/* loading skeletons */
+.skel { border-radius: var(--radius); background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+.skel-row { display: flex; gap: 12px; }
+.skel-col { display: flex; flex-direction: column; gap: 12px; }
+.skel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+
+/* press feedback */
+.tab-btn, .btn-primary, .btn-secondary, .btn-icon, .stage-btn, .filter-chip, .subject-chip, .rate-btn, .nav-toggle { transition: transform var(--t-fast) var(--ease), background var(--t-fast), color var(--t-fast), border-color var(--t-fast), filter var(--t-fast); }
+.tab-btn:active, .btn-primary:not(:disabled):active, .btn-secondary:active, .btn-icon:active, .stage-btn:active, .filter-chip:active, .subject-chip:active, .rate-btn:not(:disabled):active { transform: scale(.97); }
+.rate-btn:not(:disabled):hover { filter: brightness(.96); }
+.rate-btn.picked:disabled { opacity: 1; box-shadow: inset 0 0 0 2px currentColor; }
+@media (min-width: 820px) {
+  .sidebar .tab-btn.active::before { content: ""; position: absolute; left: -10px; top: 22%; bottom: 22%; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+}
+
+/* segmented switch with a sliding pill */
+.seg { position: relative; }
+.seg button { position: relative; z-index: 1; transition: color var(--t); }
+.seg button.on { background: transparent; color: var(--bg); }
+.seg-pill { position: absolute; top: 2px; bottom: 2px; left: 0; width: 0; border-radius: 6px; background: var(--text); transition: transform .25s var(--ease), width .25s var(--ease); z-index: 0; }
+
+/* chips and switches */
+.subject-chip.on, .filter-chip.on { animation: none; }
+input[type=checkbox] { appearance: none; -webkit-appearance: none; position: relative; width: 38px; height: 22px; margin: 0; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); cursor: pointer; flex-shrink: 0; transition: background var(--t), border-color var(--t); }
+input[type=checkbox]::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); transition: transform var(--t) var(--ease); }
+input[type=checkbox]:checked { background: var(--accent); border-color: var(--accent); }
+input[type=checkbox]:checked::after { transform: translateX(16px); }
+input:focus, textarea:focus, select:focus { box-shadow: 0 0 0 3px var(--accent-soft); }
+.stat-card, .gallery-item, .thumb-card { transition: border-color var(--t); }
+.gallery-item:hover, .thumb-card:hover, .stat-card:hover { border-color: var(--text-3); }
+
+/* review: progress + stage */
+.rv-progress { height: 4px; border-radius: 999px; background: var(--surface-2); overflow: hidden; flex-shrink: 0; }
+.rv-progress i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s var(--ease); }
+.review-stage { box-shadow: var(--shadow-sm); }
+
+/* home */
+.home-wrap { display: grid; gap: 12px; }
+@media (min-width: 820px) { .home-wrap { grid-template-columns: 1.5fr 1fr; align-items: start; } }
+.home-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.home-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; }
+.home-kicker { font-size: 13px; font-weight: 700; color: var(--text-2); }
+.home-count { font-family: var(--font-num); font-size: 60px; font-weight: 600; line-height: 1.05; letter-spacing: -.03em; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+.home-count small { font-family: var(--font-ui); font-size: 18px; font-weight: 700; color: var(--text-2); margin-left: 6px; letter-spacing: 0; }
+.home-title { margin: 6px 0 14px; font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.35; }
+.home-break { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 18px; }
+.home-hero .backlog-note { margin-bottom: 16px; }
+.home-actions { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+.home-actions button { padding: 15px 12px; font-size: 15px;  white-space: nowrap; }
+@media (max-width: 520px) { .home-actions { grid-template-columns: 1fr; } }
+.home-done-icn { color: var(--good); }
+.home-done-icn .e-icn { width: 40px; height: 40px; color: var(--good); margin-bottom: 8px; }
+.onboard { margin: 0 0 20px; padding: 0; list-style: none; counter-reset: ob; display: flex; flex-direction: column; gap: 12px; }
+.onboard li { counter-increment: ob; display: flex; gap: 12px; align-items: flex-start; font-size: 14px; color: var(--text-2); }
+.onboard li::before { content: counter(ob); flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.onboard b { color: var(--text); }
+.home-tile { margin-bottom: 0; }
+button.tile-btn { text-align: left; cursor: pointer; font: inherit; color: inherit; width: 100%; }
+button.tile-btn:hover { border-color: var(--text-3); }
+.tile-d { font-family: var(--font-num); font-size: 30px; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.tile-sub { font-size: 12px; color: var(--text-3); font-weight: 600; }
+
+/* upload saving */
+.save-prog { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin: 14px auto 0; max-width: 320px; }
+.save-prog i { display: block; height: 100%; background: var(--accent); transition: width .2s var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
 </style>
 
 <div id="app">
   <!-- tablet sidebar -->
   <aside class="sidebar">
-    <div class="brand-row"><div class="brand-mark">개</div><h1>개념노트</h1></div>
+    <div class="brand-row"><div class="brand-mark">개</div><h1>개념노트</h1><button class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="사이드바 접기 또는 펼치기" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button></div>
     <nav>
-      <button class="tab-btn active" data-tab="review" onclick="switchTab('review')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
-        오늘의 복습
-      </button>
+      <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.2 12 4l8.5 7.2V19a1.5 1.5 0 0 1-1.5 1.5h-3.5v-5.5h-7v5.5H5A1.5 1.5 0 0 1 3.5 19z"/></svg><span class="tab-label">홈</span></button>
+      <button class="tab-btn" data-tab="review" onclick="switchTab('review')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg><span class="tab-label">복습</span></button>
       <button class="tab-btn" data-tab="upload" onclick="switchTab('upload')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.6"/></svg>
-        업로드
-      </button>
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.6"/></svg><span class="tab-label">업로드</span></button>
       <button class="tab-btn" data-tab="concepts" onclick="switchTab('concepts')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
-        모아보기
-      </button>
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg><span class="tab-label">모아보기</span></button>
+      <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tab-label">통계</span></button>
     </nav>
   </aside>
 
-  <div class="main-area" style="display:flex;flex-direction:column;flex:1;min-width:0;">
+  <div class="main-area">
     <div class="topbar"><div class="brand-mark">개</div><h1>개념노트</h1></div>
     <div class="content" id="content"></div>
     <nav class="tabbar">
-      <button class="tab-btn active" data-tab="review" onclick="switchTab('review')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
-        오늘의 복습
-      </button>
+      <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.2 12 4l8.5 7.2V19a1.5 1.5 0 0 1-1.5 1.5h-3.5v-5.5h-7v5.5H5A1.5 1.5 0 0 1 3.5 19z"/></svg><span class="tab-label">홈</span></button>
+      <button class="tab-btn" data-tab="review" onclick="switchTab('review')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg><span class="tab-label">복습</span></button>
       <button class="tab-btn" data-tab="upload" onclick="switchTab('upload')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.6"/></svg>
-        업로드
-      </button>
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.6"/></svg><span class="tab-label">업로드</span></button>
       <button class="tab-btn" data-tab="concepts" onclick="switchTab('concepts')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
-        모아보기
-      </button>
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg><span class="tab-label">모아보기</span></button>
+      <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tab-label">통계</span></button>
     </nav>
   </div>
 </div>
@@ -331,6 +617,7 @@ select:focus, textarea:focus, input:focus { outline: none; border-color: var(--a
 
 <script>
 var ICONS = {
+  warn: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5"/><circle cx="12" cy="17" r=".6"/></svg>',
   empty: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h8l6 6v9.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 4v5a1 1 0 0 0 1 1h5"/></svg>',
   done: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>',
   moon: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>',
@@ -349,11 +636,11 @@ var SUBJECTS = [
 
 function subjectGradient(subjectId) {
   var subj = SUBJECTS.find(function (s) { return s.id === subjectId; });
-  return subj ? ('linear-gradient(120deg, ' + subj.c1 + ', ' + subj.c2 + ')') : 'var(--surface-2)';
+  return subj ? subj.c1 : 'var(--text-3)';
 }
 
 var db = null, assets = null;
-var currentTab = 'review';
+var currentTab = 'home';
 
 // review tab state
 var reviewQueue = null;       // FIFO array of normalized cards ready to show now
@@ -363,14 +650,36 @@ var dailyStatsKey = null;
 var undoStack = [];           // [{ conceptId, beforeCard, logId, statsField }]
 var reviewBusy = false;
 var reviewHasCompletedAny = false;
+var sessionAnswered = 0;     // cards answered since the page opened (drives the progress bar)
+var lastPaintedId = null;     // id of the card currently on screen, to animate only real card changes
+var studyInfo = null;         // { daySet, total } for the home screen, loaded once per session
 var reviewWaitTimer = null;
+var backlogInfo = null;       // 밀린 복습 정리 모드일 때 { overdue, shown, held, newHeld }
+
+// exam (D-day) state
+var examList = [];            // [{ name, date: 'YYYY-MM-DD' }] stored in settings/exams
+var examEditing = false;
+var cardShownId = null, cardShownAt = 0; // when the current card appeared, for time stats
 
 // upload tab state
-var uploadStage = 'idle'; // idle | pdf-crop | review | saving | done
+var uploadStage = 'idle'; // idle | pdf-crop | ai | review | saving | done
 var uploadSubject = SUBJECTS[0].id;
+try {
+  var savedSubject = localStorage.getItem('uploadSubject');
+  if (SUBJECTS.some(function (sj) { return sj.id === savedSubject; })) uploadSubject = savedSubject;
+} catch (e) {}
 var pendingUploads = []; // { localId, file, url, caption, included }
 var uploadSeq = 0;
 var savedCount = 0;
+var saveProgress = { i: 0, n: 0 };
+
+// PDF auto-split state
+var aiCtl = null;            // AbortController for the running PDF split
+var aiProgress = '';         // line shown while analyzing
+var aiSkipped = 0;           // (unused counter kept for the summary)
+var aiScanSkipped = 0;       // of those, scanned pages without a handwriting layer
+var aiGateSkipped = 0;       // pages skipped by the local colour gate (no AI call)
+var aiLocalCards = 0;        // problems added by local splitting, without AI text
 
 // pdf manual-crop state
 var pdfDoc = null;
@@ -383,13 +692,33 @@ var cropDragStartX = 0, cropDragStartY = 0, cropDragStartBounds = null;
 // concepts tab state
 var allConcepts = null;
 var conceptsSubjectFilter = '';
+var conceptsSearch = '';
+var conceptsDir = 'desc';       // 'desc' | 'asc' — 정렬 방향
+var conceptsSort = 'new';       // 'new' (최신 업로드순) | 'hard' (자주 어려워한 순)
+try { var savedSort = localStorage.getItem('conceptsSort'); if (savedSort === 'new' || savedSort === 'hard') conceptsSort = savedSort; var savedDir = localStorage.getItem('conceptsDir'); if (savedDir === 'asc' || savedDir === 'desc') conceptsDir = savedDir; } catch (e) {}
 var editingConceptId = null;
 
 async function initCapabilities() {
+  applyNav();
+  document.querySelectorAll('.sidebar .tab-btn').forEach(function (b) { b.title = b.textContent.trim(); }); // tooltip when the sidebar is folded
   try { db = await window.claude.use('db'); } catch (e) { db = null; }
   try { assets = await window.claude.use('assets'); } catch (e) { assets = null; }
+  if (db) await loadExams();
   renderCurrentTab();
   if (db) pruneOldReviewLogs(); // fire-and-forget, doesn't block the UI
+}
+
+var navCollapsed = false;
+try { navCollapsed = localStorage.getItem('navCollapsed') === '1'; } catch (e) {}
+function applyNav() {
+  document.getElementById('app').classList.toggle('nav-collapsed', navCollapsed);
+  var t = document.getElementById('navToggle');
+  if (t) t.setAttribute('aria-expanded', String(!navCollapsed));
+}
+function toggleNav() {
+  navCollapsed = !navCollapsed;
+  try { localStorage.setItem('navCollapsed', navCollapsed ? '1' : '0'); } catch (e) {}
+  applyNav();
 }
 
 function switchTab(tab) {
@@ -397,13 +726,19 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(function (b) {
     b.classList.toggle('active', b.dataset.tab === tab);
   });
+  var c = document.getElementById('content');
+  c.classList.remove('view-in'); void c.offsetWidth; c.classList.add('view-in');
+  c.scrollTop = 0;
   renderCurrentTab();
 }
 
 function renderCurrentTab() {
-  if (currentTab === 'review') renderReviewTab();
+  document.getElementById('content').classList.toggle('review-mode', currentTab === 'review');
+  if (currentTab === 'home') renderHomeTab();
+  else if (currentTab === 'review') renderReviewTab();
   else if (currentTab === 'upload') renderUploadTab();
   else if (currentTab === 'concepts') renderConceptsTab();
+  else if (currentTab === 'stats') renderStatsTab();
 }
 
 function showToast(msg) {
@@ -417,6 +752,32 @@ function showToast(msg) {
 function escapeHtml(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* shared screen states: loading skeletons, empty, error */
+function skelReview() {
+  return '<div class="review-split"><div class="skel" style="flex:1 1 0;min-height:320px"></div>' +
+    '<div class="review-side skel-col"><div class="skel" style="height:4px"></div><div class="skel" style="height:22px;width:50%"></div>' +
+    '<div class="skel" style="height:34px"></div><div class="skel" style="height:64px"></div><div class="skel" style="height:90px;margin-top:auto"></div></div></div>';
+}
+function skelHome() {
+  return '<div class="home-wrap"><div class="skel" style="height:290px"></div><div class="home-col"><div class="skel" style="height:150px"></div><div class="skel" style="height:90px"></div></div></div>';
+}
+function skelCards(n) {
+  var out = '';
+  for (var i = 0; i < n; i++) out += '<div class="skel" style="height:260px"></div>';
+  return '<div class="skel-grid">' + out + '</div>';
+}
+function skelStats() {
+  return '<div class="skel" style="height:44px;margin-bottom:12px"></div><div class="skel" style="height:150px;margin-bottom:12px"></div><div class="skel-row" style="margin-bottom:12px"><div class="skel" style="height:72px;flex:1"></div><div class="skel" style="height:72px;flex:1"></div></div><div class="skel" style="height:140px;margin-bottom:12px"></div><div class="skel" style="height:140px"></div>';
+}
+function errorBox(title, retryJs) {
+  return '<div class="empty-state">' + ICONS.warn + '<h2 class="state-title">' + title + '</h2><p>연결을 확인하고 다시 시도해 주세요.</p>' +
+    '<div class="state-actions"><button class="btn-primary" onclick="' + retryJs + '">다시 시도</button></div></div>';
+}
+function emptyBox(icon, title, desc, actionsHtml) {
+  return '<div class="empty-state">' + icon + '<h2 class="state-title">' + title + '</h2>' + (desc ? '<p>' + desc + '</p>' : '') +
+    (actionsHtml ? '<div class="state-actions">' + actionsHtml + '</div>' : '') + '</div>';
 }
 
 function subjectEditor(conceptId, subjectId) {
@@ -470,7 +831,9 @@ async function saveEditCaption(conceptId, newText) {
 function openLightbox(url) {
   var overlay = document.createElement('div');
   overlay.className = 'lightbox-overlay';
-  overlay.innerHTML = '<img src="' + url + '" alt="원본">';
+  overlay.innerHTML = '<img src="' + url + '" alt="원본"><button class="lightbox-close" aria-label="닫기">✕</button>';
+  var img = overlay.querySelector('img');
+  img.addEventListener('click', function (e) { e.stopPropagation(); img.classList.toggle('zoomed'); });
   overlay.addEventListener('click', function () { overlay.remove(); });
   document.body.appendChild(overlay);
 }
@@ -492,11 +855,14 @@ var SRS_CONFIG = {
   maxInterval: 180,                // 일
   newCardsPerDay: 20,
   reviewsPerDay: 200,
+  backlogThreshold: 30,            // 기한이 하루 이상 지난 복습 카드가 이 개수 이상이면 '밀린 복습 정리' 모드
+  backlogDailyReviews: 60,         // 정리 모드에서 하루에 내는 복습 카드 수 (새 카드는 멈춤)
   dayRolloverHour: 4,
   learnAheadMinutes: 20,
   leechThreshold: 8,
   reviewLogRetentionDays: 30,
   fuzzEnabled: true,
+  examDay: null,                   // ankiDay number of the nearest upcoming exam, set at runtime
 };
 
 function localDayNumber(d) {
@@ -522,8 +888,20 @@ function ankiDayKey(date, cfg) {
   return y + '-' + m + '-' + dd;
 }
 
+// With an exam coming, never schedule a review past the exam day, and in the last
+// 14 days keep every card within 4 days so nothing sits unseen right before it.
+function examCapFor(left, cfg) {
+  var cap = left <= 14 ? Math.min(4, left - 1) : left - 1;
+  return Math.max(cfg.minimumInterval, Math.min(cfg.maxInterval, cap));
+}
+function examIntervalCap(cfg) {
+  if (cfg.examDay == null) return cfg.maxInterval;
+  var left = cfg.examDay - ankiDay(new Date(), cfg);
+  return left <= 0 ? cfg.maxInterval : examCapFor(left, cfg);
+}
+
 function clampInterval(ivl, cfg) {
-  return Math.min(Math.max(Math.round(ivl), cfg.minimumInterval), cfg.maxInterval);
+  return Math.min(Math.max(Math.round(ivl), cfg.minimumInterval), examIntervalCap(cfg));
 }
 
 function fuzzInterval(ivl, cfg, rand) {
@@ -548,6 +926,7 @@ function computeReviewIntervals(ivl, ease, delay, cfg) {
 }
 
 function graduateCard(ivl, now, cfg) {
+  ivl = Math.max(cfg.minimumInterval, Math.min(ivl, examIntervalCap(cfg)));
   return {
     state: 'review', step: 0, intervalDays: ivl,
     nextReviewDate: startOfAnkiDay(ankiDay(now, cfg) + ivl, cfg).toISOString(),
@@ -626,6 +1005,9 @@ function schedule(card, rating, now, cfg, rand) {
   }
   result.reps = (card.reps || 0) + 1;
   result.lastReviewedAt = now.toISOString();
+  // running totals of 다시 / 어려움 presses, used by the 모아보기 "자주 어려워하는 순" sort
+  result.againCount = (card.againCount !== undefined ? card.againCount : (card.lapses || 0)) + (rating === 'again' ? 1 : 0);
+  result.hardCount = (card.hardCount || 0) + (rating === 'hard' ? 1 : 0);
   if (result.lapses === undefined) result.lapses = card.lapses || 0;
   if (result.leech === undefined) result.leech = card.leech || false;
   if (result.easeFactor === undefined) result.easeFactor = card.easeFactor;
@@ -706,6 +1088,8 @@ function normalizeCard(doc, cfg) {
   if (c.easeFactor === undefined) c.easeFactor = cfg.startingEase;
   if (c.intervalDays === undefined) c.intervalDays = cfg.minimumInterval;
   if (c.lapseInterval === undefined) c.lapseInterval = cfg.minimumInterval;
+  if (c.againCount === undefined) c.againCount = c.lapses || 0; // older cards only counted lapses
+  if (c.hardCount === undefined) c.hardCount = 0;
   return c;
 }
 
@@ -727,17 +1111,23 @@ async function loadDailyStats(key) {
     var snap = await db.doc('dailyStats/' + key).get();
     if (snap && snap.exists) {
       var data = snap.data();
-      return { newIntroduced: data.newIntroduced || 0, reviewsDone: data.reviewsDone || 0 };
+      return { newIntroduced: data.newIntroduced || 0, reviewsDone: data.reviewsDone || 0, studyMs: data.studyMs || 0, answered: data.answered || 0 };
     }
   } catch (e) {}
-  return { newIntroduced: 0, reviewsDone: 0 };
+  return { newIntroduced: 0, reviewsDone: 0, studyMs: 0, answered: 0 };
 }
 
-async function bumpDailyStats(field, delta) {
-  dailyStatsToday[field] = Math.max(0, (dailyStatsToday[field] || 0) + delta);
+async function bumpDailyStats(field, delta, extra) {
+  if (field) dailyStatsToday[field] = Math.max(0, (dailyStatsToday[field] || 0) + delta);
+  if (extra) {
+    dailyStatsToday.studyMs = (dailyStatsToday.studyMs || 0) + extra.studyMs;
+    dailyStatsToday.answered = (dailyStatsToday.answered || 0) + extra.answered;
+  }
   await db.doc('dailyStats/' + dailyStatsKey).set({
     newIntroduced: dailyStatsToday.newIntroduced,
     reviewsDone: dailyStatsToday.reviewsDone,
+    studyMs: dailyStatsToday.studyMs || 0,
+    answered: dailyStatsToday.answered || 0,
   });
 }
 
@@ -755,21 +1145,214 @@ document.addEventListener('keydown', function (e) {
   }
 });
 
+/* ───────────────── D-day: 시험일 ───────────────── */
+
+function examDayNumber(dateStr) {
+  var p = String(dateStr).split('-');
+  return localDayNumber(new Date(+p[0], +p[1] - 1, +p[2], 12));
+}
+
+function nearestExam() {
+  var today = ankiDay(new Date(), SRS_CONFIG);
+  var upcoming = examList
+    .filter(function (x) { return x.date && !isNaN(examDayNumber(x.date)) && examDayNumber(x.date) >= today; })
+    .map(function (x) { return { exam: x, day: examDayNumber(x.date), left: examDayNumber(x.date) - today }; })
+    .sort(function (a, b) { return a.day - b.day; });
+  return upcoming;
+}
+
+function syncExamConfig() {
+  var up = nearestExam();
+  SRS_CONFIG.examDay = up.length ? up[0].day : null;
+}
+
+async function loadExams() {
+  try {
+    var snap = await db.doc('settings/exams').get();
+    if (snap && snap.exists) examList = (snap.data().list || []).filter(function (x) { return x && x.date; });
+  } catch (e) {}
+  syncExamConfig();
+}
+
+async function saveExams() {
+  syncExamConfig();
+  try { await db.doc('settings/exams').set({ list: examList }); } catch (e) { showToast('시험일 저장 실패'); }
+  renderExamBanner();
+}
+
+function fmtExamDate(dateStr) {
+  var p = dateStr.split('-');
+  var wd = ['일', '월', '화', '수', '목', '금', '토'][new Date(+p[0], +p[1] - 1, +p[2]).getDay()];
+  return p[0] + '.' + p[1] + '.' + p[2] + ' (' + wd + ')';
+}
+
+function renderExamBanner() {
+  var hero = document.getElementById('examHero');
+  if (!hero) return;
+  var up = nearestExam();
+  if (!up.length) {
+    hero.className = 'exam-hero exam-empty';
+    hero.innerHTML = '<span>시험일을 등록하면 D-day가 나와요</span><span class="exam-edit-hint">등록</span>';
+    return;
+  }
+  var n = up[0];
+  hero.className = 'exam-hero';
+  hero.innerHTML =
+    '<div class="exam-main"><div class="exam-name">' + escapeHtml(n.exam.name || '시험') + '</div>' +
+    '<div class="exam-date">' + fmtExamDate(n.exam.date) + '</div></div>' +
+    '<div class="exam-dnum">' + (n.left === 0 ? 'D-DAY' : 'D-' + n.left) + '</div>' +
+    (up.length > 1 ? '<div class="exam-others">' + up.slice(1, 4).map(function (o) {
+      return '<span>' + escapeHtml(o.exam.name || '시험') + ' D-' + o.left + '</span>';
+    }).join('') + '</div>' : '');
+}
+
+function toggleExamEditor() {
+  examEditing = !examEditing;
+  renderExamEditor();
+}
+
+function renderExamEditor() {
+  var box = document.getElementById('examEditor');
+  if (!box) return;
+  if (!examEditing) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="exam-editor">' + examList.map(function (x, i) {
+    return '<div class="exam-edit-row">' +
+      '<input type="text" class="exam-input" id="examName' + i + '" value="' + escapeHtml(x.name || '') + '" placeholder="시험 이름" onchange="onExamEdit(' + i + ', \'name\', this.value)">' +
+      '<input type="date" class="exam-input" id="examDate' + i + '" value="' + escapeHtml(x.date || '') + '" onchange="onExamEdit(' + i + ', \'date\', this.value)">' +
+      '<button class="btn-icon" onclick="removeExam(' + i + ')" aria-label="삭제"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
+    '</div>';
+  }).join('') +
+  '<button class="btn-secondary" onclick="addExam()">시험 추가</button></div>';
+}
+
+function onExamEdit(i, field, value) {
+  if (!examList[i]) return;
+  examList[i][field] = value;
+  if (field === 'date' && !value) return;
+  saveExams();
+}
+function addExam() {
+  examList.push({ name: '', date: '' });
+  renderExamEditor();
+}
+function removeExam(i) {
+  examList.splice(i, 1);
+  renderExamEditor();
+  saveExams();
+}
+
+/* ───────────────── home ───────────────── */
+
+async function getStudyInfo() {
+  if (studyInfo) return studyInfo;
+  var info = { daySet: {}, total: null, failed: false };
+  try {
+    var r = await Promise.all([db.collection('dailyStats').limit(1000).get(), db.collection('concepts').limit(1000).get()]);
+    r[0].docs.forEach(function (d) {
+      var x = d.data();
+      if (Math.max(x.answered || 0, (x.newIntroduced || 0) + (x.reviewsDone || 0)) > 0) info.daySet[d.id] = true;
+    });
+    info.total = r[1].docs.length;
+    r[1].docs.forEach(function (d) {
+      var lr = d.data().lastReviewedAt;
+      if (lr) info.daySet[ankiDayKey(new Date(lr), SRS_CONFIG)] = true;
+    });
+  } catch (e) { info.failed = true; }
+  studyInfo = info;
+  return info;
+}
+
+function weekDotsHtml(daySet, today) {
+  var WD = ['일', '월', '화', '수', '목', '금', '토'], html = '';
+  for (var i = 6; i >= 0; i--) {
+    var k = shiftDay(today, -i), p = k.split('-'), on = !!daySet[k];
+    html += '<div class="week-day' + (on ? ' on' : '') + (i === 0 ? ' today' : '') + '">' + WD[new Date(+p[0], +p[1] - 1, +p[2]).getDay()] +
+      '<div class="week-dot">' + (on ? '<svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') + '</div></div>';
+  }
+  return html;
+}
+
+async function renderHomeTab() {
+  if (currentTab !== 'home') return;
+  var el = document.getElementById('content');
+  if (!db) {
+    el.innerHTML = emptyBox(ICONS.moon, '데이터 저장 기능을 사용할 수 없어요', '', '');
+    return;
+  }
+  if (reviewQueue === null) {
+    el.innerHTML = skelHome();
+    try { await loadReviewQueue(); }
+    catch (e) { if (currentTab === 'home') el.innerHTML = errorBox('오늘 복습을 불러오지 못했어요', 'renderCurrentTab()'); return; }
+    if (currentTab !== 'home') return;
+  }
+  tryPromoteFromWaiting();
+  var counts = queueCounts();
+  var total = counts.newCount + counts.learningCount + counts.reviewCount;
+  var now = new Date();
+  var today = ankiDayKey(now, SRS_CONFIG);
+  var info = studyInfo;
+  if (!info) getStudyInfo().then(function () { if (currentTab === 'home') renderHomeTab(); });
+  var doneToday = sessionAnswered > 0 || (dailyStatsToday && dailyStatsToday.answered > 0);
+  var daySet = info ? Object.assign({}, info.daySet) : {};
+  if (doneToday) daySet[today] = true;
+  var streak = computeStreaks(daySet, today).current;
+  var firstUse = !!info && info.total === 0 && !info.failed;
+  var WD = ['일', '월', '화', '수', '목', '금', '토'];
+
+  var hero;
+  if (firstUse && total === 0) {
+    hero = '<div class="home-hero"><div class="home-kicker">시작하기</div><h2 class="home-title">첫 문제를 올려 볼까요?</h2>' +
+      '<ol class="onboard"><li><span><b>과목을 고르고</b> 문제 PDF나 스크린샷을 올려요.</span></li>' +
+      '<li><span>빨강·파랑 펜으로 쓴 <b>새로 알게 된 개념</b>이 있는 문제만 담겨요.</span></li>' +
+      '<li><span>그날 밤 <b>복습 카드</b>로 나타나요.</span></li></ol>' +
+      '<button class="btn-primary" onclick="switchTab(\'upload\')">첫 문제 올리기</button></div>';
+  } else if (total > 0) {
+    hero = '<div class="home-hero"><div class="home-kicker">오늘 복습</div>' +
+      '<div class="home-count">' + total + '<small>개</small></div>' +
+      '<div class="home-break">' +
+        '<span class="stat-pill"><i class="dot-new"></i>새 카드 <b>' + counts.newCount + '</b></span>' +
+        '<span class="stat-pill"><i class="dot-learning"></i>학습 중 <b>' + counts.learningCount + '</b></span>' +
+        '<span class="stat-pill"><i class="dot-review"></i>복습 <b>' + counts.reviewCount + '</b></span>' +
+      '</div>' + backlogBanner() +
+      '<div class="home-actions"><button class="btn-primary" onclick="switchTab(\'review\')">복습 시작</button>' +
+      '<button class="btn-secondary" onclick="switchTab(\'upload\')">문제 올리기</button></div></div>';
+  } else if (!info && !doneToday) {
+    hero = '<div class="skel" style="height:290px"></div>';
+  } else if (doneToday) {
+    hero = '<div class="home-hero"><div class="done-banner" style="padding:8px 0 4px"><div class="home-done-icn">' + ICONS.done + '</div>' +
+      '<h2 class="state-title">오늘 복습 끝!</h2><p>' + (backlogInfo && backlogInfo.held ? '밀린 ' + backlogInfo.held + '개는 내일 이어서 나와요.' : '내일 또 만나요.') + '</p>' +
+      '<div class="state-actions"><button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button></div></div></div>';
+  } else {
+    hero = '<div class="home-hero">' + emptyBox(ICONS.moon, '오늘 복습할 개념이 없어요', '새 문제를 올리면 오늘 밤 복습에 나타나요.',
+      '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>') + '</div>';
+  }
+
+  var up = nearestExam();
+  var examTile = up.length
+    ? '<button class="mini-stat tile-btn" onclick="switchTab(\'stats\')"><div class="stat-title" style="margin:0 0 6px">' + escapeHtml(up[0].exam.name || '시험') + '</div>' +
+      '<div class="tile-d">' + (up[0].left === 0 ? 'D-DAY' : 'D-' + up[0].left) + '</div><div class="tile-sub">' + fmtExamDate(up[0].exam.date) + '</div></button>'
+    : '<button class="mini-stat tile-btn" onclick="switchTab(\'stats\')"><div class="stat-title" style="margin:0 0 6px">D-day</div><div class="tile-sub">시험일을 등록하면 남은 날이 나와요</div></button>';
+  var streakTile = info
+    ? '<div class="stat-card home-tile"><div class="stat-title">연속 학습</div><div class="streak-num">' + streak + '<small>일</small></div><div class="week-row">' + weekDotsHtml(daySet, today) + '</div></div>'
+    : '<div class="skel" style="height:150px"></div>';
+  var totalTile = info && info.total != null
+    ? '<button class="mini-stat tile-btn" onclick="switchTab(\'concepts\')"><div class="stat-title" style="margin:0 0 6px">저장한 개념</div><div class="tile-d">' + info.total + '<small style="font-size:14px;font-family:var(--font-ui);margin-left:3px">개</small></div></button>'
+    : '';
+
+  el.innerHTML = '<h2 class="page-h">오늘<span class="page-sub">' + (now.getMonth() + 1) + '월 ' + now.getDate() + '일 (' + WD[now.getDay()] + ')</span></h2>' +
+    '<div class="home-wrap">' + hero + '<div class="home-col">' + streakTile + examTile + totalTile + '</div></div>';
+}
+
 /* ───────────────── review tab ───────────────── */
 
 async function loadReviewQueue() {
   var now = new Date();
   var tomorrowBound = startOfAnkiDay(ankiDay(now, SRS_CONFIG) + 1, SRS_CONFIG).toISOString();
-  var snap;
-  try {
-    snap = await db.collection('concepts')
-      .where('nextReviewDate', '<=', tomorrowBound)
-      .orderBy('nextReviewDate', 'asc')
-      .limit(1000)
-      .get();
-  } catch (e) {
-    snap = { docs: [] };
-  }
+  var snap = await db.collection('concepts')
+    .where('nextReviewDate', '<=', tomorrowBound)
+    .orderBy('nextReviewDate', 'asc')
+    .limit(1000)
+    .get();
   var cards = snap.docs.map(function (d) { return normalizeCard(Object.assign({ id: d.id }, d.data()), SRS_CONFIG); });
 
   dailyStatsKey = ankiDayKey(now, SRS_CONFIG);
@@ -795,6 +1378,19 @@ async function loadReviewQueue() {
 
   reviewCards.sort(function (a, b) { return a.nextReviewDate.localeCompare(b.nextReviewDate); });
   newCards.sort(function (a, b) { return (a.createdAt || '').localeCompare(b.createdAt || ''); });
+
+  // 밀린 복습 정리: 기한이 지난 복습 카드가 많이 쌓이면 새 카드를 멈추고, 가장 오래 밀린 것(같으면 간격이 짧은 것)부터 하루 분량만 낸다
+  var overdue = reviewCards.filter(function (c) { return ankiDay(new Date(c.nextReviewDate), SRS_CONFIG) < today; });
+  backlogInfo = null;
+  if (overdue.length >= SRS_CONFIG.backlogThreshold) {
+    reviewCards.sort(function (a, b) {
+      return (a.nextReviewDate.slice(0, 10) !== b.nextReviewDate.slice(0, 10) ? a.nextReviewDate.localeCompare(b.nextReviewDate) : 0) ||
+        (a.intervalDays - b.intervalDays) || (a.easeFactor - b.easeFactor);
+    });
+    reviewLeft = Math.max(0, Math.min(reviewLeft, SRS_CONFIG.backlogDailyReviews - dailyStatsToday.reviewsDone));
+    newLeft = 0;
+    backlogInfo = { overdue: overdue.length, shown: Math.min(reviewLeft, reviewCards.length), held: Math.max(0, reviewCards.length - reviewLeft), newHeld: newCards.length };
+  }
 
   reviewQueue = learningDueNow.concat(reviewCards.slice(0, reviewLeft), newCards.slice(0, newLeft));
   waitingQueue = learningAhead;
@@ -834,6 +1430,14 @@ function queueCounts() {
   return counts;
 }
 
+function backlogBanner() {
+  if (!backlogInfo) return '';
+  var b = backlogInfo;
+  return '<div class="backlog-note"><b>밀린 복습 정리 중</b>' +
+    '<span>기한이 지난 복습 ' + b.overdue + '개 · 오래 밀린 것부터 오늘 ' + SRS_CONFIG.backlogDailyReviews + '개까지만 보여요.' +
+    (b.newHeld ? ' 새 카드 ' + b.newHeld + '개는 정리가 끝나면 나와요.' : '') + '</span></div>';
+}
+
 function renderWaitingScreen(el) {
   var nextDue = Math.min.apply(null, waitingQueue.map(function (w) { return w.dueAt; }));
   var mins = Math.max(1, Math.ceil((nextDue - Date.now()) / 60000));
@@ -842,15 +1446,20 @@ function renderWaitingScreen(el) {
 }
 
 async function renderReviewTab() {
-  var el = document.getElementById('content');
   if (currentTab !== 'review') return;
+  var content = document.getElementById('content');
+  if (!document.getElementById('reviewBody')) {
+    content.innerHTML = '<div id="reviewBody"></div>';
+  }
+  var el = document.getElementById('reviewBody');
   if (!db) {
     el.innerHTML = '<div class="empty-state">' + ICONS.moon + '<p>데이터 저장 기능을 사용할 수 없어요.</p></div>';
     return;
   }
   if (reviewQueue === null) {
-    el.innerHTML = '<div class="loading">불러오는 중...</div>';
-    await loadReviewQueue();
+    el.innerHTML = skelReview();
+    try { await loadReviewQueue(); }
+    catch (e) { if (currentTab === 'review') el.innerHTML = errorBox('복습할 개념을 불러오지 못했어요', 'renderReviewTab()'); return; }
     if (currentTab !== 'review') return;
   }
   clearInterval(reviewWaitTimer);
@@ -867,42 +1476,88 @@ async function renderReviewTab() {
       }, 5000);
       return;
     }
-    el.innerHTML = reviewHasCompletedAny
-      ? '<div class="done-banner">' + ICONS.done + '<p>오늘 밤 복습을 다 마쳤어요.</p></div>'
-      : '<div class="empty-state">' + ICONS.moon + '<p>오늘 밤 복습할 개념이 없어요.</p></div>';
+    var undoBtn = undoStack.length > 0 ? '<button class="btn-secondary undo-btn" style="max-width:240px;margin:12px auto 0" onclick="undoLast()">되돌리기</button>' : '';
+    if (reviewHasCompletedAny) {
+      el.innerHTML = backlogBanner() + '<div class="done-banner"><div class="home-done-icn">' + ICONS.done + '</div><h2 class="state-title">오늘 복습 끝!</h2><p>' +
+        (sessionAnswered ? sessionAnswered + '번 답했어요. ' : '') + (backlogInfo && backlogInfo.held ? '밀린 ' + backlogInfo.held + '개는 내일 이어서 나와요.' : '내일 또 만나요.') + '</p>' +
+        '<div class="state-actions"><button class="btn-primary" onclick="switchTab(\'home\')">홈으로</button><button class="btn-secondary" onclick="switchTab(\'upload\')">문제 올리기</button></div>' + undoBtn + '</div>';
+    } else {
+      el.innerHTML = backlogBanner() + emptyBox(ICONS.moon, '오늘 복습할 개념이 없어요', '새 문제를 올리면 오늘 밤 복습에 나타나요.',
+        '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>');
+    }
     return;
   }
 
   var item = reviewQueue[0];
+  var isNewCard = lastPaintedId !== item.id;
+  lastPaintedId = item.id;
+  if (cardShownId !== item.id) { cardShownId = item.id; cardShownAt = Date.now(); }
   var counts = queueCounts();
   var preview = previewIntervals(item, new Date(), SRS_CONFIG);
   var imgUrl = item.imageId ? ('/_blob/' + item.imageId) : '';
+  var subj = SUBJECTS.find(function (x) { return x.id === item.subjectId; });
+  var dis = reviewBusy ? ' disabled' : '';
+  var remaining = reviewQueue.length + waitingQueue.length;
+  var pct = Math.round(sessionAnswered / Math.max(1, sessionAnswered + remaining) * 100);
+  function rateBtn(key, cls, label, rating) {
+    return '<button class="rate-btn ' + cls + '" data-rating="' + rating + '" onclick="rateCurrent(\'' + rating + '\')"' + dis + '><span class="rate-key">' + key + '</span>' + label +
+      '<span class="rate-preview">' + preview[rating] + '</span></button>';
+  }
+  var pills =
+    '<span class="stat-pill"><i class="dot-new"></i>새 카드 <b>' + counts.newCount + '</b></span>' +
+    '<span class="stat-pill"><i class="dot-learning"></i>학습 중 <b>' + counts.learningCount + '</b></span>' +
+    '<span class="stat-pill"><i class="dot-review"></i>복습 <b>' + counts.reviewCount + '</b></span>';
   el.innerHTML =
-    '<div class="progress-line">' +
-      '<span class="count-new">새 ' + counts.newCount + '</span> · ' +
-      '<span class="count-learning">학습 ' + counts.learningCount + '</span> · ' +
-      '<span class="count-review">복습 ' + counts.reviewCount + '</span>' +
-    '</div>' +
-    '<div class="review-card">' +
-      '<div class="accent-stripe" style="background:' + subjectGradient(item.subjectId) + '"></div>' +
-      (item.leech ? '<div class="leech-badge">자주 틀림</div>' : '') +
-      (imgUrl ? '<img src="' + imgUrl + '" alt="개념" onclick="openLightbox(\'' + imgUrl + '\')">' : '') +
-      (item.text ? '<div class="review-caption">' + escapeHtml(item.text) + '</div>' : '') +
-    '</div>' +
-    '<div class="rating-grid">' +
-      '<button class="rate-btn rate-again" onclick="rateCurrent(\'again\')"' + (reviewBusy ? ' disabled' : '') + '>다시<span class="rate-preview">' + preview.again + '</span></button>' +
-      '<button class="rate-btn rate-hard" onclick="rateCurrent(\'hard\')"' + (reviewBusy ? ' disabled' : '') + '>어려움<span class="rate-preview">' + preview.hard + '</span></button>' +
-      '<button class="rate-btn rate-good" onclick="rateCurrent(\'good\')"' + (reviewBusy ? ' disabled' : '') + '>좋음<span class="rate-preview">' + preview.good + '</span></button>' +
-      '<button class="rate-btn rate-easy" onclick="rateCurrent(\'easy\')"' + (reviewBusy ? ' disabled' : '') + '>쉬움<span class="rate-preview">' + preview.easy + '</span></button>' +
-    '</div>' +
-    (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '');
+    '<div class="review-split' + (isNewCard ? ' card-in' : '') + '">' +
+      '<div class="review-stage' + (reviewZoom === 'wide' ? ' wide' : '') + '" id="reviewStage">' +
+        (imgUrl ? '<img src="' + imgUrl + '" alt="개념" onclick="toggleReviewZoom()">' +
+          '<div class="stage-tools">' +
+            '<button class="stage-btn" id="zoomBtn" onclick="toggleReviewZoom()">' + (reviewZoom === 'wide' ? '전체 보기' : '가로 채우기') + '</button>' +
+            '<button class="stage-btn" onclick="openLightbox(\'' + imgUrl + '\')">확대</button>' +
+          '</div>' : '<div class="stage-empty">이미지 없음</div>') +
+      '</div>' +
+      '<aside class="review-side">' +
+        '<div class="rv-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
+        '<div class="side-top">' +
+          '<span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? subj.name : '과목 없음') + '</span>' +
+          (item.leech ? '<span class="leech-badge">자주 틀림</span>' : (item.reps ? '<span class="card-meta">복습 ' + item.reps + '회</span>' : '<span class="card-meta">새 카드</span>')) +
+        '</div>' +
+        backlogBanner() +
+        '<div class="progress-line">' + pills + '</div>' +
+        (item.text ? '<div class="review-caption">' + escapeHtml(item.text) + '</div>' : '') +
+        '<div class="rating-bar"><div class="rating-grid">' +
+          rateBtn('1', 'rate-again', '다시', 'again') + rateBtn('2', 'rate-hard', '어려움', 'hard') +
+          rateBtn('3', 'rate-good', '좋음', 'good') + rateBtn('4', 'rate-easy', '쉬움', 'easy') +
+        '</div>' + (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '') + '</div>' +
+      '</aside>' +
+    '</div>';
+  var nx = reviewQueue[1];                       // warm the next card so it appears instantly
+  if (nx && nx.imageId) { var pre = new Image(); pre.src = '/_blob/' + nx.imageId; }
+}
+
+function setRatingBusy(rating) {
+  document.querySelectorAll('.rate-btn').forEach(function (b) {
+    b.disabled = true;
+    if (b.dataset.rating === rating) b.classList.add('picked');
+  });
+}
+
+var reviewZoom = 'fit';
+function toggleReviewZoom() {
+  reviewZoom = reviewZoom === 'fit' ? 'wide' : 'fit';
+  var st = document.getElementById('reviewStage');
+  if (!st) return;
+  st.classList.toggle('wide', reviewZoom === 'wide');
+  st.scrollTop = 0;
+  var b = document.getElementById('zoomBtn');
+  if (b) b.textContent = reviewZoom === 'wide' ? '전체 보기' : '가로 채우기';
 }
 
 async function rateCurrent(rating) {
   if (reviewBusy || !reviewQueue || reviewQueue.length === 0) return;
   var before = reviewQueue[0];
   reviewBusy = true;
-  renderReviewTab();
+  setRatingBusy(rating);     // mark the pressed button in place; no re-render, so the image doesn't flash
 
   var now = new Date();
   var after = schedule(before, rating, now, SRS_CONFIG);
@@ -918,11 +1573,13 @@ async function rateCurrent(rating) {
     reviewedAt: now.toISOString(), ankiDay: ankiDay(now, SRS_CONFIG),
   };
   var statsField = before.state === 'new' ? 'newIntroduced' : (before.state === 'review' ? 'reviewsDone' : null);
+  // time on this card, capped so a card left open doesn't inflate the total
+  var spentMs = cardShownAt ? Math.min(Date.now() - cardShownAt, 120000) : 0;
 
   try {
     await db.doc('concepts/' + before.id).update(updated);
     await db.doc('reviewLog/' + logId).set(logEntry);
-    if (statsField) await bumpDailyStats(statsField, 1);
+    await bumpDailyStats(statsField, statsField ? 1 : 0, { studyMs: spentMs, answered: 1 });
   } catch (e) {
     reviewBusy = false;
     showToast('저장 실패, 다시 눌러주세요');
@@ -931,6 +1588,10 @@ async function rateCurrent(rating) {
   }
 
   reviewHasCompletedAny = true;
+  allConcepts = null;   // 모아보기 정렬(어려움 횟수)이 방금 한 복습을 반영하도록 다시 불러오게 함
+  cardShownId = null;
+  lastPaintedId = null;
+  sessionAnswered++;
   reviewQueue.shift();
   undoStack.push({ conceptId: before.id, beforeCard: before, logId: logId, statsField: statsField });
   if (undoStack.length > 30) undoStack.shift();
@@ -955,6 +1616,9 @@ async function undoLast() {
     showToast('되돌리기 실패, 다시 눌러주세요');
     return;
   }
+  allConcepts = null;
+  sessionAnswered = Math.max(0, sessionAnswered - 1);
+  lastPaintedId = null;
   waitingQueue = waitingQueue.filter(function (w) { return w.card.id !== entry.conceptId; });
   reviewQueue = reviewQueue.filter(function (c) { return c.id !== entry.conceptId; });
   reviewQueue.unshift(entry.beforeCard);
@@ -969,24 +1633,32 @@ function renderUploadTab() {
 
   if (uploadStage === 'idle') {
     el.innerHTML =
-      '<label class="field-label">과목</label>' +
-      '<select id="subjectSelect" onchange="uploadSubject=this.value">' +
-        SUBJECTS.map(function (s) {
-          return '<option value="' + s.id + '"' + (s.id === uploadSubject ? ' selected' : '') + '>' + s.name + '</option>';
-        }).join('') +
-      '</select>' +
-      '<div class="dropzone-group">' +
+      '<h2 class="page-h">문제 올리기</h2>' +
+      '<div class="step-title">1. 과목 <small>올리는 문제 전부 이 과목으로 저장돼요</small></div>' +
+      renderSubjectPicker() +
+      '<div class="step-title">2. 문제 올리기</div>' +
+      renderPdfZone() +
+      '<div class="section-label">직접 올리기</div>' +
+      '<div class="dropzone-row">' +
         '<label class="dropzone">' +
           ICONS.pdf +
-          'PDF 업로드 (직접 영역을 잘라서 추가)' +
+          'PDF에서 직접 자르기' +
           '<input type="file" accept="application/pdf" onchange="onPdfFilePicked(this.files[0])">' +
         '</label>' +
         '<label class="dropzone">' +
           ICONS.photos +
-          '이미 잘라낸 사진/스크린샷 업로드' +
+          '사진·스크린샷 올리기' +
           '<input type="file" accept="image/*" multiple onchange="onImagesPicked(this.files)">' +
         '</label>' +
       '</div>';
+    return;
+  }
+
+  if (uploadStage === 'ai') {
+    el.innerHTML =
+      '<div class="ai-progress"><div class="ai-spinner"></div>' + escapeHtml(aiProgress) +
+      '<div class="sub">빨강·파랑 메모가 있는 문제만 잘라 담는 중이에요.</div></div>' +
+      '<button class="btn-secondary" onclick="stopAi()">중지하고 지금까지 결과 보기</button>';
     return;
   }
 
@@ -996,32 +1668,61 @@ function renderUploadTab() {
   }
 
   if (uploadStage === 'saving') {
-    el.innerHTML = '<div class="loading">저장하는 중...</div>';
+    el.innerHTML = '<div class="ai-progress"><div class="ai-spinner"></div>' + saveProgress.i + ' / ' + saveProgress.n + '개 저장하는 중' +
+      '<div class="save-prog"><i style="width:' + Math.round(saveProgress.i / Math.max(1, saveProgress.n) * 100) + '%"></i></div></div>';
     return;
   }
 
   if (uploadStage === 'done') {
-    el.innerHTML =
-      '<div class="empty-state">' + ICONS.done + '<p>' + savedCount + '개 개념이 저장됐어요.<br>오늘 밤 복습 큐에 나타나요.</p></div>' +
-      '<button class="btn-primary" onclick="resetUploadFlow()">새로 업로드</button>';
+    var failN = pendingUploads.length;
+    el.innerHTML = failN
+      ? emptyBox(ICONS.warn, savedCount + '개 저장, ' + failN + '개는 저장하지 못했어요', '연결이 불안정했을 수 있어요. 못 한 것만 다시 저장할 수 있어요.',
+          '<button class="btn-primary" onclick="saveAllUploads()">' + failN + '개 다시 저장</button><button class="btn-secondary" onclick="resetUploadFlow()">그만두기</button>')
+      : emptyBox(ICONS.done, savedCount + '개 개념이 저장됐어요', '오늘 밤 복습 카드로 나타나요.',
+          '<button class="btn-primary" onclick="resetUploadFlow()">새로 올리기</button><button class="btn-secondary" onclick="switchTab(\'home\')">홈으로</button>');
     return;
   }
 
-  // review stage — plain confirm-before-save, no AI involved
-  var html = '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
+  // review stage — confirm before save
+  var summary = (aiGateSkipped || aiLocalCards)
+    ? '<div class="ai-summary">' +
+        (aiLocalCards ? '문제 ' + aiLocalCards + '개를 잘라 담았어요. 사진 아래 메모 칸에 필요하면 적어 두세요. ' : '') +
+        (aiGateSkipped ? '빨강·파랑 메모가 없는 ' + aiGateSkipped + '페이지는 건너뛰었어요' + (aiScanSkipped ? '(스캔 쪽 ' + aiScanSkipped + '쪽은 필기 그림층이 없어서 제외)' : '') + '. ' : '') +
+      '</div>'
+    : '';
+  if (pendingUploads.length === 0) {
+    el.innerHTML = (summary || '<div class="empty-state">' + ICONS.empty + '<p>담긴 개념이 없어요.</p></div>') +
+      '<div style="margin-top:14px"><button class="btn-primary" onclick="resetUploadFlow()">새로 업로드</button></div>';
+    return;
+  }
+  var html = '<div class="step-title">저장할 과목 <small>전부 같은 과목으로 저장돼요</small></div>' + renderSubjectPicker() + summary + '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
     '<div class="save-bar"><button class="btn-primary" onclick="saveAllUploads()">전체 저장 (' +
     pendingUploads.filter(function (i) { return i.included; }).length + '개)</button></div>';
   el.innerHTML = html;
 }
 
+function renderSubjectPicker() {
+  return '<div class="subject-chips">' + SUBJECTS.map(function (sj) {
+    var on = sj.id === uploadSubject;
+    return '<button class="subject-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="pickUploadSubject(\'' + sj.id + '\')"><i style="background:' + sj.c1 + '"></i>' + sj.name + '</button>';
+  }).join('') + '</div>';
+}
+
+function pickUploadSubject(id) {
+  uploadSubject = id;
+  try { localStorage.setItem('uploadSubject', id); } catch (e) {}
+  renderUploadTab();
+}
+
 function renderThumbCard(item) {
   return '<div class="thumb-card">' +
-    '<img src="' + item.url + '" onclick="openLightbox(\'' + item.url + '\')" alt="개념">' +
-    '<input type="text" placeholder="메모 (선택)" value="' + escapeHtml(item.caption) + '" oninput="onCaptionInput(\'' + item.localId + '\', this.value)">' +
+    '<div class="thumb-img"><img src="' + item.url + '" onclick="openLightbox(\'' + item.url + '\')" alt="개념"></div>' +
+    '<div class="thumb-body">' +
+    '<textarea placeholder="메모 (선택)" oninput="onCaptionInput(\'' + item.localId + '\', this.value)">' + escapeHtml(item.caption) + '</textarea>' +
     '<div class="thumb-card-foot">' +
-      '<label><input type="checkbox" ' + (item.included ? 'checked' : '') + ' onchange="onIncludedChange(\'' + item.localId + '\', this.checked)"> 포함</label>' +
-      '<button class="btn-icon" onclick="removePendingUpload(\'' + item.localId + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
-    '</div>' +
+      '<label><input type="checkbox" ' + (item.included ? 'checked' : '') + ' onchange="onIncludedChange(\'' + item.localId + '\', this.checked)"> 저장에 포함</label>' +
+      '<button class="btn-icon" aria-label="삭제" onclick="removePendingUpload(\'' + item.localId + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
+    '</div></div>' +
   '</div>';
 }
 
@@ -1098,7 +1799,7 @@ function loadPdfPage() {
 
 function renderPdfCropStage(el) {
   if (!pdfPageImage) {
-    el.innerHTML = '<div class="loading">페이지를 불러오는 중...</div>';
+    el.innerHTML = '<div class="ai-progress"><div class="ai-spinner"></div>페이지를 불러오는 중</div>';
     return;
   }
   el.innerHTML =
@@ -1262,17 +1963,24 @@ function resetUploadFlow() {
   uploadStage = 'idle';
   pendingUploads = [];
   savedCount = 0;
+  aiSkipped = 0;
+  aiGateSkipped = 0;
+  aiScanSkipped = 0;
+  aiLocalCards = 0;
   renderUploadTab();
 }
 
 async function saveAllUploads() {
   if (!assets || !db) { showToast('저장 기능을 사용할 수 없어요'); return; }
   uploadStage = 'saving';
-  renderUploadTab();
   var toSave = pendingUploads.filter(function (i) { return i.included; });
-  var count = 0;
+  var count = savedCount, failed = [];
+  saveProgress = { i: 0, n: toSave.length };
+  renderUploadTab();
   for (var i = 0; i < toSave.length; i++) {
     var item = toSave[i];
+    saveProgress.i = i + 1;
+    renderUploadTab();
     try {
       var up = await assets.upload(item.file);
       await db.collection('concepts').add({
@@ -1292,14 +2000,762 @@ async function saveAllUploads() {
         lastReviewedAt: null,
       });
       count++;
-    } catch (e) {}
+    } catch (e) { failed.push(item); }
   }
   savedCount = count;
+  pendingUploads = failed;   // only what failed stays, so "다시 저장" retries just those
   uploadStage = 'done';
+  studyInfo = null;
   reviewQueue = null; // force the review tab to refetch and include today's new concepts
   waitingQueue = [];
   allConcepts = null;
   renderUploadTab();
+}
+
+/* ───────────────── PDF 자동 나누기 (전부 이 기기 안에서 처리, AI 없음) ─────────────────
+   PDF를 문제별로 나누고, 빨강·파랑 펜 메모가 있는 문제만 사진으로 잘라 담는다.
+   글자 인식은 하지 않는다. 사진을 크게 보여 주고, 필요하면 메모 칸에 직접 적는다. */
+
+var AI_PAGE_SCALE = 2.5;   // render scale for pages — crops keep enough detail for handwriting
+var AI_BOX_PAD = 12;       // padding added around each problem box, in 0-1000 units
+
+function renderPdfZone() {
+  return '<div class="dropzone-group">' +
+    '<label class="dropzone ai-zone">' + ICONS.pdf +
+      '<span>PDF 올리기 · 문제 자동 나누기</span>' +
+      '<span class="ai-sub">빨강·파랑 메모가 있는 문제만 사진으로 잘라 담아요</span>' +
+      '<input type="file" accept="application/pdf" onchange="onPdfAutoPicked(this.files[0])">' +
+    '</label>' +
+  '</div>';
+}
+
+function canvasToBlob(canvas, quality) {
+  return new Promise(function (resolve) { canvas.toBlob(resolve, 'image/jpeg', quality || 0.88); });
+}
+
+async function renderPdfPageCanvas(doc, n, scale) {
+  var page = await doc.getPage(n);
+  var viewport = page.getViewport({ scale: scale });
+  var canvas = document.createElement('canvas');
+  canvas.width = Math.round(viewport.width);
+  canvas.height = Math.round(viewport.height);
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+  return canvas;
+}
+
+// Local colour gate. Counts red/blue pen pixels (HSV) on a half-size copy of the page, after removing printed colour:
+//  - connected pieces that sit (≥85%) inside text-layer boxes are printed text (e.g. blue problem numbers),
+//  - solid blocks, hollow frames and thin straight rules are printed shapes (tabs, boxes, bullets).
+// Pages with almost no pen ink left are skipped without any AI call (recall first: the threshold is low).
+var GATE_MIN_PX = 40;
+
+function penInk(canvas, textBoxes, layers) {
+  var w = Math.max(1, Math.round(canvas.width / 2)), h = Math.max(1, Math.round(canvas.height / 2));
+  var c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  var ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(canvas, 0, 0, w, h);
+  var d = ctx.getImageData(0, 0, w, h).data;
+  var mask = new Uint8Array(w * h), list = [], i;
+  // when the page carries separate overlay images (tablet export puts handwriting there), only look inside them
+  var zones = (layers || []).map(function (z) { return [Math.floor((z[0] - 0.01) * w), Math.floor((z[1] - 0.01) * h), Math.ceil((z[2] + 0.01) * w), Math.ceil((z[3] + 0.01) * h)]; });
+  for (i = 0; i < w * h; i++) {
+    if (zones.length) {
+      var zx = i % w, zy = (i / w) | 0, inZone = false;
+      for (var zi = 0; zi < zones.length; zi++) { var zz = zones[zi]; if (zx >= zz[0] && zx <= zz[2] && zy >= zz[1] && zy <= zz[3]) { inZone = true; break; } }
+      if (!inZone) continue;
+    }
+    if (isPenPx(d, i * 4)) { mask[i] = 1; list.push(i); }
+  }
+  if (layers && !layers.length) return { w: w, h: h, xs: [], ys: [], n: 0 }; // bare scan: printed colour lives in the image, no overlay = no handwriting
+  var boxes = (textBoxes || []).map(function (b) { return [b[0] * w, b[1] * h, b[2] * w, b[3] * h]; });
+  var inText = function (x, y) {
+    for (var k = 0; k < boxes.length; k++) { var b = boxes[k]; if (x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]) return true; }
+    return false;
+  };
+  var xs = [], ys = [];
+  for (var li = 0; li < list.length; li++) {
+    var start = list[li];
+    if (mask[start] !== 1) continue;
+    var stack = [start], comp = [];
+    mask[start] = 2;
+    while (stack.length) {
+      var cur = stack.pop(); comp.push(cur);
+      var cx = cur % w, cy = (cur / w) | 0;
+      for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
+        var nx = cx + dx, ny = cy + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        var ni = ny * w + nx;
+        if (mask[ni] === 1) { mask[ni] = 2; stack.push(ni); }
+      }
+    }
+    var x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, ins = 0, j;
+    for (j = 0; j < comp.length; j++) {
+      var px = comp[j] % w, py = (comp[j] / w) | 0;
+      if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py;
+      if (boxes.length && inText(px, py)) ins++;
+    }
+    var bw = x1 - x0 + 1, bh = y1 - y0 + 1, n = comp.length;
+    var printed = false;
+    if (n >= 6) {
+      if (ins / n >= 0.85) printed = true;                                            // printed coloured text
+      else if (Math.min(bw, bh) >= 6 && n / (bw * bh) >= 0.6) printed = true;         // solid block
+      else if (Math.min(bw, bh) <= 4 && Math.max(bw, bh) / Math.min(bw, bh) >= 12) printed = true; // straight rule
+      else if (bw >= 20 && bh >= 20) {                                                 // hollow frame
+        var edge = 0;
+        for (j = 0; j < comp.length; j++) {
+          var ex = comp[j] % w, ey = (comp[j] / w) | 0;
+          if (ex - x0 <= 3 || x1 - ex <= 3 || ey - y0 <= 3 || y1 - ey <= 3) edge++;
+        }
+        if (edge / n >= 0.85) printed = true;
+      }
+    }
+    if (printed) continue;
+    for (j = 0; j < comp.length; j++) { xs.push(comp[j] % w); ys.push((comp[j] / w) | 0); }
+  }
+  return { w: w, h: h, xs: xs, ys: ys, n: xs.length };
+}
+
+// Overlay images on the page (not the page-sized background), as page fractions. Tablet note apps
+// export handwriting as one image laid over the page (digital or scanned); null = no usable overlay info.
+async function pdfOverlayImages(page) {
+  var vp = page.getViewport({ scale: 1 });
+  var ol = await page.getOperatorList(), O = pdfjsLib.OPS, U = pdfjsLib.Util;
+  var ctm = vp.transform.slice(), stack = [], boxes = [];
+  var imgOps = [O.paintImageXObject, O.paintInlineImageXObject, O.paintImageMaskXObject, O.paintSolidColorImageMask, O.paintJpegXObject];
+  for (var i = 0; i < ol.fnArray.length; i++) {
+    var fn = ol.fnArray[i];
+    if (fn === O.save) stack.push(ctm.slice());
+    else if (fn === O.restore) { if (stack.length) ctm = stack.pop(); }
+    else if (fn === O.transform) ctm = U.transform(ctm, ol.argsArray[i]);
+    else if (imgOps.indexOf(fn) >= 0) {
+      var pts = [[0, 0], [1, 0], [0, 1], [1, 1]].map(function (pt) { return U.applyTransform(pt, ctm); });
+      var xs = pts.map(function (q) { return q[0]; }), ys = pts.map(function (q) { return q[1]; });
+      boxes.push([Math.max(0, Math.min.apply(null, xs) / vp.width), Math.max(0, Math.min.apply(null, ys) / vp.height),
+                  Math.min(1, Math.max.apply(null, xs) / vp.width), Math.min(1, Math.max.apply(null, ys) / vp.height)]);
+    }
+  }
+  var area = function (b) { return Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]); };
+  var big = boxes.filter(function (b) { return area(b) >= 0.7; });
+  var overlays = boxes.filter(function (b) { return area(b) < 0.7 && area(b) >= 0.002; });
+  // two page-sized images: could be background + a full-page ink layer, so no overlay shortcut
+  if (big.length > 1) return null;
+  if (!overlays.length) return big.length === 1 ? [] : null; // [] = bare page image, no overlay
+  return overlays;
+}
+
+function pageHasColoredInk(ink) { return ink.n >= GATE_MIN_PX; }
+
+// Text-layer boxes as page fractions, used to recognise printed text.
+async function pdfTextBoxes(page) {
+  var vp = page.getViewport({ scale: 1 });
+  var content = await page.getTextContent();
+  var out = [];
+  content.items.forEach(function (it) {
+    if (!it.str || !it.str.trim()) return;
+    var tr = pdfjsLib.Util.transform(vp.transform, it.transform);
+    var fs = Math.hypot(tr[2], tr[3]) || 10;
+    out.push([(tr[4] - 1) / vp.width, (tr[5] - fs - 1) / vp.height, (tr[4] + (it.width || 0) + 1) / vp.width, (tr[5] + fs * 0.25 + 1) / vp.height]);
+  });
+  return out;
+}
+
+// ── Phase 2: split a digital PDF page into problems from its text layer (no AI call) ──
+function isPenPx(d, i) {
+  var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+  var mx = Math.max(r, g, b), df = mx - Math.min(r, g, b);
+  if (mx < 0.25 || df / mx < 0.35) return false;
+  var hue;
+  if (mx === r) hue = ((g - b) / df + 6) % 6; else if (mx === g) hue = (b - r) / df + 2; else hue = (r - g) / df + 4;
+  hue *= 60;
+  return hue < 20 || hue > 335 || (hue > 190 && hue < 260);
+}
+
+// Fade everything that is not red/blue pen (black solving ink, printed text) so the AI only sees the memo.
+// Uses a looser saturation than the gate so anti-aliased pen edges survive.
+function inkFocus(canvas) {
+  var ctx = canvas.getContext('2d', { willReadFrequently: true });
+  var img = ctx.getImageData(0, 0, canvas.width, canvas.height), d = img.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+    var mx = Math.max(r, g, b), df = mx - Math.min(r, g, b), keep = false;
+    if (mx >= 0.25 && df / mx >= 0.15 && df > 0.05) {
+      var hue;
+      if (mx === r) hue = ((g - b) / df + 6) % 6; else if (mx === g) hue = (b - r) / df + 2; else hue = (r - g) / df + 4;
+      hue *= 60;
+      keep = hue < 25 || hue > 330 || (hue > 185 && hue < 265);
+    }
+    if (!keep) { d[i] = 255 - (255 - d[i]) * 0.2; d[i + 1] = 255 - (255 - d[i + 1]) * 0.2; d[i + 2] = 255 - (255 - d[i + 2]) * 0.2; }
+  }
+  ctx.putImageData(img, 0, 0);
+  return canvas;
+}
+
+// Memo regions as page fractions {x0,y0,x1,y1}: pen pixels → 6px cells → merge nearby cells.
+function memoRegions(ink) {
+  var CELL = 6, GROW = 2;
+  var w = ink.w, h = ink.h;
+  var cw = Math.ceil(w / CELL), ch = Math.ceil(h / CELL), cnt = new Uint16Array(cw * ch);
+  for (var pi = 0; pi < ink.n; pi++) cnt[((ink.ys[pi] / CELL) | 0) * cw + ((ink.xs[pi] / CELL) | 0)]++;
+  var on = new Uint8Array(cw * ch), dil = new Uint8Array(cw * ch), i, cx, cy;
+  for (i = 0; i < on.length; i++) on[i] = cnt[i] >= 2 ? 1 : 0;
+  for (cy = 0; cy < ch; cy++) for (cx = 0; cx < cw; cx++) {
+    if (!on[cy * cw + cx]) continue;
+    for (var dy = -GROW; dy <= GROW; dy++) for (var dx = -GROW; dx <= GROW; dx++) {
+      var ny = cy + dy, nx = cx + dx;
+      if (ny >= 0 && ny < ch && nx >= 0 && nx < cw) dil[ny * cw + nx] = 1;
+    }
+  }
+  var lab = new Int32Array(cw * ch), regions = [], k = 0;
+  for (i = 0; i < dil.length; i++) {
+    if (!dil[i] || lab[i]) continue;
+    k++;
+    var stack = [i], box = { x0: 1e9, y0: 1e9, x1: -1, y1: -1, mass: 0 };
+    lab[i] = k;
+    while (stack.length) {
+      var cur = stack.pop(), qx = cur % cw, qy = (cur / cw) | 0;
+      if (on[cur]) { box.mass += cnt[cur]; box.x0 = Math.min(box.x0, qx); box.y0 = Math.min(box.y0, qy); box.x1 = Math.max(box.x1, qx + 1); box.y1 = Math.max(box.y1, qy + 1); }
+      for (var ddy = -1; ddy <= 1; ddy++) for (var ddx = -1; ddx <= 1; ddx++) {
+        var my = qy + ddy, mx = qx + ddx;
+        if (my < 0 || my >= ch || mx < 0 || mx >= cw) continue;
+        var ni = my * cw + mx;
+        if (dil[ni] && !lab[ni]) { lab[ni] = k; stack.push(ni); }
+      }
+    }
+    if (box.x1 > 0 && box.mass >= 25) regions.push({ x0: box.x0 * CELL / w, y0: box.y0 * CELL / h, x1: Math.min(1, box.x1 * CELL / w), y1: Math.min(1, box.y1 * CELL / h) });
+  }
+  return regions;
+}
+
+// Problem ranges per column from the PDF text layer. Returns null when the page has no usable text layer.
+async function pdfProblemRanges(page) {
+  var vp = page.getViewport({ scale: 1 }), W = vp.width, H = vp.height;
+  var content = await page.getTextContent();
+  var items = [];
+  content.items.forEach(function (it) {
+    if (!it.str || !it.str.trim()) return;
+    var tr = pdfjsLib.Util.transform(vp.transform, it.transform);
+    var fs = Math.hypot(tr[2], tr[3]) || 10;
+    items.push({ s: it.str.trim(), x0: tr[4], x1: tr[4] + (it.width || 0), top: tr[5] - fs, bot: tr[5] + fs * 0.25, fs: fs });
+  });
+  if (items.length < 8) return null;
+  // column split: widest run of x-bins near the centre that almost no text crosses
+  var BINS = 100, cover = new Array(BINS).fill(0);
+  items.forEach(function (it) {
+    for (var b = Math.max(0, Math.floor(it.x0 / W * BINS)); b <= Math.min(BINS - 1, Math.floor(it.x1 / W * BINS)); b++) cover[b]++;
+  });
+  var limit = Math.max(2, items.length * 0.01), bestLen = 0, bestMid = -1, runStart = -1;
+  for (var b = 30; b <= 70; b++) {
+    if (cover[b] <= limit) { if (runStart < 0) runStart = b; var len = b - runStart + 1; if (len > bestLen) { bestLen = len; bestMid = (runStart + b + 1) / 2; } }
+    else runStart = -1;
+  }
+  var split = bestLen >= 2 ? bestMid / BINS * W : W + 1;
+  var cols = split <= W ? [[0, split], [split, W]] : [[0, W]];
+  var out = [];
+  var fsAll = items.map(function (it) { return it.fs; }).sort(function (a, b2) { return a - b2; }), medFs = fsAll[fsAll.length >> 1];
+  cols.forEach(function (cr, ci) {
+    var ci_items = items.filter(function (it) { var m = (it.x0 + it.x1) / 2; return m >= cr[0] && m < cr[1]; });
+    if (!ci_items.length) return;
+    var left = Math.min.apply(null, ci_items.filter(function (it) { return it.s.length >= 3; }).map(function (it) { return it.x0; }).concat([1e9]));
+    var colX0 = Math.min.apply(null, ci_items.map(function (it) { return it.x0; })), colX1 = Math.max.apply(null, ci_items.map(function (it) { return it.x1; }));
+    var sorted = ci_items.slice().sort(function (a, b2) { return a.top - b2.top || a.x0 - b2.x0; });
+    var lines = [];
+    sorted.forEach(function (it) {
+      var ln = lines[lines.length - 1];
+      if (ln && Math.abs(it.top - ln.top) < it.fs * 0.6) ln.items.push(it); else lines.push({ top: it.top, items: [it] });
+    });
+    var starts = [];
+    lines.forEach(function (ln) {
+      ln.items.sort(function (a, b2) { return a.x0 - b2.x0; });
+      var f = ln.items[0];
+      var numOnly = /^\d{1,2}$/.test(f.s) && f.fs >= medFs * 1.25 && ln.items.length <= 2; // books with big bare numbers (12, 13…)
+      if ((/^\d{1,2}\.(?!\d)/.test(f.s) || numOnly) && f.x0 <= left + W * 0.03) starts.push(ln.top);
+    });
+    // clamp to the column so a wide page header in this column doesn't pull the next column into the crop
+    var cx0 = Math.max(cr[0], colX0 - 6) / W, cx1 = Math.min(cr[1], colX1 + 6) / W;
+    var colFrom = cr[0] / W, colTo = cr[1] / W;
+    var bounds = [0].concat(starts.map(function (t) { return Math.max(0, t - 6); })).concat([H]);
+    bounds.forEach(function (y0, bi) {
+      if (bi === bounds.length - 1) return;
+      var y1 = bounds[bi + 1];
+      var inRange = ci_items.filter(function (it) { return it.top >= y0 - 1 && it.top < y1; });
+      out.push({
+        problem: bi > 0, colFrom: colFrom, colTo: colTo, x0: cx0, x1: cx1, y0: y0 / H, y1: y1 / H,
+        textBottom: inRange.length ? Math.max.apply(null, inRange.filter(function (it) { return it.top < H * 0.92; }).map(function (it) { return it.bot; }).concat([y0])) / H : y0 / H
+      });
+    });
+  });
+  return out.some(function (r) { return r.problem; }) ? out : null;
+}
+
+function cropCanvas(src, box) {
+  var clamp = function (v) { return Math.min(1000, Math.max(0, v)); };
+  var x0 = clamp(Math.min(box[0], box[2]) - AI_BOX_PAD), y0 = clamp(Math.min(box[1], box[3]) - AI_BOX_PAD);
+  var x1 = clamp(Math.max(box[0], box[2]) + AI_BOX_PAD), y1 = clamp(Math.max(box[1], box[3]) + AI_BOX_PAD);
+  var px = Math.round(x0 / 1000 * src.width), py = Math.round(y0 / 1000 * src.height);
+  var pw = Math.max(1, Math.round((x1 - x0) / 1000 * src.width)), ph = Math.max(1, Math.round((y1 - y0) / 1000 * src.height));
+  var c = document.createElement('canvas');
+  c.width = pw; c.height = ph;
+  c.getContext('2d').drawImage(src, px, py, pw, ph, 0, 0, pw, ph);
+  return c;
+}
+
+function pushPending(blob, caption, included) {
+  pendingUploads.push({
+    localId: 'p' + (uploadSeq++),
+    file: blob,
+    url: URL.createObjectURL(blob),
+    caption: caption,
+    included: included,
+  });
+}
+
+function pushLocal(blob) {
+  pushPending(blob, '', true);
+  aiLocalCards++;
+}
+
+// Red/blue pen pixels from the gate that fall inside a 0-1000 box.
+function inkInBox(ink, box) {
+  var x0 = Math.min(box[0], box[2]) / 1000 * ink.w, x1 = Math.max(box[0], box[2]) / 1000 * ink.w;
+  var y0 = Math.min(box[1], box[3]) / 1000 * ink.h, y1 = Math.max(box[1], box[3]) / 1000 * ink.h;
+  var n = 0;
+  for (var i = 0; i < ink.n; i++) if (ink.xs[i] >= x0 && ink.xs[i] <= x1 && ink.ys[i] >= y0 && ink.ys[i] <= y1) n++;
+  return n;
+}
+
+// Problem ranges on a scanned page (no text layer), from the picture alone. Rows of printed ink form lines;
+// a problem number is a line at the column's left edge that stands out in at least two ways: taller, coloured
+// first glyph, outdented, alone on its line, or extra space above. Handwriting overlays are blanked first, and
+// only the left part of each column is read so checkboxes and side notes don't merge into lines.
+function scanProblemRanges(pageCanvas, layers) {
+  var W = 700, H = Math.round(pageCanvas.height * W / pageCanvas.width);
+  var c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  var ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(pageCanvas, 0, 0, W, H);
+  (layers || []).forEach(function (z) { ctx.fillRect(z[0] * W, z[1] * H, (z[2] - z[0]) * W, (z[3] - z[1]) * H); });
+  var d = ctx.getImageData(0, 0, W, H).data;
+  var ink = new Uint8Array(W * H), col = new Uint8Array(W * H);
+  var xL = Math.round(W * 0.04), xR = Math.round(W * 0.92), x, y, i;
+  var colCover = new Uint32Array(W);
+  for (y = 0; y < H; y++) for (x = xL; x < xR; x++) {
+    i = (y * W + x) * 4;
+    var mx = Math.max(d[i], d[i + 1], d[i + 2]), sat = mx - Math.min(d[i], d[i + 1], d[i + 2]);
+    var coloured = sat > 60 && mx < 245;
+    if (mx < 140 || coloured) { ink[y * W + x] = 1; colCover[x]++; if (coloured) col[y * W + x] = 1; }
+  }
+  // two columns when a near-empty vertical band runs through the middle
+  var best = 0, bestMid = -1, run = 0;
+  for (x = Math.round(W * 0.35); x <= Math.round(W * 0.65); x++) {
+    if (colCover[x] <= 2) { run++; if (run > best) { best = run; bestMid = x - run / 2; } } else run = 0;
+  }
+  var cols = best >= W * 0.015 ? [[xL, Math.round(bestMid)], [Math.round(bestMid), xR]] : [[xL, xR]];
+  var out = [];
+  cols.forEach(function (cr) {
+    var readTo = cr[0] + Math.round((cr[1] - cr[0]) * 0.55);
+    var lines = [], cur = null;
+    for (y = 0; y < H; y++) {
+      var lx0 = -1, lx1 = -1;
+      for (x = cr[0]; x < readTo; x++) if (ink[y * W + x]) { if (lx0 < 0) lx0 = x; lx1 = x; }
+      if (lx0 >= 0) {
+        if (!cur) cur = { y0: y, y1: y + 1, x0: lx0, x1: lx1 };
+        else { cur.y1 = y + 1; cur.x0 = Math.min(cur.x0, lx0); cur.x1 = Math.max(cur.x1, lx1); }
+      } else if (cur) { lines.push(cur); cur = null; }
+    }
+    if (cur) lines.push(cur);
+    lines = lines.filter(function (l) { return l.y1 - l.y0 >= 5; }); // underlines and table rules
+    if (lines.length < 3) return;
+    var hs = lines.map(function (l) { return l.y1 - l.y0; }).sort(function (a, b) { return a - b; }), med = hs[hs.length >> 1];
+    var xs0 = lines.map(function (l) { return l.x0; }).sort(function (a, b) { return a - b; }), body = xs0[xs0.length >> 1];
+    var starts = [];
+    lines.forEach(function (ln, k) {
+      var hgt = ln.y1 - ln.y0, gap = ln.y0 - (k ? lines[k - 1].y1 : 0);
+      if (ln.y0 < H * 0.08 || ln.y0 > H * 0.93 || hgt > med * 3 || ln.x0 > body + W * 0.02) return;
+      var gx1 = Math.min(readTo, ln.x0 + Math.round(med * 1.6)), gi = 0, gc = 0;
+      for (var yy = ln.y0; yy < ln.y1; yy++) for (var xx = ln.x0; xx < gx1; xx++) { var p = yy * W + xx; if (ink[p]) { gi++; if (col[p]) gc++; } }
+      var score = (hgt >= med * 1.25 ? 1 : 0) + (ln.x0 < body - W * 0.015 ? 1 : 0) + (gi && gc / gi > 0.3 ? 1 : 0) +
+        (ln.x1 - ln.x0 < med * 3 ? 1 : 0) + (gap >= med * 1.2 ? 1 : 0);
+      if (score >= 2) starts.push(ln.y0);
+    });
+    if (!starts.length) return;
+    var cx0 = W, cx1 = 0;
+    for (x = cr[0]; x < cr[1]; x++) if (colCover[x] > 2) { cx0 = Math.min(cx0, x); cx1 = Math.max(cx1, x); }
+    if (cx1 <= cx0) { cx0 = cr[0]; cx1 = cr[1]; }
+    var bounds = [0].concat(starts.map(function (t) { return Math.max(0, t - 6); })).concat([H]);
+    bounds.forEach(function (y0, bi) {
+      if (bi === bounds.length - 1) return;
+      var y1 = bounds[bi + 1];
+      var inRange = lines.filter(function (l) { return l.y0 >= y0 && l.y0 < y1 && l.y0 < H * 0.93; });
+      out.push({
+        problem: bi > 0, colFrom: cr[0] / W, colTo: cr[1] / W, x0: Math.max(0, cx0 - 4) / W, x1: Math.min(W, cx1 + 4) / W,
+        y0: y0 / H, y1: y1 / H, textBottom: (inRange.length ? inRange[inRange.length - 1].y1 : y0) / H
+      });
+    });
+  });
+  if (out.length && cols.length === 2) { // a column without numbers still needs a range for its memos
+    cols.forEach(function (cr) {
+      if (!out.some(function (r) { return r.colFrom === cr[0] / W; })) out.push({ problem: false, colFrom: cr[0] / W, colTo: cr[1] / W, x0: cr[0] / W, x1: cr[1] / W, y0: 0, y1: 1, textBottom: 0.93 });
+    });
+  }
+  return out.some(function (r) { return r.problem; }) ? out : null;
+}
+
+// One crop box (0-1000) per problem that has red/blue memos. Memos above a page's first number belong to a
+// problem carried over from the previous page, so that strip is cropped on its own. With no ranges at all,
+// nearby memos are grouped and cropped with some context above them.
+function localCardBoxes(ranges, memos) {
+  var groups = [];
+  memos.forEach(function (m) {
+    var cx = (m.x0 + m.x1) / 2, cy = (m.y0 + m.y1) / 2, hit = null;
+    (ranges || []).some(function (r) {
+      if (cx >= r.colFrom && cx < r.colTo && cy >= r.y0 && cy < r.y1) { hit = r; return true; }
+      return false;
+    });
+    var g = groups.find(function (q) { return hit ? q.r === hit : (!q.r && cy >= q.y0 - 0.08 && cy <= q.y1 + 0.08); });
+    if (!g) { g = { r: hit, x0: 1, y0: 1, x1: 0, y1: 0 }; groups.push(g); }
+    g.x0 = Math.min(g.x0, m.x0); g.y0 = Math.min(g.y0, m.y0); g.x1 = Math.max(g.x1, m.x1); g.y1 = Math.max(g.y1, m.y1);
+  });
+  return groups.map(function (g) {
+    var r = g.r, top, bottom, x0, x1;
+    if (r) { top = r.y0; bottom = Math.max(r.textBottom, g.y1) + 0.01; x0 = Math.min(r.x0, g.x0); x1 = Math.max(r.x1, g.x1); }
+    else { top = Math.max(0, g.y0 - 0.15); bottom = g.y1 + 0.03; x0 = Math.min(0.04, g.x0); x1 = Math.max(0.96, g.x1); }
+    return { top: top, box: [x0 * 1000, top * 1000, x1 * 1000, Math.min(1, bottom) * 1000] };
+  }).sort(function (a, b) { return a.top - b.top; }).map(function (b) { return b.box; });
+}
+
+// Split one page into problems without AI and add every problem that has red/blue memos, without text.
+async function pushLocalPage(page, pageCanvas, ink, layers) {
+  var memos = memoRegions(ink);
+  if (!memos.length) return;
+  var ranges = null;
+  try { ranges = await pdfProblemRanges(page); } catch (e) { ranges = null; }
+  if (!ranges) ranges = scanProblemRanges(pageCanvas, layers);
+  var boxes = localCardBoxes(ranges, memos);
+  for (var i = 0; i < boxes.length; i++) pushLocal(await canvasToBlob(cropCanvas(pageCanvas, boxes[i]), 0.9));
+}
+
+function startLocalRun() {
+  aiCtl = new AbortController();
+  aiSkipped = 0;
+  aiGateSkipped = 0;
+  aiScanSkipped = 0;
+  aiLocalCards = 0;
+  uploadStage = 'ai';
+}
+
+function finishLocalRun() {
+  aiCtl = null;
+  uploadStage = 'review';
+  renderUploadTab();
+}
+
+function stopAi() {
+  if (aiCtl) aiCtl.abort();
+}
+
+async function onPdfAutoPicked(file) {
+  if (!file) return;
+  var doc;
+  try {
+    doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  } catch (e) {
+    showToast('PDF를 여는 중 문제가 생겼어요');
+    return;
+  }
+  startLocalRun();
+  try {
+    for (var n = 1; n <= doc.numPages; n++) {
+      if (aiCtl.signal.aborted) break;
+      aiProgress = n + ' / ' + doc.numPages + '페이지 문제 나누는 중';
+      renderUploadTab();
+      var pageCanvas = await renderPdfPageCanvas(doc, n, AI_PAGE_SCALE);
+      var textPage = await doc.getPage(n), boxes = [];
+      try { boxes = await pdfTextBoxes(textPage); } catch (e) { boxes = []; }
+      var layers = null;
+      try { layers = await pdfOverlayImages(textPage); } catch (e) { layers = null; }
+      var bareScan = false;
+      if (layers && !layers.length) { if (boxes.length) layers = null; else bareScan = true; } // pages with a text layer keep the colour rules
+      var ink = penInk(pageCanvas, boxes, layers);
+      if (!pageHasColoredInk(ink)) { aiGateSkipped++; if (bareScan) aiScanSkipped++; continue; }
+      await pushLocalPage(textPage, pageCanvas, ink, layers);
+    }
+  } catch (e) {
+    // keep whatever was collected
+  }
+  finishLocalRun();
+}
+
+/* ───────────────── stats tab ───────────────── */
+
+function shiftDay(key, n) {
+  var p = key.split('-');
+  var d = new Date(+p[0], +p[1] - 1, +p[2] + n);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// flame grows and shifts from orange toward blue as the streak gets longer
+var FLAME_TIERS = [
+  { min: 0,  size: 64,  label: '불씨가 꺼졌어요',    c1: '#c7c7cc', c2: '#e5e5ea', core: '#f2f2f7', glow: 0 },
+  { min: 1,  size: 70,  label: '작은 불씨',          c1: '#fb923c', c2: '#fdba74', core: '#fef3c7', glow: 2 },
+  { min: 3,  size: 84,  label: '타오르는 중',        c1: '#f97316', c2: '#fbbf24', core: '#fef9c3', glow: 5 },
+  { min: 7,  size: 98,  label: '활활 타오르는 불꽃', c1: '#ea580c', c2: '#f59e0b', core: '#fef08a', glow: 9 },
+  { min: 14, size: 110, label: '맹렬한 불꽃',        c1: '#dc2626', c2: '#f97316', core: '#fde047', glow: 14 },
+  { min: 30, size: 122, label: '푸른 불꽃',          c1: '#2563eb', c2: '#06b6d4', core: '#e0f2fe', glow: 20 },
+];
+function flameTier(streak) {
+  var t = FLAME_TIERS[0];
+  FLAME_TIERS.forEach(function (x) { if (streak >= x.min) t = x; });
+  return t;
+}
+
+function flameSvg(tier) {
+  var h = Math.round(tier.size * 1.25);
+  var glow = tier.glow ? 'filter:drop-shadow(0 0 ' + tier.glow + 'px ' + tier.c1 + ');' : '';
+  return '<svg class="flame" viewBox="0 0 64 80" width="' + tier.size + '" height="' + h + '" style="' + glow + '" aria-hidden="true">' +
+    '<defs><linearGradient id="flameGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="' + tier.c1 + '"/><stop offset="1" stop-color="' + tier.c2 + '"/></linearGradient></defs>' +
+    '<path fill="url(#flameGrad)" d="M32 4C34 18 50 26 50 46C50 62 42 76 32 76C22 76 14 62 14 46C14 38 18 32 22 28C22 36 26 40 28 40C26 28 28 14 32 4Z"/>' +
+    '<path fill="' + tier.core + '" d="M32 38C33 46 40 50 40 58C40 66 36 72 32 72C28 72 24 66 24 58C24 50 30 46 32 38Z"/>' +
+  '</svg>';
+}
+
+function computeStreaks(daySet, today) {
+  var current = 0;
+  var cursor = daySet[today] ? today : shiftDay(today, -1);
+  while (daySet[cursor]) { current++; cursor = shiftDay(cursor, -1); }
+  var days = Object.keys(daySet).sort();
+  var longest = 0, run = 0, prev = null;
+  days.forEach(function (d) {
+    run = (prev && shiftDay(prev, 1) === d) ? run + 1 : 1;
+    if (run > longest) longest = run;
+    prev = d;
+  });
+  return { current: current, longest: longest };
+}
+
+async function renderStatsTab() {
+  var el = document.getElementById('content');
+  if (!db) {
+    el.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>데이터 저장 기능을 사용할 수 없어요.</p></div>';
+    return;
+  }
+  el.innerHTML = skelStats();
+  // each source loads on its own so one failing query can't blank the whole page (page size max is 1000)
+  var failed = [];
+  async function loadDocs(label, query) {
+    try {
+      var snap = await query.get();
+      return snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+    } catch (e) {
+      failed.push(label);
+      return [];
+    }
+  }
+  var loaded = await Promise.all([
+    loadDocs('학습 기록', db.collection('dailyStats').limit(1000)),
+    loadDocs('복습 로그', db.collection('reviewLog').orderBy('reviewedAt', 'desc').limit(1000)),
+    loadDocs('개념', db.collection('concepts').limit(1000)),
+  ]);
+  var dailyDocs = loaded[0], logDocs = loaded[1], concepts = loaded[2];
+  if (currentTab !== 'stats') return;
+
+  var now = new Date();
+  var today = ankiDayKey(now, SRS_CONFIG);
+
+  // a day counts as studied if dailyStats logged any review, or a concept's last review fell on it
+  var daySet = {};
+  var dayCounts = {};
+  dailyDocs.forEach(function (d) {
+    var n = Math.max(d.answered || 0, (d.newIntroduced || 0) + (d.reviewsDone || 0));
+    if (n > 0) { daySet[d.id] = true; dayCounts[d.id] = n; }
+  });
+  concepts.forEach(function (c) { if (c.lastReviewedAt) daySet[ankiDayKey(new Date(c.lastReviewedAt), SRS_CONFIG)] = true; });
+  var streaks = computeStreaks(daySet, today);
+  var tier = flameTier(streaks.current);
+  var note = streaks.current === 0 ? '오늘 복습하면 불꽃이 켜져요.'
+    : daySet[today] ? '오늘 복습 완료. 내일도 이어가요.'
+    : '오늘 복습하면 ' + (streaks.current + 1) + '일째가 돼요.';
+
+  var WD = ['일', '월', '화', '수', '목', '금', '토'];
+  function weekdayOf(key) { var p = key.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]).getDay(); }
+  var week = '';
+  for (var i = 6; i >= 0; i--) {
+    var k = shiftDay(today, -i);
+    var on = !!daySet[k];
+    week += '<div class="week-day' + (on ? ' on' : '') + (i === 0 ? ' today' : '') + '">' + WD[weekdayOf(k)] +
+      '<div class="week-dot">' + (on ? '<svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') + '</div></div>';
+  }
+
+  // recall rate per subject over the retained review log (좋음/쉬움 = recalled)
+  var subjectOf = {};
+  concepts.forEach(function (c) { subjectOf[c.id] = c.subjectId; });
+  var bySubject = {};
+  logDocs.forEach(function (r) {
+    var sid = subjectOf[r.conceptId];
+    if (!sid) return;
+    var b = bySubject[sid] || (bySubject[sid] = { total: 0, ok: 0 });
+    b.total++;
+    if (r.rating === 'good' || r.rating === 'easy') b.ok++;
+  });
+  var accRows = SUBJECTS.filter(function (s) { return bySubject[s.id]; }).map(function (s) {
+    var b = bySubject[s.id];
+    var pct = Math.round(b.ok / b.total * 100);
+    return '<div class="acc-row"><span class="acc-name">' + s.name + '</span>' +
+      '<div class="acc-track"><div class="acc-fill" style="width:' + pct + '%;background:' + subjectGradient(s.id) + '"></div></div>' +
+      '<span class="acc-val">' + pct + '% · ' + b.total + '회</span></div>';
+  }).join('');
+
+  // 오래된 카드 기억률: 복습 직전 간격이 21일 이상이었던 복습만 따로 센다 (좋음·쉬움 = 기억함)
+  var oldTotal = 0, oldOk = 0, allRevTotal = 0, allRevOk = 0;
+  logDocs.forEach(function (r) {
+    if (r.stateBefore !== 'review') return;
+    var ok = r.rating === 'good' || r.rating === 'easy';
+    allRevTotal++; if (ok) allRevOk++;
+    if ((r.intervalBefore || 0) >= 21) { oldTotal++; if (ok) oldOk++; }
+  });
+  var matureCount = concepts.filter(function (c) { return c.state === 'review' && (c.intervalDays || 0) >= 21; }).length;
+  var oldCard = '<div class="stat-card"><h2 class="stat-title">오래된 카드 기억률 (간격 3주 이상, 최근 30일)</h2>' +
+    (oldTotal
+      ? '<div class="old-recall"><div class="old-pct">' + Math.round(oldOk / oldTotal * 100) + '<small>%</small></div>' +
+        '<div class="old-desc"><div>' + oldTotal + '번 복습 중 ' + oldOk + '번 기억했어요</div>' +
+        '<div class="old-sub">복습 카드 전체 기억률 ' + Math.round(allRevOk / allRevTotal * 100) + '% · 지금 3주 이상 간격 카드 ' + matureCount + '개</div></div></div>'
+      : '<div class="stat-empty">간격이 3주 이상 벌어진 카드를 복습하면 기억률이 나타나요. 지금 3주 이상 간격 카드는 ' + matureCount + '개예요.</div>') +
+    '</div>';
+
+  // reviews due per day for the next 7 days; overdue and learning cards count toward today
+  var dueKeys = [0, 1, 2, 3, 4, 5, 6].map(function (i) { return shiftDay(today, i); });
+  var due = [0, 0, 0, 0, 0, 0, 0];
+  concepts.forEach(function (c) {
+    if (!c.nextReviewDate) return;
+    var dk = ankiDayKey(new Date(c.nextReviewDate), SRS_CONFIG);
+    if (dk < today) dk = today;
+    var idx = dueKeys.indexOf(dk);
+    if (idx >= 0) due[idx]++;
+  });
+  var maxDue = Math.max.apply(null, due.concat([1]));
+  var dueCols = due.map(function (n, i) {
+    var label = i === 0 ? '오늘' : i === 1 ? '내일' : WD[weekdayOf(dueKeys[i])];
+    return '<div class="due-col"><span class="due-n">' + n + '</span>' +
+      '<div class="due-bar' + (n === 0 ? ' zero' : '') + '" style="height:' + Math.round(n / maxDue * 86) + 'px"></div>' +
+      '<span class="due-d">' + label + '</span></div>';
+  }).join('');
+
+  // heatmap: last 16 weeks, one column per week starting Sunday
+  var todayWd = weekdayOf(today);
+  var heatStart = shiftDay(today, -(15 * 7 + todayWd));
+  var heatCells = '', heatTotal = 0;
+  for (var hk = heatStart; hk <= today; hk = shiftDay(hk, 1)) {
+    var hn = dayCounts[hk] || (daySet[hk] ? 1 : 0);
+    heatTotal += hn;
+    var lvl = hn === 0 ? 0 : hn < 5 ? 1 : hn < 15 ? 2 : hn < 30 ? 3 : 4;
+    var hp = hk.split('-');
+    heatCells += '<div class="heat-cell' + (lvl ? ' l' + lvl : '') + (hk === today ? ' today' : '') + '" title="' + (+hp[1]) + '월 ' + (+hp[2]) + '일 · ' + hn + '회"></div>';
+  }
+  var heatCard = '<div class="stat-card"><h2 class="stat-title">학습 달력 (최근 16주)</h2>' +
+    '<div class="heat-wrap" id="heatWrap"><div class="heat-grid">' + heatCells + '</div></div>' +
+    '<div class="heat-foot"><span>' + heatTotal + '회 복습</span><span class="heat-legend">적음 ' +
+    '<div class="heat-cell"></div><div class="heat-cell l1"></div><div class="heat-cell l2"></div><div class="heat-cell l3"></div><div class="heat-cell l4"></div> 많음</span></div></div>';
+
+  // study time: today, per-card average over days that recorded time, and the last 7 days
+  function fmtDuration(ms) {
+    var sec = Math.round(ms / 1000);
+    if (sec < 60) return sec + '초';
+    var min = Math.round(sec / 60);
+    return min < 60 ? min + '분' : Math.floor(min / 60) + '시간 ' + (min % 60) + '분';
+  }
+  var msByDay = {}, timedMs = 0, timedCards = 0;
+  dailyDocs.forEach(function (d) {
+    if (d.studyMs > 0) {
+      msByDay[d.id] = d.studyMs;
+      if (d.id >= shiftDay(today, -6)) { timedMs += d.studyMs; timedCards += d.answered || 0; }
+    }
+  });
+  var timeKeys = [6, 5, 4, 3, 2, 1, 0].map(function (i) { return shiftDay(today, -i); });
+  var maxMs = Math.max.apply(null, timeKeys.map(function (k) { return msByDay[k] || 0; }).concat([1]));
+  var timeCols = timeKeys.map(function (k, i) {
+    var ms = msByDay[k] || 0;
+    return '<div class="due-col"><span class="due-n">' + (ms ? Math.max(1, Math.round(ms / 60000)) : 0) + '</span>' +
+      '<div class="due-bar' + (ms ? '' : ' zero') + '" style="height:' + Math.round(ms / maxMs * 86) + 'px"></div>' +
+      '<span class="due-d">' + (i === 6 ? '오늘' : WD[weekdayOf(k)]) + '</span></div>';
+  }).join('');
+  var timeCard =
+    '<div class="mini-stats">' +
+      '<div class="mini-stat"><div class="v">' + (msByDay[today] ? fmtDuration(msByDay[today]) : '0분') + '</div><div class="l">오늘 학습 시간</div></div>' +
+      '<div class="mini-stat"><div class="v">' + (timedCards ? fmtDuration(timedMs / timedCards) : '-') + '</div><div class="l">카드당 평균 (최근 7일)</div></div>' +
+    '</div>' +
+    '<div class="stat-card"><h2 class="stat-title">하루 학습 시간 (분)</h2><div class="due-chart">' + timeCols + '</div>' +
+    (Object.keys(msByDay).length ? '' : '<div class="stat-empty" style="margin-top:10px">시간 기록은 이번 업데이트 이후 복습부터 쌓여요.</div>') + '</div>';
+
+  // maturity: how settled the concepts are (young = interval under 21 days)
+  var mat = { newC: 0, learning: 0, young: 0, mature: 0 };
+  concepts.forEach(function (c) {
+    var n = normalizeCard(c, SRS_CONFIG);
+    if (n.state === 'new') mat.newC++;
+    else if (n.state === 'learning' || n.state === 'relearning') mat.learning++;
+    else if (n.intervalDays < 21) mat.young++;
+    else mat.mature++;
+  });
+  var matDefs = [
+    { key: 'newC', label: '새 카드', color: '#3b82f6' },
+    { key: 'learning', label: '학습 중', color: '#f87171' },
+    { key: 'young', label: '어린 카드', color: '#fbbf24' },
+    { key: 'mature', label: '숙성 카드', color: '#22c55e' },
+  ];
+  var matCard = '<div class="stat-card"><h2 class="stat-title">개념 성숙도</h2>' +
+    (concepts.length
+      ? '<div class="mature-bar">' + matDefs.map(function (m) {
+          return mat[m.key] ? '<div class="mature-seg" style="width:' + (mat[m.key] / concepts.length * 100) + '%;background:' + m.color + '"></div>' : '';
+        }).join('') + '</div>' +
+        '<div class="mature-legend">' + matDefs.map(function (m) {
+          return '<span class="k"><i style="background:' + m.color + '"></i>' + m.label + '<b>' + mat[m.key] + '</b></span>';
+        }).join('') + '</div>'
+      : '<div class="stat-empty">개념을 추가하면 성숙도가 나타나요.</div>') +
+    '</div>';
+
+  // weak concepts: most lapses (pressed 다시 on a review card)
+  var weak = concepts.map(function (c) { return { c: c, lapses: c.lapses || 0 }; })
+    .filter(function (w) { return w.lapses > 0; })
+    .sort(function (a, b) { return b.lapses - a.lapses; })
+    .slice(0, 5);
+  var weakCard = '<div class="stat-card"><h2 class="stat-title">자주 틀리는 개념 TOP 5</h2>' +
+    (weak.length ? weak.map(function (w) {
+      var subj = SUBJECTS.find(function (x) { return x.id === w.c.subjectId; });
+      var url = w.c.imageId ? '/_blob/' + w.c.imageId : '';
+      return '<div class="weak-row">' +
+        (url ? '<img class="weak-thumb" src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')">' : '<div class="weak-thumb"></div>') +
+        '<div class="weak-body"><div class="weak-subj" style="color:' + (subj ? subj.c1 : 'var(--text-3)') + '">' + (subj ? subj.name : '') + '</div>' +
+        '<div class="weak-text">' + (w.c.text ? escapeHtml(w.c.text) : '메모 없음') + '</div></div>' +
+        '<span class="weak-count">다시 ' + w.lapses + '회</span></div>';
+    }).join('') : '<div class="stat-empty">복습 중 "다시"를 누른 개념이 아직 없어요.</div>') +
+    '</div>';
+
+  var warn = failed.length ? '<div class="stat-card stat-warn">' + failed.join(', ') + '을(를) 불러오지 못했어요. 잠시 뒤 통계 탭을 다시 열어 주세요.</div>' : '';
+  el.innerHTML = '<h2 class="page-h">통계</h2>' + warn +
+    '<div id="examBanner"><div id="examHero" class="exam-hero" onclick="toggleExamEditor()"></div><div id="examEditor"></div></div>' +
+    '<div class="stat-card">' +
+      '<div class="streak-hero">' +
+        '<div class="flame-wrap">' + flameSvg(tier) + '</div>' +
+        '<div><div class="streak-num">' + streaks.current + '<small>일 연속</small></div>' +
+        '<div class="streak-tier" style="color:' + tier.c1 + '">' + tier.label + '</div>' +
+        '<div class="streak-note">' + note + '</div></div>' +
+      '</div>' +
+      '<div class="week-row">' + week + '</div>' +
+    '</div>' +
+    '<div class="mini-stats">' +
+      '<div class="mini-stat"><div class="v">' + streaks.longest + '일</div><div class="l">최장 연속</div></div>' +
+      '<div class="mini-stat"><div class="v">' + concepts.length + '개</div><div class="l">저장한 개념</div></div>' +
+    '</div>' +
+    heatCard + timeCard + matCard + oldCard +
+    '<div class="stat-card"><h2 class="stat-title">과목별 기억률 (최근 30일)</h2>' +
+      (accRows || '<div class="stat-empty">복습을 시작하면 과목별 기억률(좋음·쉬움 비율)이 나타나요.</div>') +
+    '</div>' +
+    '<div class="stat-card"><h2 class="stat-title">앞으로 7일 복습 예정</h2><div class="due-chart">' + dueCols + '</div></div>' + weakCard;
+  renderExamEditor();
+  renderExamBanner();
+  var heatEl = document.getElementById('heatWrap');
+  if (heatEl) heatEl.scrollLeft = heatEl.scrollWidth;
 }
 
 /* ───────────────── concepts tab (모아보기) ───────────────── */
@@ -1311,54 +2767,159 @@ async function renderConceptsTab() {
     return;
   }
   if (allConcepts === null) {
-    el.innerHTML = '<div class="loading">불러오는 중...</div>';
+    el.innerHTML = skelCards(6);
     try {
       var snap = await db.collection('concepts').limit(1000).get();
       allConcepts = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
       allConcepts.sort(function (a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
     } catch (e) {
-      allConcepts = [];
+      allConcepts = null;
+      if (currentTab === 'concepts') el.innerHTML = errorBox('개념을 불러오지 못했어요', 'renderConceptsTab()');
+      return;
     }
+    // 카운터가 생기기 전 복습도 반영: 복습 기록의 다시/어려움 횟수와 카운터 중 큰 값을 쓴다
+    try {
+      var logSnap = await db.collection('reviewLog').limit(1000).get();
+      var again = {}, hard = {};
+      logSnap.docs.forEach(function (d) {
+        var r = d.data();
+        if (r.rating === 'again') again[r.conceptId] = (again[r.conceptId] || 0) + 1;
+        else if (r.rating === 'hard') hard[r.conceptId] = (hard[r.conceptId] || 0) + 1;
+      });
+      allConcepts.forEach(function (c) {
+        c._again = Math.max(c.againCount !== undefined ? c.againCount : (c.lapses || 0), again[c.id] || 0);
+        c._hard = Math.max(c.hardCount || 0, hard[c.id] || 0);
+      });
+    } catch (e) {}
   }
   if (currentTab !== 'concepts') return;
 
   el.innerHTML =
-    '<div class="subject-filter"><select id="subjectFilterSelect">' +
-      '<option value="">전체 과목</option>' +
-      SUBJECTS.map(function (s) {
-        return '<option value="' + s.id + '"' + (s.id === conceptsSubjectFilter ? ' selected' : '') + '>' + s.name + '</option>';
-      }).join('') +
-    '</select></div><div id="galleryResults"></div>';
-  document.getElementById('subjectFilterSelect').addEventListener('change', function (e) {
-    conceptsSubjectFilter = e.target.value;
+    '<h2 class="page-h">모아보기</h2>' +
+    '<div class="concept-toolbar">' +
+      '<div class="toolbar-row">' +
+        '<input type="search" id="conceptSearch" class="search-input" placeholder="메모 검색" value="' + escapeHtml(conceptsSearch) + '" autocomplete="off">' +
+        '<div class="seg" id="sortSeg" role="group" aria-label="정렬 기준"></div>' +
+        '<div class="seg" id="dirSeg" role="group" aria-label="정렬 방향"></div>' +
+        '<span class="sort-hint" id="sortHint"></span>' +
+      '</div>' +
+      '<div class="chip-scroll" id="subjectChips" role="group" aria-label="과목"></div>' +
+    '</div><div id="galleryResults"></div>';
+  document.getElementById('conceptSearch').addEventListener('input', function (e) {
+    conceptsSearch = e.target.value;
     renderGalleryResults();
   });
+  renderConceptControls();
   renderGalleryResults();
+}
+
+// subject chips and the sort switch act together on the list below
+function renderConceptControls() {
+  var seg = document.getElementById('sortSeg'), chips = document.getElementById('subjectChips');
+  if (!seg || !chips) return;
+  renderSeg(seg, [['new', '최신순'], ['hard', '어려운 순']], conceptsSort, 'setConceptsSort');
+  renderSeg(document.getElementById('dirSeg'), [['desc', '내림차순 ↓'], ['asc', '오름차순 ↑']], conceptsDir, 'setConceptsDir');
+  var hint = document.getElementById('sortHint');
+  if (hint) hint.textContent = conceptsSort === 'new'
+    ? (conceptsDir === 'desc' ? '가장 최근에 올린 것부터' : '가장 오래전에 올린 것부터')
+    : (conceptsDir === 'desc' ? '다시·어려움을 많이 누른 것부터' : '다시·어려움을 적게 누른 것부터');
+  if (chips.dataset.sel === conceptsSubjectFilter && chips.children.length) return;   // 과목이 안 바뀌면 칩을 다시 그리지 않아 애니메이션이 한 번만 나옴
+  chips.dataset.sel = conceptsSubjectFilter;
+  chips.innerHTML = '<button class="filter-chip' + (conceptsSubjectFilter === '' ? ' on' : '') + '" onclick="setConceptsSubject(\'\')">전체</button>' +
+    SUBJECTS.map(function (sj) {
+      return '<button class="filter-chip' + (conceptsSubjectFilter === sj.id ? ' on' : '') + '" onclick="setConceptsSubject(\'' + sj.id + '\')"><i style="background:' + sj.c1 + '"></i>' + sj.name + '</button>';
+    }).join('');
+}
+// 버튼은 한 번만 만들고 .on 과 슬라이드 알약만 옮겨서, 전환이 부드럽게 미끄러지게 한다
+function renderSeg(seg, opts, current, handler) {
+  if (!seg) return;
+  if (!seg.querySelector('button')) {
+    seg.innerHTML = '<span class="seg-pill"></span>' + opts.map(function (o) {
+      return '<button data-v="' + o[0] + '" onclick="' + handler + '(\'' + o[0] + '\')">' + o[1] + '</button>';
+    }).join('');
+  }
+  seg.querySelectorAll('button').forEach(function (b) {
+    var on = b.dataset.v === current;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on);
+  });
+  var place = function () {
+    var on = seg.querySelector('button.on'), pill = seg.querySelector('.seg-pill');
+    if (!on || !pill) return;
+    pill.style.width = on.offsetWidth + 'px';
+    pill.style.transform = 'translateX(' + on.offsetLeft + 'px)';
+  };
+  place();
+  requestAnimationFrame(place);
+}
+function setConceptsSort(v) {
+  conceptsSort = v;
+  try { localStorage.setItem('conceptsSort', v); } catch (e) {}
+  renderConceptControls();
+  renderGalleryResults();
+}
+function setConceptsDir(v) {
+  conceptsDir = v;
+  try { localStorage.setItem('conceptsDir', v); } catch (e) {}
+  renderConceptControls();
+  renderGalleryResults();
+}
+function setConceptsSubject(v) {
+  conceptsSubjectFilter = v;
+  renderConceptControls();
+  renderGalleryResults();
+}
+
+// 다시 + 어려움 presses; cards from before the counters existed fall back to their lapses
+function againOf(c) { return c._again !== undefined ? c._again : (c.againCount !== undefined ? c.againCount : (c.lapses || 0)); }
+function hardOf(c) { return c._hard !== undefined ? c._hard : (c.hardCount || 0); }
+function hardScore(c) { return againOf(c) + hardOf(c); }
+
+// Wraps each search word found in the raw text in <mark>, escaping everything else.
+function highlightText(text, tokens) {
+  if (!tokens.length) return escapeHtml(text);
+  var re = new RegExp('(' + tokens.map(function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')', 'gi');
+  return text.split(re).map(function (part, i) { return i % 2 ? '<mark>' + escapeHtml(part) + '</mark>' : escapeHtml(part); }).join('');
 }
 
 function renderGalleryResults() {
   var resultsEl = document.getElementById('galleryResults');
   if (!resultsEl) return;
-  var filtered = conceptsSubjectFilter
-    ? allConcepts.filter(function (c) { return c.subjectId === conceptsSubjectFilter; })
-    : allConcepts;
+  var tokens = conceptsSearch.toLowerCase().split(/\s+/).filter(Boolean);
+  var filtered = allConcepts.filter(function (c) {
+    if (conceptsSubjectFilter && c.subjectId !== conceptsSubjectFilter) return false;
+    var text = (c.text || '').toLowerCase();
+    return tokens.every(function (t) { return text.indexOf(t) !== -1; });
+  });
+  // subject filter and sort work together: filter first, then order what is left
+  filtered = filtered.slice().sort(function (a, b) {
+    var sign = conceptsDir === 'asc' ? -1 : 1;
+    if (conceptsSort === 'hard') {
+      var d = hardScore(b) - hardScore(a);
+      if (d) return d * sign;
+      return (b.createdAt || '').localeCompare(a.createdAt || '');   // 같은 횟수면 최신 먼저
+    }
+    return (b.createdAt || '').localeCompare(a.createdAt || '') * sign;
+  });
 
   if (filtered.length === 0) {
-    resultsEl.innerHTML = '<div class="empty-state">' + ICONS.empty + '<p>저장된 개념이 없어요.</p></div>';
+    resultsEl.innerHTML = tokens.length || conceptsSubjectFilter
+      ? emptyBox(ICONS.empty, '검색 결과가 없어요', '다른 단어나 과목으로 찾아보세요.', '')
+      : emptyBox(ICONS.empty, '저장된 개념이 없어요', '문제를 올리면 여기에 모여요.', '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>');
     return;
   }
-  resultsEl.innerHTML = '<div class="gallery-grid">' + filtered.map(function (c) {
+  resultsEl.innerHTML = '<div class="search-count">' + (tokens.length ? '검색 결과 ' : '') + filtered.length + '개</div>' + '<div class="gallery-grid">' + filtered.map(function (c) {
     var url = c.imageId ? ('/_blob/' + c.imageId) : '';
     return '<div class="gallery-item">' +
-      '<div class="accent-stripe" style="background:' + subjectGradient(c.subjectId) + '"></div>' +
-      (url ? '<img src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')">' : '') +
+      (url ? '<div class="g-img"><img src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')"></div>' : '') +
       '<div class="g-body">' +
+        (hardScore(c) > 0 ? '<div class="g-hard">다시 ' + againOf(c) + '회 · 어려움 ' + hardOf(c) + '회</div>' : '') +
         '<div class="g-top">' + subjectEditor(c.id, c.subjectId) +
           '<button class="btn-icon" onclick="deleteConcept(\'' + c.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
         '</div>' +
         (editingConceptId === c.id
           ? '<textarea class="g-caption-edit" onblur="saveEditCaption(\'' + c.id + '\', this.value)">' + escapeHtml(c.text || '') + '</textarea>'
-          : '<div class="g-caption" onclick="startEditCaption(\'' + c.id + '\')">' + (c.text ? escapeHtml(c.text) : '메모 추가...') + '</div>') +
+          : '<div class="g-caption" onclick="startEditCaption(\'' + c.id + '\')">' + (c.text ? highlightText(c.text, tokens) : '메모 추가...') + '</div>') +
       '</div>' +
     '</div>';
   }).join('') + '</div>';
@@ -1377,6 +2938,7 @@ async function deleteConcept(id) {
     return;
   }
   allConcepts = allConcepts.filter(function (c) { return c.id !== id; });
+  studyInfo = null;
   reviewQueue = null;
   waitingQueue = [];
   renderGalleryResults();
