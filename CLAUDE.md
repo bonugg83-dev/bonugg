@@ -14,9 +14,13 @@ Claude Code 세션이 직접 수행해서 아티팩트의 DB/자산 저장소에
 
 ## 사용자가 PDF나 스크린샷을 올리며 "개념 추가해줘"라고 하면
 
-1. 과목(subjectId)을 모르면 물어봐서 확인: `intermediate`(중급회계) /
-   `advanced`(고급회계) / `tax`(세무회계) / `finance`(재무관리) /
-   `economics`(경제학) / `cost`(원가관리회계) 중 하나.
+1. 과목(subjectId)을 모르면 물어봐서 확인. 과목은 4대 과목 아래 세부 과목이고,
+   `subjectId`에는 세부 과목 id를 넣는다:
+   - 회계학: `intermediate`(중급회계) / `advanced`(고급회계) / `gov`(정부회계) / `cost`(원가회계)
+   - 경영학: `bizgen`(일반경영) / `finance`(재무관리)
+   - 기업법: `commerce`(상행위) / `company`(회사법) / `audit`(외부감사법) / `cpalaw`(공인회계사법)
+   - 세법: `vat`(부가가치세) / `corp`(법인세) / `income`(소득세) / `othertax`(기타세법)
+   (옛 값 `tax`→기타세법, `economics`→일반경영은 앱이 읽을 때 자동으로 바꿔 읽는다.)
 
 2. PDF면 페이지별 이미지로 렌더링. `python3 -c "import fitz"`가 실패하면 먼저
    `pip install pymupdf`.
@@ -101,7 +105,7 @@ Claude Code 세션이 직접 수행해서 아티팩트의 DB/자산 저장소에
 `concepts` 컬렉션 문서 하나 = 개념 하나 (안키 v2 스케줄러, 페이지 JS의
 `SRS_CONFIG`/`schedule`/`normalizeCard` 참고):
 - `text`: 다듬어진 개념 텍스트 (빈 문자열 가능)
-- `subjectId`: 위 6개 중 하나
+- `subjectId`: 위 세부 과목 id 중 하나
 - `imageId`: 자산 id — 아티팩트 페이지는 `/_blob/` + imageId 로 표시
 - `state`: `new` | `learning` | `review` | `relearning`
 - `step`: 학습/재학습 단계 인덱스

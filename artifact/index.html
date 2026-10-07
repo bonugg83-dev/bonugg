@@ -578,6 +578,35 @@ button.nav-tile:active { transform: scale(.97); }
 .nav-tile b { font-size: 15px; font-weight: 800; }
 .nav-tile span { font-size: 12px; color: var(--text-3); font-weight: 600; }
 
+/* subject colours: one fixed colour per major subject */
+:root { --g-acct: #b7791f; --g-biz: #1f8f4e; --g-law: #0f7f86; --g-tax: #26418f; --g-ink: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --g-acct: #e3ae45; --g-biz: #4cc783; --g-law: #45c1c8; --g-tax: #8aa4ff; --g-ink: #0f1217; } }
+:root[data-theme="dark"] { --g-acct: #e3ae45; --g-biz: #4cc783; --g-law: #45c1c8; --g-tax: #8aa4ff; --g-ink: #0f1217; }
+.subj-select-wrap select { color: var(--g-ink); }
+.subj-select-wrap .dot { color: var(--g-ink); }
+.group-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.group-chips .subject-chip.on { border-color: var(--gc); box-shadow: inset 0 0 0 1px var(--gc); }
+.exam-dnum { font-size: 34px; }
+.section-label.tight { margin-top: 18px; }
+.subj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.subj-card { background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--gc); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.subj-head { display: flex; align-items: baseline; gap: 8px; border: none; background: none; padding: 2px; font: inherit; cursor: pointer; text-align: left; color: var(--text); }
+.subj-name { font-size: 16px; font-weight: 800; color: var(--gc); }
+.subj-due { font-size: 11px; font-weight: 700; background: var(--gc); color: var(--g-ink); border-radius: 999px; padding: 1px 8px; }
+.subj-count { margin-left: auto; font-family: var(--font-num); font-size: 12px; color: var(--text-3); font-weight: 600; }
+.subj-subs { display: flex; flex-wrap: wrap; gap: 6px; }
+.subj-sub { border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2); border-radius: 999px; padding: 5px 11px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; transition: border-color var(--t-fast), transform var(--t-fast) var(--ease); }
+.subj-sub b { font-family: var(--font-num); color: var(--gc); font-weight: 600; }
+.subj-sub.zero { color: var(--text-3); }
+.subj-sub:hover { border-color: var(--gc); }
+.subj-sub:active { transform: scale(.96); }
+.subj-hint { font-size: 12px; color: var(--text-3); }
+.stat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.stat-action { border: none; background: none; color: var(--accent); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0 0 12px; white-space: nowrap; }
+.stat-action:hover { text-decoration: underline; }
+.acc-row.clickable { cursor: pointer; }
+.acc-row.clickable:hover .acc-name { text-decoration: underline; }
+
 /* upload saving */
 .save-prog { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin: 14px auto 0; max-width: 320px; }
 .save-prog i { display: block; height: 100%; background: var(--accent); transition: width .2s var(--ease); }
@@ -606,17 +635,26 @@ var ICONS = {
   pdf: '<svg class="e-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5v4a1 1 0 0 0 1 1h4"/><path d="M8.5 13.5h7M8.5 17h4.5"/></svg>',
 };
 
-var SUBJECTS = [
-  { id: 'intermediate', name: '중급회계', mono: '중', c1: '#6366f1', c2: '#a855f7' },
-  { id: 'advanced', name: '고급회계', mono: '고', c1: '#2563eb', c2: '#06b6d4' },
-  { id: 'tax', name: '세무회계', mono: '세', c1: '#f59e0b', c2: '#f97316' },
-  { id: 'finance', name: '재무관리', mono: '재', c1: '#10b981', c2: '#14b8a6' },
-  { id: 'economics', name: '경제학', mono: '경', c1: '#f43f5e', c2: '#ec4899' },
-  { id: 'cost', name: '원가관리회계', mono: '원', c1: '#a855f7', c2: '#d946ef' },
+// 4 major subjects, each with its own fixed colour; concepts store the detailed subject id.
+var GROUPS = [
+  { id: 'acct', name: '회계학', color: 'var(--g-acct)', subs: [['intermediate', '중급회계'], ['advanced', '고급회계'], ['gov', '정부회계'], ['cost', '원가회계']] },
+  { id: 'biz', name: '경영학', color: 'var(--g-biz)', subs: [['bizgen', '일반경영'], ['finance', '재무관리']] },
+  { id: 'law', name: '기업법', color: 'var(--g-law)', subs: [['commerce', '상행위'], ['company', '회사법'], ['audit', '외부감사법'], ['cpalaw', '공인회계사법']] },
+  { id: 'taxlaw', name: '세법', color: 'var(--g-tax)', subs: [['vat', '부가가치세'], ['corp', '법인세'], ['income', '소득세'], ['othertax', '기타세법']] },
 ];
-
+var SUBJECTS = [];
+GROUPS.forEach(function (g) {
+  g.subs.forEach(function (s) { SUBJECTS.push({ id: s[0], name: s[1], mono: s[1].charAt(0), group: g.id, groupName: g.name, c1: g.color }); });
+});
+// subject ids from the earlier 6-subject setup, mapped on read (세무회계 → 기타세법, 경제학 → 일반경영)
+var LEGACY_SUBJECT = { tax: 'othertax', economics: 'bizgen' };
+function canonSubjectId(id) { return LEGACY_SUBJECT[id] || id; }
+function findSubject(id) {
+  id = canonSubjectId(id);
+  return SUBJECTS.find(function (s) { return s.id === id; }) || null;
+}
 function subjectGradient(subjectId) {
-  var subj = SUBJECTS.find(function (s) { return s.id === subjectId; });
+  var subj = findSubject(subjectId);
   return subj ? subj.c1 : 'var(--text-3)';
 }
 
@@ -647,7 +685,7 @@ var uploadStage = 'idle'; // idle | pdf-crop | ai | review | saving | done
 var uploadSubject = SUBJECTS[0].id;
 try {
   var savedSubject = localStorage.getItem('uploadSubject');
-  if (SUBJECTS.some(function (sj) { return sj.id === savedSubject; })) uploadSubject = savedSubject;
+  if (findSubject(savedSubject)) uploadSubject = canonSubjectId(savedSubject);
 } catch (e) {}
 var pendingUploads = []; // { localId, file, url, caption, included }
 var uploadSeq = 0;
@@ -672,7 +710,8 @@ var cropDragStartX = 0, cropDragStartY = 0, cropDragStartBounds = null;
 
 // concepts tab state
 var allConcepts = null;
-var conceptsSubjectFilter = '';
+var conceptsGroup = '';          // 큰 과목 id ('' = 전체)
+var conceptsSubjectFilter = '';  // 세부 과목 id ('' = 큰 과목 전체)
 var conceptsSearch = '';
 var conceptsDir = 'desc';       // 'desc' | 'asc' — 정렬 방향
 var conceptsSort = 'new';       // 'new' (최신 업로드순) | 'hard' (자주 어려워한 순)
@@ -763,6 +802,9 @@ function skelCards(n) {
 function skelStats() {
   return '<div class="skel" style="height:44px;margin-bottom:12px"></div><div class="skel" style="height:150px;margin-bottom:12px"></div><div class="skel-row" style="margin-bottom:12px"><div class="skel" style="height:72px;flex:1"></div><div class="skel" style="height:72px;flex:1"></div></div><div class="skel" style="height:140px;margin-bottom:12px"></div><div class="skel" style="height:140px"></div>';
 }
+function statHead(title, label, js) {
+  return '<div class="stat-head"><h2 class="stat-title">' + title + '</h2>' + (label ? '<button class="stat-action" onclick="' + js + '">' + label + ' ›</button>' : '') + '</div>';
+}
 function errorBox(title, retryJs) {
   return '<div class="empty-state">' + ICONS.warn + '<h2 class="state-title">' + title + '</h2><p>연결을 확인하고 다시 시도해 주세요.</p>' +
     '<div class="state-actions"><button class="btn-primary" onclick="' + retryJs + '">다시 시도</button></div></div>';
@@ -773,13 +815,16 @@ function emptyBox(icon, title, desc, actionsHtml) {
 }
 
 function subjectEditor(conceptId, subjectId) {
-  var subj = SUBJECTS.find(function (s) { return s.id === subjectId; });
-  var mono = subj ? subj.mono : '?';
+  var subj = findSubject(subjectId);
+  var cur = subj ? subj.id : '';
   return '<span class="subj-select-wrap">' +
-    '<span class="dot" style="background:' + (subj ? subj.c1 : '#8e8e93') + '">' + mono + '</span>' +
+    '<span class="dot" style="background:' + (subj ? subj.c1 : '#8e8e93') + '">' + (subj ? subj.mono : '?') + '</span>' +
     '<select style="background:' + subjectGradient(subjectId) + '" onclick="event.stopPropagation()" onchange="onSubjectChange(\'' + conceptId + '\', this.value)">' +
-    SUBJECTS.map(function (s) {
-      return '<option value="' + s.id + '"' + (s.id === subjectId ? ' selected' : '') + '>' + s.name + '</option>';
+    (cur ? '' : '<option value="" selected disabled>과목 없음</option>') +
+    GROUPS.map(function (g) {
+      return '<optgroup label="' + g.name + '">' + g.subs.map(function (s) {
+        return '<option value="' + s[0] + '"' + (s[0] === cur ? ' selected' : '') + '>' + s[1] + '</option>';
+      }).join('') + '</optgroup>';
     }).join('') +
     '</select></span>';
 }
@@ -793,6 +838,7 @@ async function onSubjectChange(conceptId, newSubjectId) {
   }
   var concept = allConcepts.find(function (c) { return c.id === conceptId; });
   if (concept) concept.subjectId = newSubjectId;
+  studyInfo = null;
   renderGalleryResults();
 }
 
@@ -1237,7 +1283,7 @@ function removeExam(i) {
 
 async function getStudyInfo() {
   if (studyInfo) return studyInfo;
-  var info = { daySet: {}, total: null, failed: false };
+  var info = { daySet: {}, total: null, bySubj: {}, failed: false };
   try {
     var r = await Promise.all([db.collection('dailyStats').limit(1000).get(), db.collection('concepts').limit(1000).get()]);
     r[0].docs.forEach(function (d) {
@@ -1246,8 +1292,9 @@ async function getStudyInfo() {
     });
     info.total = r[1].docs.length;
     r[1].docs.forEach(function (d) {
-      var lr = d.data().lastReviewedAt;
-      if (lr) info.daySet[ankiDayKey(new Date(lr), SRS_CONFIG)] = true;
+      var x = d.data(), sid = canonSubjectId(x.subjectId);
+      info.bySubj[sid] = (info.bySubj[sid] || 0) + 1;
+      if (x.lastReviewedAt) info.daySet[ankiDayKey(new Date(x.lastReviewedAt), SRS_CONFIG)] = true;
     });
   } catch (e) { info.failed = true; }
   studyInfo = info;
@@ -1282,6 +1329,11 @@ async function renderHomeTab() {
   var total = counts.newCount + counts.learningCount + counts.reviewCount;
   var now = new Date();
   var today = ankiDayKey(now, SRS_CONFIG);
+  var dueBy = {};
+  reviewQueue.concat(waitingQueue.map(function (w) { return w.card; })).forEach(function (c) {
+    var sid = canonSubjectId(c.subjectId);
+    dueBy[sid] = (dueBy[sid] || 0) + 1;
+  });
   var info = studyInfo;
   if (!info) getStudyInfo().then(function () { if (currentTab === 'home') renderHomeTab(); });
   var doneToday = sessionAnswered > 0 || (dailyStatsToday && dailyStatsToday.answered > 0);
@@ -1319,20 +1371,31 @@ async function renderHomeTab() {
       '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>') + '</div>';
   }
 
-  var up = nearestExam();
-  var examTile = up.length
-    ? '<button class="mini-stat tile-btn" onclick="switchTab(\'stats\')"><div class="stat-title" style="margin:0 0 6px">' + escapeHtml(up[0].exam.name || '시험') + '</div>' +
-      '<div class="tile-d">' + (up[0].left === 0 ? 'D-DAY' : 'D-' + up[0].left) + '</div><div class="tile-sub">' + fmtExamDate(up[0].exam.date) + '</div></button>'
-    : '<button class="mini-stat tile-btn" onclick="switchTab(\'stats\')"><div class="stat-title" style="margin:0 0 6px">D-day</div><div class="tile-sub">시험일을 등록하면 남은 날이 나와요</div></button>';
   var streakTile = info
     ? '<div class="stat-card home-tile"><div class="stat-title">연속 학습</div><div class="streak-num">' + streak + '<small>일</small></div><div class="week-row">' + weekDotsHtml(daySet, today) + '</div></div>'
     : '<div class="skel" style="height:150px"></div>';
+  var subjCards = GROUPS.map(function (g) {
+    var gTotal = 0, gDue = 0;
+    g.subs.forEach(function (sb) { gTotal += (info && info.bySubj[sb[0]]) || 0; gDue += dueBy[sb[0]] || 0; });
+    return '<div class="subj-card" style="--gc:' + g.color + '">' +
+      '<button class="subj-head" onclick="openConcepts(\'' + g.id + '\', \'\')"><span class="subj-name">' + g.name + '</span>' +
+        (gDue ? '<span class="subj-due">오늘 ' + gDue + '</span>' : '') + '<span class="subj-count">' + (info ? gTotal + '개' : '') + '</span></button>' +
+      '<div class="subj-subs">' + g.subs.map(function (sb) {
+        var n = info ? (info.bySubj[sb[0]] || 0) : 0;
+        return '<button class="subj-sub' + (n === 0 ? ' zero' : '') + '" onclick="openConcepts(\'' + g.id + '\', \'' + sb[0] + '\')">' + sb[1] + (n ? '<b>' + n + '</b>' : '') + '</button>';
+      }).join('') + '</div>' +
+      (info && !info.failed && gTotal === 0 ? '<div class="subj-hint">문제를 올리면 여기에 쌓여요</div>' : '') + '</div>';
+  }).join('');
   var navTiles = '<div class="home-nav">' +
     '<button class="nav-tile" onclick="switchTab(\'concepts\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg><b>모아보기</b><span>' + (info && info.total != null ? '저장한 개념 ' + info.total + '개' : '저장한 개념') + '</span></button>' +
     '<button class="nav-tile" onclick="switchTab(\'stats\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><b>통계</b><span>학습 기록과 기억률</span></button></div>';
 
   el.innerHTML = '<h2 class="page-h">오늘<span class="page-sub">' + (now.getMonth() + 1) + '월 ' + now.getDate() + '일 (' + WD[now.getDay()] + ')</span></h2>' +
-    '<div class="home-wrap">' + hero + '<div class="home-col">' + streakTile + examTile + navTiles + '</div></div>';
+    '<div id="examBanner"><div id="examHero" class="exam-hero" onclick="toggleExamEditor()"></div><div id="examEditor"></div></div>' +
+    '<div class="home-wrap">' + hero + '<div class="home-col">' + streakTile + '</div></div>' +
+    '<div class="section-label tight">과목</div><div class="subj-grid">' + subjCards + '</div>' + navTiles;
+  renderExamBanner();
+  renderExamEditor();
 }
 
 /* ───────────────── review tab ───────────────── */
@@ -1487,7 +1550,7 @@ async function renderReviewTab() {
   var counts = queueCounts();
   var preview = previewIntervals(item, new Date(), SRS_CONFIG);
   var imgUrl = item.imageId ? ('/_blob/' + item.imageId) : '';
-  var subj = SUBJECTS.find(function (x) { return x.id === item.subjectId; });
+  var subj = findSubject(item.subjectId);
   var dis = reviewBusy ? ' disabled' : '';
   var remaining = reviewQueue.length + waitingQueue.length;
   var pct = Math.round(sessionAnswered / Math.max(1, sessionAnswered + remaining) * 100);
@@ -1511,7 +1574,7 @@ async function renderReviewTab() {
       '<aside class="review-side">' +
         '<div class="rv-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
         '<div class="side-top">' +
-          '<span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? subj.name : '과목 없음') + '</span>' +
+          '<span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? subj.groupName + ' · ' + subj.name : '과목 없음') + '</span>' +
           (item.leech ? '<span class="leech-badge">자주 틀림</span>' : (item.reps ? '<span class="card-meta">복습 ' + item.reps + '회</span>' : '<span class="card-meta">새 카드</span>')) +
         '</div>' +
         backlogBanner() +
@@ -1693,10 +1756,23 @@ function renderUploadTab() {
 }
 
 function renderSubjectPicker() {
-  return '<div class="subject-chips">' + SUBJECTS.map(function (sj) {
-    var on = sj.id === uploadSubject;
-    return '<button class="subject-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="pickUploadSubject(\'' + sj.id + '\')"><i style="background:' + sj.c1 + '"></i>' + sj.name + '</button>';
+  var cur = findSubject(uploadSubject);
+  var g = GROUPS.find(function (x) { return cur && x.id === cur.group; }) || GROUPS[0];
+  return '<div class="group-chips">' + GROUPS.map(function (x) {
+    var on = x.id === g.id;
+    return '<button class="subject-chip' + (on ? ' on' : '') + '" style="--gc:' + x.color + '" aria-pressed="' + on + '" onclick="pickUploadGroup(\'' + x.id + '\')"><i style="background:' + x.color + '"></i>' + x.name + '</button>';
+  }).join('') + '</div>' +
+  '<div class="subject-chips">' + g.subs.map(function (s) {
+    var on = s[0] === uploadSubject;
+    return '<button class="subject-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="pickUploadSubject(\'' + s[0] + '\')"><i style="background:' + g.color + '"></i>' + s[1] + '</button>';
   }).join('') + '</div>';
+}
+
+function pickUploadGroup(gid) {
+  var cur = findSubject(uploadSubject);
+  if (cur && cur.group === gid) return;
+  var g = GROUPS.find(function (x) { return x.id === gid; });
+  pickUploadSubject(g.subs[0][0]);
 }
 
 function pickUploadSubject(id) {
@@ -2581,7 +2657,7 @@ async function renderStatsTab() {
 
   // recall rate per subject over the retained review log (좋음/쉬움 = recalled)
   var subjectOf = {};
-  concepts.forEach(function (c) { subjectOf[c.id] = c.subjectId; });
+  concepts.forEach(function (c) { subjectOf[c.id] = canonSubjectId(c.subjectId); });
   var bySubject = {};
   logDocs.forEach(function (r) {
     var sid = subjectOf[r.conceptId];
@@ -2590,11 +2666,11 @@ async function renderStatsTab() {
     b.total++;
     if (r.rating === 'good' || r.rating === 'easy') b.ok++;
   });
-  var accRows = SUBJECTS.filter(function (s) { return bySubject[s.id]; }).map(function (s) {
+  var accRows = SUBJECTS.filter(function (s) { return bySubject[s.id] && bySubject[s.id].total >= 3; }).map(function (s) {
     var b = bySubject[s.id];
     var pct = Math.round(b.ok / b.total * 100);
-    return '<div class="acc-row"><span class="acc-name">' + s.name + '</span>' +
-      '<div class="acc-track"><div class="acc-fill" style="width:' + pct + '%;background:' + subjectGradient(s.id) + '"></div></div>' +
+    return '<div class="acc-row clickable" onclick="openConcepts(\'' + s.group + '\', \'' + s.id + '\', \'hard\')" title="이 과목의 어려운 개념 보기"><span class="acc-name">' + s.name + '</span>' +
+      '<div class="acc-track"><div class="acc-fill" style="width:' + pct + '%;background:' + s.c1 + '"></div></div>' +
       '<span class="acc-val">' + pct + '% · ' + b.total + '회</span></div>';
   }).join('');
 
@@ -2694,7 +2770,7 @@ async function renderStatsTab() {
     { key: 'young', label: '어린 카드', color: '#fbbf24' },
     { key: 'mature', label: '숙성 카드', color: '#22c55e' },
   ];
-  var matCard = '<div class="stat-card"><h2 class="stat-title">개념 성숙도</h2>' +
+  var matCard = '<div class="stat-card">' + statHead('개념 성숙도', mat.newC > 0 ? '새 카드 ' + mat.newC + '개 복습하기' : '', "switchTab('review')") +
     (concepts.length
       ? '<div class="mature-bar">' + matDefs.map(function (m) {
           return mat[m.key] ? '<div class="mature-seg" style="width:' + (mat[m.key] / concepts.length * 100) + '%;background:' + m.color + '"></div>' : '';
@@ -2710,9 +2786,9 @@ async function renderStatsTab() {
     .filter(function (w) { return w.lapses > 0; })
     .sort(function (a, b) { return b.lapses - a.lapses; })
     .slice(0, 5);
-  var weakCard = '<div class="stat-card"><h2 class="stat-title">자주 틀리는 개념 TOP 5</h2>' +
+  var weakCard = '<div class="stat-card">' + statHead('자주 틀리는 개념 TOP 5', weak.length ? '전체 보기' : '', "openConcepts('', '', 'hard')") +
     (weak.length ? weak.map(function (w) {
-      var subj = SUBJECTS.find(function (x) { return x.id === w.c.subjectId; });
+      var subj = findSubject(w.c.subjectId);
       var url = w.c.imageId ? '/_blob/' + w.c.imageId : '';
       return '<div class="weak-row">' +
         (url ? '<img class="weak-thumb" src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')">' : '<div class="weak-thumb"></div>') +
@@ -2730,7 +2806,8 @@ async function renderStatsTab() {
         '<div class="flame-wrap">' + flameSvg(tier) + '</div>' +
         '<div><div class="streak-num">' + streaks.current + '<small>일 연속</small></div>' +
         '<div class="streak-tier" style="color:' + tier.c1 + '">' + tier.label + '</div>' +
-        '<div class="streak-note">' + note + '</div></div>' +
+        '<div class="streak-note">' + note + '</div>' +
+        (daySet[today] ? '' : '<button class="btn-primary" style="margin-top:10px;width:auto;padding:9px 18px" onclick="switchTab(\'review\')">지금 복습하기</button>') + '</div>' +
       '</div>' +
       '<div class="week-row">' + week + '</div>' +
     '</div>' +
@@ -2739,10 +2816,10 @@ async function renderStatsTab() {
       '<div class="mini-stat"><div class="v">' + concepts.length + '개</div><div class="l">저장한 개념</div></div>' +
     '</div>' +
     heatCard + timeCard + matCard + oldCard +
-    '<div class="stat-card"><h2 class="stat-title">과목별 기억률 (최근 30일)</h2>' +
-      (accRows || '<div class="stat-empty">복습을 시작하면 과목별 기억률(좋음·쉬움 비율)이 나타나요.</div>') +
+    '<div class="stat-card">' + statHead('과목별 기억률 (최근 30일)', accRows ? '어려운 순으로 보기' : '', "openConcepts('', '', 'hard')") +
+      (accRows || '<div class="stat-empty">한 과목을 3번 이상 복습하면 기억률(좋음·쉬움 비율)이 나타나요.</div>') +
     '</div>' +
-    '<div class="stat-card"><h2 class="stat-title">앞으로 7일 복습 예정</h2><div class="due-chart">' + dueCols + '</div></div>' + weakCard;
+    '<div class="stat-card">' + statHead('앞으로 7일 복습 예정', due[0] > 0 ? '오늘 ' + due[0] + '개 복습하기' : '', "switchTab('review')") + '<div class="due-chart">' + dueCols + '</div></div>' + weakCard;
   renderExamEditor();
   renderExamBanner();
   var heatEl = document.getElementById('heatWrap');
@@ -2793,7 +2870,7 @@ async function renderConceptsTab() {
         '<div class="seg" id="dirSeg" role="group" aria-label="정렬 방향"></div>' +
         '<span class="sort-hint" id="sortHint"></span>' +
       '</div>' +
-      '<div class="chip-scroll" id="subjectChips" role="group" aria-label="과목"></div>' +
+      '<div id="subjectChips" role="group" aria-label="과목"></div>' +
     '</div><div id="galleryResults"></div>';
   document.getElementById('conceptSearch').addEventListener('input', function (e) {
     conceptsSearch = e.target.value;
@@ -2813,12 +2890,17 @@ function renderConceptControls() {
   if (hint) hint.textContent = conceptsSort === 'new'
     ? (conceptsDir === 'desc' ? '가장 최근에 올린 것부터' : '가장 오래전에 올린 것부터')
     : (conceptsDir === 'desc' ? '다시·어려움을 많이 누른 것부터' : '다시·어려움을 적게 누른 것부터');
-  if (chips.dataset.sel === conceptsSubjectFilter && chips.children.length) return;   // 과목이 안 바뀌면 칩을 다시 그리지 않아 애니메이션이 한 번만 나옴
-  chips.dataset.sel = conceptsSubjectFilter;
-  chips.innerHTML = '<button class="filter-chip' + (conceptsSubjectFilter === '' ? ' on' : '') + '" onclick="setConceptsSubject(\'\')">전체</button>' +
-    SUBJECTS.map(function (sj) {
-      return '<button class="filter-chip' + (conceptsSubjectFilter === sj.id ? ' on' : '') + '" onclick="setConceptsSubject(\'' + sj.id + '\')"><i style="background:' + sj.c1 + '"></i>' + sj.name + '</button>';
-    }).join('');
+  var key = conceptsGroup + '|' + conceptsSubjectFilter;
+  if (chips.dataset.sel === key && chips.children.length) return;   // 선택이 안 바뀌면 칩을 다시 그리지 않아 애니메이션이 한 번만 나옴
+  chips.dataset.sel = key;
+  function chip(label, on, js, color) {
+    return '<button class="filter-chip' + (on ? ' on' : '') + '" onclick="' + js + '">' + (color ? '<i style="background:' + color + '"></i>' : '') + label + '</button>';
+  }
+  var g = GROUPS.find(function (x) { return x.id === conceptsGroup; });
+  chips.innerHTML = '<div class="chip-scroll">' + chip('전체', conceptsGroup === '', "setConceptsGroup('')") +
+    GROUPS.map(function (x) { return chip(x.name, conceptsGroup === x.id, "setConceptsGroup('" + x.id + "')", x.color); }).join('') + '</div>' +
+    (g ? '<div class="chip-scroll" style="margin-top:6px">' + chip(g.name + ' 전체', conceptsSubjectFilter === '', "setConceptsSubject('')", g.color) +
+      g.subs.map(function (s) { return chip(s[1], conceptsSubjectFilter === s[0], "setConceptsSubject('" + s[0] + "')", g.color); }).join('') + '</div>' : '');
 }
 // 버튼은 한 번만 만들고 .on 과 슬라이드 알약만 옮겨서, 전환이 부드럽게 미끄러지게 한다
 function renderSeg(seg, opts, current, handler) {
@@ -2854,6 +2936,19 @@ function setConceptsDir(v) {
   renderConceptControls();
   renderGalleryResults();
 }
+function setConceptsGroup(v) {
+  conceptsGroup = v;
+  conceptsSubjectFilter = '';
+  renderConceptControls();
+  renderGalleryResults();
+}
+function openConcepts(group, sub, sort, dir) {   // 홈·통계에서 모아보기를 특정 과목/정렬로 열기
+  conceptsGroup = group || '';
+  conceptsSubjectFilter = sub || '';
+  conceptsSearch = '';
+  if (sort) { conceptsSort = sort; conceptsDir = dir || 'desc'; }
+  switchTab('concepts');
+}
 function setConceptsSubject(v) {
   conceptsSubjectFilter = v;
   renderConceptControls();
@@ -2877,7 +2972,9 @@ function renderGalleryResults() {
   if (!resultsEl) return;
   var tokens = conceptsSearch.toLowerCase().split(/\s+/).filter(Boolean);
   var filtered = allConcepts.filter(function (c) {
-    if (conceptsSubjectFilter && c.subjectId !== conceptsSubjectFilter) return false;
+    var sj = findSubject(c.subjectId);
+    if (conceptsGroup && (!sj || sj.group !== conceptsGroup)) return false;
+    if (conceptsSubjectFilter && (!sj || sj.id !== conceptsSubjectFilter)) return false;
     var text = (c.text || '').toLowerCase();
     return tokens.every(function (t) { return text.indexOf(t) !== -1; });
   });
@@ -2893,8 +2990,10 @@ function renderGalleryResults() {
   });
 
   if (filtered.length === 0) {
-    resultsEl.innerHTML = tokens.length || conceptsSubjectFilter
-      ? emptyBox(ICONS.empty, '검색 결과가 없어요', '다른 단어나 과목으로 찾아보세요.', '')
+    resultsEl.innerHTML = tokens.length
+      ? emptyBox(ICONS.empty, '검색 결과가 없어요', '다른 단어로 찾아보세요.', '')
+      : (conceptsGroup || conceptsSubjectFilter)
+      ? emptyBox(ICONS.empty, '이 과목엔 아직 개념이 없어요', '문제를 올리면 여기에 쌓여요.', '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>')
       : emptyBox(ICONS.empty, '저장된 개념이 없어요', '문제를 올리면 여기에 모여요.', '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>');
     return;
   }
