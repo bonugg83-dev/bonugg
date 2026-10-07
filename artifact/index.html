@@ -100,6 +100,9 @@ svg { display: block; }
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 14px; flex-shrink: 0;
 }
+.back-btn { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; padding: 6px 14px 6px 8px; font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.back-btn:hover { background: var(--surface-2); }
+.back-btn svg { width: 18px; height: 18px; }
 .topbar h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
 
 .content {
@@ -140,7 +143,6 @@ svg { display: block; }
 
 @media (min-width: 820px) {
   #app { flex-direction: row; }
-  .topbar, .tabbar { display: none; }
   .sidebar {
     display: flex; flex-direction: column;
     width: var(--sidebar-w); flex-shrink: 0;
@@ -568,6 +570,14 @@ button.tile-btn:hover { border-color: var(--text-3); }
 .tile-d { font-family: var(--font-num); font-size: 30px; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .tile-sub { font-size: 12px; color: var(--text-3); font-weight: 600; }
 
+.home-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+button.nav-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; text-align: left; transition: transform var(--t-fast) var(--ease), border-color var(--t-fast); }
+button.nav-tile:hover { border-color: var(--text-3); }
+button.nav-tile:active { transform: scale(.97); }
+.nav-tile svg { width: 24px; height: 24px; color: var(--accent); margin-bottom: 8px; }
+.nav-tile b { font-size: 15px; font-weight: 800; }
+.nav-tile span { font-size: 12px; color: var(--text-3); font-weight: 600; }
+
 /* upload saving */
 .save-prog { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin: 14px auto 0; max-width: 320px; }
 .save-prog i { display: block; height: 100%; background: var(--accent); transition: width .2s var(--ease); }
@@ -578,38 +588,9 @@ button.tile-btn:hover { border-color: var(--text-3); }
 </style>
 
 <div id="app">
-  <!-- tablet sidebar -->
-  <aside class="sidebar">
-    <div class="brand-row"><div class="brand-mark">개</div><h1>개념노트</h1><button class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="사이드바 접기 또는 펼치기" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button></div>
-    <nav>
-      <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.2 12 4l8.5 7.2V19a1.5 1.5 0 0 1-1.5 1.5h-3.5v-5.5h-7v5.5H5A1.5 1.5 0 0 1 3.5 19z"/></svg><span class="tab-label">홈</span></button>
-      <button class="tab-btn" data-tab="review" onclick="switchTab('review')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg><span class="tab-label">복습</span></button>
-      <button class="tab-btn" data-tab="upload" onclick="switchTab('upload')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.6"/></svg><span class="tab-label">업로드</span></button>
-      <button class="tab-btn" data-tab="concepts" onclick="switchTab('concepts')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg><span class="tab-label">모아보기</span></button>
-      <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tab-label">통계</span></button>
-    </nav>
-  </aside>
-
   <div class="main-area">
-    <div class="topbar"><div class="brand-mark">개</div><h1>개념노트</h1></div>
+    <div class="topbar" id="topbar"></div>
     <div class="content" id="content"></div>
-    <nav class="tabbar">
-      <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.2 12 4l8.5 7.2V19a1.5 1.5 0 0 1-1.5 1.5h-3.5v-5.5h-7v5.5H5A1.5 1.5 0 0 1 3.5 19z"/></svg><span class="tab-label">홈</span></button>
-      <button class="tab-btn" data-tab="review" onclick="switchTab('review')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg><span class="tab-label">복습</span></button>
-      <button class="tab-btn" data-tab="upload" onclick="switchTab('upload')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.6"/></svg><span class="tab-label">업로드</span></button>
-      <button class="tab-btn" data-tab="concepts" onclick="switchTab('concepts')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg><span class="tab-label">모아보기</span></button>
-      <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">
-        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tab-label">통계</span></button>
-    </nav>
   </div>
 </div>
 
@@ -699,6 +680,7 @@ try { var savedSort = localStorage.getItem('conceptsSort'); if (savedSort === 'n
 var editingConceptId = null;
 
 async function initCapabilities() {
+  updateTopbar();
   applyNav();
   document.querySelectorAll('.sidebar .tab-btn').forEach(function (b) { b.title = b.textContent.trim(); }); // tooltip when the sidebar is folded
   try { db = await window.claude.use('db'); } catch (e) { db = null; }
@@ -721,8 +703,18 @@ function toggleNav() {
   applyNav();
 }
 
+var TAB_TITLES = { review: '복습', upload: '문제 올리기', concepts: '모아보기', stats: '통계' };
+function updateTopbar() {
+  var t = document.getElementById('topbar');
+  if (!t) return;
+  t.innerHTML = currentTab === 'home'
+    ? '<div class="brand-mark">개</div><h1>개념노트</h1>'
+    : '<button class="back-btn" onclick="switchTab(\'home\')" aria-label="홈으로 돌아가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>홈</button><h1>' + TAB_TITLES[currentTab] + '</h1>';
+}
+
 function switchTab(tab) {
   currentTab = tab;
+  updateTopbar();
   document.querySelectorAll('.tab-btn').forEach(function (b) {
     b.classList.toggle('active', b.dataset.tab === tab);
   });
@@ -1335,12 +1327,12 @@ async function renderHomeTab() {
   var streakTile = info
     ? '<div class="stat-card home-tile"><div class="stat-title">연속 학습</div><div class="streak-num">' + streak + '<small>일</small></div><div class="week-row">' + weekDotsHtml(daySet, today) + '</div></div>'
     : '<div class="skel" style="height:150px"></div>';
-  var totalTile = info && info.total != null
-    ? '<button class="mini-stat tile-btn" onclick="switchTab(\'concepts\')"><div class="stat-title" style="margin:0 0 6px">저장한 개념</div><div class="tile-d">' + info.total + '<small style="font-size:14px;font-family:var(--font-ui);margin-left:3px">개</small></div></button>'
-    : '';
+  var navTiles = '<div class="home-nav">' +
+    '<button class="nav-tile" onclick="switchTab(\'concepts\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg><b>모아보기</b><span>' + (info && info.total != null ? '저장한 개념 ' + info.total + '개' : '저장한 개념') + '</span></button>' +
+    '<button class="nav-tile" onclick="switchTab(\'stats\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><b>통계</b><span>학습 기록과 기억률</span></button></div>';
 
   el.innerHTML = '<h2 class="page-h">오늘<span class="page-sub">' + (now.getMonth() + 1) + '월 ' + now.getDate() + '일 (' + WD[now.getDay()] + ')</span></h2>' +
-    '<div class="home-wrap">' + hero + '<div class="home-col">' + streakTile + examTile + totalTile + '</div></div>';
+    '<div class="home-wrap">' + hero + '<div class="home-col">' + streakTile + examTile + navTiles + '</div></div>';
 }
 
 /* ───────────────── review tab ───────────────── */
@@ -1633,7 +1625,6 @@ function renderUploadTab() {
 
   if (uploadStage === 'idle') {
     el.innerHTML =
-      '<h2 class="page-h">문제 올리기</h2>' +
       '<div class="step-title">1. 과목 <small>올리는 문제 전부 이 과목으로 저장돼요</small></div>' +
       renderSubjectPicker() +
       '<div class="step-title">2. 문제 올리기</div>' +
@@ -2732,7 +2723,7 @@ async function renderStatsTab() {
     '</div>';
 
   var warn = failed.length ? '<div class="stat-card stat-warn">' + failed.join(', ') + '을(를) 불러오지 못했어요. 잠시 뒤 통계 탭을 다시 열어 주세요.</div>' : '';
-  el.innerHTML = '<h2 class="page-h">통계</h2>' + warn +
+  el.innerHTML = warn +
     '<div id="examBanner"><div id="examHero" class="exam-hero" onclick="toggleExamEditor()"></div><div id="examEditor"></div></div>' +
     '<div class="stat-card">' +
       '<div class="streak-hero">' +
@@ -2795,7 +2786,6 @@ async function renderConceptsTab() {
   if (currentTab !== 'concepts') return;
 
   el.innerHTML =
-    '<h2 class="page-h">모아보기</h2>' +
     '<div class="concept-toolbar">' +
       '<div class="toolbar-row">' +
         '<input type="search" id="conceptSearch" class="search-input" placeholder="메모 검색" value="' + escapeHtml(conceptsSearch) + '" autocomplete="off">' +
