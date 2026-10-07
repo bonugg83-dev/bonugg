@@ -607,6 +607,12 @@ button.nav-tile:active { transform: scale(.97); }
 .acc-row.clickable { cursor: pointer; }
 .acc-row.clickable:hover .acc-name { text-decoration: underline; }
 
+button.sel-toggle { width: auto; padding: 7px 14px; margin-left: auto; font-size: 13px; }
+.g-sel { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-2); cursor: pointer; }
+.sel-bar { position: sticky; bottom: 0; z-index: 5; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; box-shadow: var(--shadow-md); margin-top: 12px; font-size: 13px; }
+.sel-bar button { width: auto; padding: 9px 16px; }
+.sel-bar select { width: auto; flex: 1 1 160px; }
+
 /* upload saving */
 .save-prog { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin: 14px auto 0; max-width: 320px; }
 .save-prog i { display: block; height: 100%; background: var(--accent); transition: width .2s var(--ease); }
@@ -651,7 +657,10 @@ var LEGACY_SUBJECT = { tax: 'othertax', economics: 'bizgen' };
 function canonSubjectId(id) { return LEGACY_SUBJECT[id] || id; }
 function findSubject(id) {
   id = canonSubjectId(id);
-  return SUBJECTS.find(function (s) { return s.id === id; }) || null;
+  var sj = SUBJECTS.find(function (s) { return s.id === id; });
+  if (sj) return sj;
+  var g = GROUPS.find(function (x) { return x.id === id; });   // 큰 과목 id만 저장된 개념 = 세부 미지정
+  return g ? { id: g.id, name: '세부 미지정', mono: g.name.charAt(0), group: g.id, groupName: g.name, c1: g.color, isGroupOnly: true } : null;
 }
 function subjectGradient(subjectId) {
   var subj = findSubject(subjectId);
@@ -717,6 +726,9 @@ var conceptsDir = 'desc';       // 'desc' | 'asc' — 정렬 방향
 var conceptsSort = 'new';       // 'new' (최신 업로드순) | 'hard' (자주 어려워한 순)
 try { var savedSort = localStorage.getItem('conceptsSort'); if (savedSort === 'new' || savedSort === 'hard') conceptsSort = savedSort; var savedDir = localStorage.getItem('conceptsDir'); if (savedDir === 'asc' || savedDir === 'desc') conceptsDir = savedDir; } catch (e) {}
 var editingConceptId = null;
+var selectMode = false;         // 여러 개 선택해서 세부 과목을 한꺼번에 지정
+var selectedIds = {};
+var lastFiltered = [];
 
 async function initCapabilities() {
   updateTopbar();
@@ -822,7 +834,7 @@ function subjectEditor(conceptId, subjectId) {
     '<select style="background:' + subjectGradient(subjectId) + '" onclick="event.stopPropagation()" onchange="onSubjectChange(\'' + conceptId + '\', this.value)">' +
     (cur ? '' : '<option value="" selected disabled>과목 없음</option>') +
     GROUPS.map(function (g) {
-      return '<optgroup label="' + g.name + '">' + g.subs.map(function (s) {
+      return '<optgroup label="' + g.name + '"><option value="' + g.id + '"' + (g.id === cur ? ' selected' : '') + '>' + g.name + ' · 미지정</option>' + g.subs.map(function (s) {
         return '<option value="' + s[0] + '"' + (s[0] === cur ? ' selected' : '') + '>' + s[1] + '</option>';
       }).join('') + '</optgroup>';
     }).join('') +
@@ -1376,11 +1388,13 @@ async function renderHomeTab() {
     : '<div class="skel" style="height:150px"></div>';
   var subjCards = GROUPS.map(function (g) {
     var gTotal = 0, gDue = 0;
+    gTotal += (info && info.bySubj[g.id]) || 0; gDue += dueBy[g.id] || 0;
     g.subs.forEach(function (sb) { gTotal += (info && info.bySubj[sb[0]]) || 0; gDue += dueBy[sb[0]] || 0; });
+    var gUn = (info && info.bySubj[g.id]) || 0;
     return '<div class="subj-card" style="--gc:' + g.color + '">' +
       '<button class="subj-head" onclick="openConcepts(\'' + g.id + '\', \'\')"><span class="subj-name">' + g.name + '</span>' +
         (gDue ? '<span class="subj-due">오늘 ' + gDue + '</span>' : '') + '<span class="subj-count">' + (info ? gTotal + '개' : '') + '</span></button>' +
-      '<div class="subj-subs">' + g.subs.map(function (sb) {
+      '<div class="subj-subs">' + (gUn ? '<button class="subj-sub" onclick="openConcepts(\'' + g.id + '\', \'' + g.id + '\')">세부 미지정<b>' + gUn + '</b></button>' : '') + g.subs.map(function (sb) {
         var n = info ? (info.bySubj[sb[0]] || 0) : 0;
         return '<button class="subj-sub' + (n === 0 ? ' zero' : '') + '" onclick="openConcepts(\'' + g.id + '\', \'' + sb[0] + '\')">' + sb[1] + (n ? '<b>' + n + '</b>' : '') + '</button>';
       }).join('') + '</div>' +
@@ -1574,7 +1588,7 @@ async function renderReviewTab() {
       '<aside class="review-side">' +
         '<div class="rv-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
         '<div class="side-top">' +
-          '<span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? subj.groupName + ' · ' + subj.name : '과목 없음') + '</span>' +
+          '<span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? (subj.isGroupOnly ? subj.groupName : subj.groupName + ' · ' + subj.name) : '과목 없음') + '</span>' +
           (item.leech ? '<span class="leech-badge">자주 틀림</span>' : (item.reps ? '<span class="card-meta">복습 ' + item.reps + '회</span>' : '<span class="card-meta">새 카드</span>')) +
         '</div>' +
         backlogBanner() +
@@ -1688,7 +1702,7 @@ function renderUploadTab() {
 
   if (uploadStage === 'idle') {
     el.innerHTML =
-      '<div class="step-title">1. 과목 <small>올리는 문제 전부 이 과목으로 저장돼요</small></div>' +
+      '<div class="step-title">1. 과목 <small>세부 과목은 안 골라도 돼요. 나중에 모아보기에서 지정할 수 있어요</small></div>' +
       renderSubjectPicker() +
       '<div class="step-title">2. 문제 올리기</div>' +
       renderPdfZone() +
@@ -1749,7 +1763,7 @@ function renderUploadTab() {
       '<div style="margin-top:14px"><button class="btn-primary" onclick="resetUploadFlow()">새로 업로드</button></div>';
     return;
   }
-  var html = '<div class="step-title">저장할 과목 <small>전부 같은 과목으로 저장돼요</small></div>' + renderSubjectPicker() + summary + '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
+  var html = '<div class="step-title">저장할 과목 <small>전부 같은 과목으로 저장돼요. 세부는 나중에 지정해도 돼요</small></div>' + renderSubjectPicker() + summary + '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
     '<div class="save-bar"><button class="btn-primary" onclick="saveAllUploads()">전체 저장 (' +
     pendingUploads.filter(function (i) { return i.included; }).length + '개)</button></div>';
   el.innerHTML = html;
@@ -1762,7 +1776,7 @@ function renderSubjectPicker() {
     var on = x.id === g.id;
     return '<button class="subject-chip' + (on ? ' on' : '') + '" style="--gc:' + x.color + '" aria-pressed="' + on + '" onclick="pickUploadGroup(\'' + x.id + '\')"><i style="background:' + x.color + '"></i>' + x.name + '</button>';
   }).join('') + '</div>' +
-  '<div class="subject-chips">' + g.subs.map(function (s) {
+  '<div class="subject-chips"><button class="subject-chip' + (uploadSubject === g.id ? ' on' : '') + '" aria-pressed="' + (uploadSubject === g.id) + '" onclick="pickUploadSubject(\'' + g.id + '\')"><i style="background:' + g.color + '"></i>세부 미지정</button>' + g.subs.map(function (s) {
     var on = s[0] === uploadSubject;
     return '<button class="subject-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" onclick="pickUploadSubject(\'' + s[0] + '\')"><i style="background:' + g.color + '"></i>' + s[1] + '</button>';
   }).join('') + '</div>';
@@ -1772,7 +1786,7 @@ function pickUploadGroup(gid) {
   var cur = findSubject(uploadSubject);
   if (cur && cur.group === gid) return;
   var g = GROUPS.find(function (x) { return x.id === gid; });
-  pickUploadSubject(g.subs[0][0]);
+  pickUploadSubject(g.id);   // 큰 과목만 고르면 세부 과목은 미지정으로 올라가고, 모아보기에서 나중에 지정
 }
 
 function pickUploadSubject(id) {
@@ -2792,7 +2806,7 @@ async function renderStatsTab() {
       var url = w.c.imageId ? '/_blob/' + w.c.imageId : '';
       return '<div class="weak-row">' +
         (url ? '<img class="weak-thumb" src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')">' : '<div class="weak-thumb"></div>') +
-        '<div class="weak-body"><div class="weak-subj" style="color:' + (subj ? subj.c1 : 'var(--text-3)') + '">' + (subj ? subj.name : '') + '</div>' +
+        '<div class="weak-body"><div class="weak-subj" style="color:' + (subj ? subj.c1 : 'var(--text-3)') + '">' + (subj ? (subj.isGroupOnly ? subj.groupName : subj.name) : '') + '</div>' +
         '<div class="weak-text">' + (w.c.text ? escapeHtml(w.c.text) : '메모 없음') + '</div></div>' +
         '<span class="weak-count">다시 ' + w.lapses + '회</span></div>';
     }).join('') : '<div class="stat-empty">복습 중 "다시"를 누른 개념이 아직 없어요.</div>') +
@@ -2869,15 +2883,69 @@ async function renderConceptsTab() {
         '<div class="seg" id="sortSeg" role="group" aria-label="정렬 기준"></div>' +
         '<div class="seg" id="dirSeg" role="group" aria-label="정렬 방향"></div>' +
         '<span class="sort-hint" id="sortHint"></span>' +
+        '<button class="btn-secondary sel-toggle" onclick="toggleSelectMode()">' + (selectMode ? '선택 끝내기' : '여러 개 선택') + '</button>' +
       '</div>' +
       '<div id="subjectChips" role="group" aria-label="과목"></div>' +
-    '</div><div id="galleryResults"></div>';
+    '</div><div id="galleryResults"></div><div id="selBar"></div>';
   document.getElementById('conceptSearch').addEventListener('input', function (e) {
     conceptsSearch = e.target.value;
     renderGalleryResults();
   });
   renderConceptControls();
   renderGalleryResults();
+  renderSelBar();
+}
+
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  selectedIds = {};
+  renderConceptsTab();
+}
+function selCount() { return Object.keys(selectedIds).filter(function (k) { return selectedIds[k]; }).length; }
+function renderSelBar() {
+  var bar = document.getElementById('selBar');
+  if (!bar) return;
+  if (!selectMode) { bar.innerHTML = ''; return; }
+  bar.innerHTML = '<div class="sel-bar"><span><b id="selN">' + selCount() + '</b>개 선택</span>' +
+    '<button class="btn-secondary" onclick="selectAllVisible()">보이는 것 전체</button>' +
+    '<select id="selTarget"><option value="" selected disabled>세부 과목 고르기</option>' +
+    GROUPS.map(function (g) {
+      return '<optgroup label="' + g.name + '"><option value="' + g.id + '">' + g.name + ' · 미지정</option>' + g.subs.map(function (s) {
+        return '<option value="' + s[0] + '">' + s[1] + '</option>';
+      }).join('') + '</optgroup>';
+    }).join('') + '</select>' +
+    '<button class="btn-primary" onclick="applySelSubject()">지정</button></div>';
+}
+function toggleSel(id, on) {
+  selectedIds[id] = !!on;
+  var n = document.getElementById('selN');
+  if (n) n.textContent = selCount();
+}
+function selectAllVisible() {
+  lastFiltered.forEach(function (c) { selectedIds[c.id] = true; });
+  renderGalleryResults();
+  var n = document.getElementById('selN');
+  if (n) n.textContent = selCount();
+}
+async function applySelSubject() {
+  var sel = document.getElementById('selTarget');
+  var v = sel ? sel.value : '';
+  var ids = Object.keys(selectedIds).filter(function (k) { return selectedIds[k]; });
+  if (!v) { showToast('지정할 과목을 먼저 골라 주세요'); return; }
+  if (!ids.length) { showToast('개념을 먼저 선택해 주세요'); return; }
+  try {
+    await Promise.all(ids.map(function (id) { return db.doc('concepts/' + id).update({ subjectId: v }); }));
+  } catch (e) {
+    showToast('일부를 저장하지 못했어요. 다시 불러올게요');
+    allConcepts = null; selectedIds = {};
+    renderConceptsTab();
+    return;
+  }
+  allConcepts.forEach(function (c) { if (selectedIds[c.id]) c.subjectId = v; });
+  var sj = findSubject(v);
+  studyInfo = null; selectedIds = {}; selectMode = false;
+  showToast(ids.length + '개를 ' + (sj ? (sj.isGroupOnly ? sj.groupName + ' · 미지정' : sj.name) : '') + '(으)로 지정했어요');
+  renderConceptsTab();
 }
 
 // subject chips and the sort switch act together on the list below
@@ -2900,6 +2968,7 @@ function renderConceptControls() {
   chips.innerHTML = '<div class="chip-scroll">' + chip('전체', conceptsGroup === '', "setConceptsGroup('')") +
     GROUPS.map(function (x) { return chip(x.name, conceptsGroup === x.id, "setConceptsGroup('" + x.id + "')", x.color); }).join('') + '</div>' +
     (g ? '<div class="chip-scroll" style="margin-top:6px">' + chip(g.name + ' 전체', conceptsSubjectFilter === '', "setConceptsSubject('')", g.color) +
+      chip('세부 미지정', conceptsSubjectFilter === g.id, "setConceptsSubject('" + g.id + "')", g.color) +
       g.subs.map(function (s) { return chip(s[1], conceptsSubjectFilter === s[0], "setConceptsSubject('" + s[0] + "')", g.color); }).join('') + '</div>' : '');
 }
 // 버튼은 한 번만 만들고 .on 과 슬라이드 알약만 옮겨서, 전환이 부드럽게 미끄러지게 한다
@@ -2946,6 +3015,7 @@ function openConcepts(group, sub, sort, dir) {   // 홈·통계에서 모아보�
   conceptsGroup = group || '';
   conceptsSubjectFilter = sub || '';
   conceptsSearch = '';
+  selectMode = false; selectedIds = {};
   if (sort) { conceptsSort = sort; conceptsDir = dir || 'desc'; }
   switchTab('concepts');
 }
@@ -2989,6 +3059,7 @@ function renderGalleryResults() {
     return (b.createdAt || '').localeCompare(a.createdAt || '') * sign;
   });
 
+  lastFiltered = filtered;
   if (filtered.length === 0) {
     resultsEl.innerHTML = tokens.length
       ? emptyBox(ICONS.empty, '검색 결과가 없어요', '다른 단어로 찾아보세요.', '')
@@ -3002,6 +3073,7 @@ function renderGalleryResults() {
     return '<div class="gallery-item">' +
       (url ? '<div class="g-img"><img src="' + url + '" alt="개념" onclick="openLightbox(\'' + url + '\')"></div>' : '') +
       '<div class="g-body">' +
+        (selectMode ? '<label class="g-sel"><input type="checkbox"' + (selectedIds[c.id] ? ' checked' : '') + ' onchange="toggleSel(\'' + c.id + '\', this.checked)"> 선택</label>' : '') +
         (hardScore(c) > 0 ? '<div class="g-hard">다시 ' + againOf(c) + '회 · 어려움 ' + hardOf(c) + '회</div>' : '') +
         '<div class="g-top">' + subjectEditor(c.id, c.subjectId) +
           '<button class="btn-icon" onclick="deleteConcept(\'' + c.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +

@@ -20,6 +20,7 @@ Claude Code 세션이 직접 수행해서 아티팩트의 DB/자산 저장소에
    - 경영학: `bizgen`(일반경영) / `finance`(재무관리)
    - 기업법: `commerce`(상행위) / `company`(회사법) / `audit`(외부감사법) / `cpalaw`(공인회계사법)
    - 세법: `vat`(부가가치세) / `corp`(법인세) / `income`(소득세) / `othertax`(기타세법)
+   세부 과목을 모르면 큰 과목 id(`acct`/`biz`/`law`/`taxlaw`)만 넣어도 된다(앱에서 "세부 미지정"으로 보이고 모아보기에서 나중에 지정).
    (옛 값 `tax`→기타세법, `economics`→일반경영은 앱이 읽을 때 자동으로 바꿔 읽는다.)
 
 2. PDF면 페이지별 이미지로 렌더링. `python3 -c "import fitz"`가 실패하면 먼저
