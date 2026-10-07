@@ -619,6 +619,14 @@ label.ai-toggle small { display: block; font-size: 12px; color: var(--text-3); f
 .ai-note { font-size: 12px; color: var(--text-3); margin: 12px 0 0; text-align: center; }
 select.thumb-subj { font-size: 12px; padding: 6px 8px; }
 
+.extra-box { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); text-align: left; }
+.extra-title { font-size: 12px; font-weight: 700; color: var(--text-3); margin-bottom: 10px; text-align: center; }
+.extra-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 520px) { .extra-row { grid-template-columns: 1fr; } }
+.extra-row .btn-secondary { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; text-align: left; padding: 12px 14px; }
+.extra-row .btn-secondary b { color: var(--text); font-size: 14px; }
+.extra-row .btn-secondary span { font-size: 12px; font-weight: 500; color: var(--text-3); }
+
 /* upload saving */
 .save-prog { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin: 14px auto 0; max-width: 320px; }
 .save-prog i { display: block; height: 100%; background: var(--accent); transition: width .2s var(--ease); }
@@ -1392,10 +1400,10 @@ async function renderHomeTab() {
   } else if (doneToday) {
     hero = '<div class="home-hero"><div class="done-banner" style="padding:8px 0 4px"><div class="home-done-icn">' + ICONS.done + '</div>' +
       '<h2 class="state-title">오늘 복습 끝!</h2><p>' + (backlogInfo && backlogInfo.held ? '밀린 ' + backlogInfo.held + '개는 내일 이어서 나와요.' : '내일 또 만나요.') + '</p>' +
-      '<div class="state-actions"><button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button></div></div></div>';
+      '<div class="state-actions"><button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button></div>' + extraStudyBox() + '</div></div>';
   } else {
     hero = '<div class="home-hero">' + emptyBox(ICONS.moon, '오늘 복습할 개념이 없어요', '새 문제를 올리면 오늘 밤 복습에 나타나요.',
-      '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>') + '</div>';
+      '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>') + (info && info.total > 0 ? extraStudyBox() : '') + '</div>';
   }
 
   var streakTile = info
@@ -1425,6 +1433,51 @@ async function renderHomeTab() {
     '<div class="section-label tight">과목</div><div class="subj-grid">' + subjCards + '</div>' + navTiles;
   renderExamBanner();
   renderExamEditor();
+}
+
+/* ───────────────── 더 공부하기: 오늘 분량을 끝낸 뒤 추가로 복습 ───────────────── */
+
+var EXTRA_N = { ahead: 20, newer: 10, hard: 20 };
+function extraStudyBox() {
+  return '<div class="extra-box"><div class="extra-title">더 공부하고 싶다면</div><div class="extra-row">' +
+    '<button class="btn-secondary" onclick="startExtraStudy(\'ahead\')"><b>미리 복습</b><span>만기가 가까운 카드 ' + EXTRA_N.ahead + '개</span></button>' +
+    '<button class="btn-secondary" onclick="startExtraStudy(\'hard\')"><b>어려워한 카드</b><span>자주 틀린 카드 ' + EXTRA_N.hard + '개</span></button>' +
+    '<button class="btn-secondary" onclick="startExtraStudy(\'newer\')"><b>새 카드 더</b><span>오늘 한도 넘어 ' + EXTRA_N.newer + '개</span></button>' +
+    '</div></div>';
+}
+
+// Builds an extra queue outside today's limits. Reviewing early keeps the normal scheduler (the interval is computed from the card's own interval).
+async function startExtraStudy(kind) {
+  if (!db) return;
+  var snap;
+  try { snap = await db.collection('concepts').limit(1000).get(); }
+  catch (e) { showToast('카드를 불러오지 못했어요. 다시 눌러 주세요'); return; }
+  var now = new Date(), today = ankiDay(now, SRS_CONFIG);
+  var inQueue = {};
+  reviewQueue && reviewQueue.forEach(function (c) { inQueue[c.id] = true; });
+  waitingQueue.forEach(function (w) { inQueue[w.card.id] = true; });
+  var cards = snap.docs.map(function (d) { return normalizeCard(Object.assign({ id: d.id }, d.data()), SRS_CONFIG); })
+    .filter(function (c) { return !inQueue[c.id]; });
+  function reviewedToday(c) { return c.lastReviewedAt && ankiDay(new Date(c.lastReviewedAt), SRS_CONFIG) === today; }
+  var pick;
+  if (kind === 'newer') {
+    pick = cards.filter(function (c) { return c.state === 'new'; })
+      .sort(function (a, b) { return (a.createdAt || '').localeCompare(b.createdAt || ''); });
+  } else if (kind === 'hard') {
+    pick = cards.filter(function (c) { return c.state === 'review' && !reviewedToday(c) && ((c.againCount || 0) + (c.hardCount || 0)) > 0; })
+      .sort(function (a, b) { return ((b.againCount || 0) + (b.hardCount || 0)) - ((a.againCount || 0) + (a.hardCount || 0)); });
+  } else {
+    pick = cards.filter(function (c) { return c.state === 'review' && !reviewedToday(c); })
+      .sort(function (a, b) { return a.nextReviewDate.localeCompare(b.nextReviewDate); });
+  }
+  pick = pick.slice(0, EXTRA_N[kind] || 20);
+  if (!pick.length) {
+    showToast(kind === 'newer' ? '더 꺼낼 새 카드가 없어요' : kind === 'hard' ? '어려워한 카드가 아직 없어요' : '미리 볼 카드가 없어요');
+    return;
+  }
+  reviewQueue = (reviewQueue || []).concat(pick);
+  lastPaintedId = null;
+  switchTab('review');
 }
 
 /* ───────────────── review tab ───────────────── */
@@ -1564,10 +1617,10 @@ async function renderReviewTab() {
     if (reviewHasCompletedAny) {
       el.innerHTML = backlogBanner() + '<div class="done-banner"><div class="home-done-icn">' + ICONS.done + '</div><h2 class="state-title">오늘 복습 끝!</h2><p>' +
         (sessionAnswered ? sessionAnswered + '번 답했어요. ' : '') + (backlogInfo && backlogInfo.held ? '밀린 ' + backlogInfo.held + '개는 내일 이어서 나와요.' : '내일 또 만나요.') + '</p>' +
-        '<div class="state-actions"><button class="btn-primary" onclick="switchTab(\'home\')">홈으로</button><button class="btn-secondary" onclick="switchTab(\'upload\')">문제 올리기</button></div>' + undoBtn + '</div>';
+        '<div class="state-actions"><button class="btn-primary" onclick="switchTab(\'home\')">홈으로</button><button class="btn-secondary" onclick="switchTab(\'upload\')">문제 올리기</button></div>' + extraStudyBox() + undoBtn + '</div>';
     } else {
       el.innerHTML = backlogBanner() + emptyBox(ICONS.moon, '오늘 복습할 개념이 없어요', '새 문제를 올리면 오늘 밤 복습에 나타나요.',
-        '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>');
+        '<button class="btn-primary" onclick="switchTab(\'upload\')">문제 올리기</button>') + extraStudyBox();
     }
     return;
   }
