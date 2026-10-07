@@ -557,6 +557,28 @@ input[type=date].exam-input { padding: 10px 12px; border: 1px solid var(--border
 .tab-btn, .btn-primary, .btn-secondary, .btn-icon, .stage-btn, .filter-chip, .subject-chip, .rate-btn, .nav-toggle { transition: transform var(--t-fast) var(--ease), background var(--t-fast), color var(--t-fast), border-color var(--t-fast), filter var(--t-fast); }
 .tab-btn:active, .btn-primary:not(:disabled):active, .btn-secondary:active, .btn-icon:active, .stage-btn:active, .filter-chip:active, .subject-chip:active, .rate-btn:not(:disabled):active { transform: scale(.97); }
 .rate-btn:not(:disabled):hover { filter: brightness(.96); }
+/* fill effect: two soft ellipses rise from below while hovered or pressed (main and secondary buttons) */
+.btn-primary, .btn-secondary { position: relative; overflow: hidden; isolation: isolate; }
+.btn-primary::before, .btn-primary::after, .btn-secondary::before, .btn-secondary::after {
+  content: ""; position: absolute; z-index: -1; pointer-events: none; border-radius: 50%;
+  transition: top .5s .05s cubic-bezier(.55, 0, .1, 1), transform .5s .05s cubic-bezier(.55, 0, .1, 1);
+}
+.btn-primary::before, .btn-secondary::before { left: 50%; top: 100%; width: 140%; height: 180%; transform: translateX(-50%) scaleY(1) scaleX(1.25); }
+.btn-primary::after, .btn-secondary::after { left: 55%; top: 180%; width: 160%; height: 190%; transform: translateX(-50%) scaleY(1) scaleX(1.45); }
+.btn-primary::before, .btn-primary::after { background: rgba(0, 0, 0, .16); }
+.btn-secondary::before, .btn-secondary::after { background: var(--accent); }
+.btn-secondary { transition: color .3s .1s, border-color .3s .1s, transform var(--t-fast) var(--ease); }
+.btn-secondary:not(:disabled):active { color: var(--accent-ink); border-color: var(--accent); }
+.btn-secondary:not(:disabled):active * { color: inherit; }
+.btn-primary:not(:disabled):active::before, .btn-secondary:not(:disabled):active::before { top: -35%; transform: translateX(-50%) scaleY(1.3) scaleX(.8); transition-duration: .25s; transition-delay: 0s; }
+.btn-primary:not(:disabled):active::after, .btn-secondary:not(:disabled):active::after { top: -45%; transform: translateX(-50%) scaleY(1.3) scaleX(.8); transition-duration: .25s; transition-delay: 0s; }
+.btn-primary:not(:disabled):active, .btn-secondary:not(:disabled):active { box-shadow: inset 0 2px 6px rgba(0, 0, 0, .18); }
+@media (hover: hover) {
+  .btn-secondary:not(:disabled):hover { color: var(--accent-ink); border-color: var(--accent); background: var(--surface); }
+  .btn-secondary:not(:disabled):hover * { color: inherit; }
+  .btn-primary:not(:disabled):hover::before, .btn-secondary:not(:disabled):hover::before { top: -35%; transform: translateX(-50%) scaleY(1.3) scaleX(.8); }
+  .btn-primary:not(:disabled):hover::after, .btn-secondary:not(:disabled):hover::after { top: -45%; transform: translateX(-50%) scaleY(1.3) scaleX(.8); }
+}
 .rate-btn.picked:disabled { opacity: 1; box-shadow: inset 0 0 0 2px currentColor; }
 @media (min-width: 820px) {
   .sidebar .tab-btn.active::before { content: ""; position: absolute; left: -10px; top: 22%; bottom: 22%; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
