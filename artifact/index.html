@@ -1905,7 +1905,7 @@ function renderUploadTab() {
   var qBar = qBusy
     ? '<div class="ai-summary">자기 전 복습 문제를 만드는 중입니다…</div>'
     : (askN ? '<div class="ai-summary"><button class="btn-secondary" style="width:auto" onclick="makeUploadQuestions()">복습 문제 만들기 (' + askN + '개)</button>' +
-        '<div style="margin-top:6px;font-size:12px;color:var(--text-3)">Claude가 문제마다 머릿속으로 답하는 질문을 하나씩 만들어요. 만든 질문은 고칠 수 있고, 저장할 때 함께 저장돼요. 처음 쓸 때 허용 창이 뜨고 Claude 사용량이 쓰여요.</div></div>' : '');
+        '<div style="margin-top:6px;font-size:12px;color:var(--text-3)">Claude가 문제마다 머릿속으로 답하는 질문을 하나씩 만들고, 세부 과목이 비어 있으면 원문을 보고 함께 골라요. 만든 질문은 고칠 수 있고, 저장할 때 함께 저장돼요. 처음 쓸 때 허용 창이 뜨고 Claude 사용량이 쓰여요.</div></div>' : '');
   var html = '<div class="step-title">저장할 과목 <small>전부 같은 과목으로 저장돼요. 세부는 나중에 지정해도 돼요</small></div>' + renderSubjectPicker() + summary + qBar + '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
     '<div class="save-bar"><button class="btn-primary" onclick="saveAllUploads()"' + (qBusy ? ' disabled' : '') + '>전체 저장 (' +
     pendingUploads.filter(function (i) { return i.included; }).length + '개)</button></div>';
@@ -2528,10 +2528,12 @@ function questionPrompt(list) {
     '입력은 문제 ' + list.length + '개다.\n\n' +
     list.map(function (x, i) {
       return '### 문제 ' + (i + 1) + '\n[원본 문제 텍스트]\n' + x.problemText + '\n\n[사용자가 빨간색 또는 파란색 펜으로 작성한 개념 텍스트]\n' + x.conceptText +
-        (x.avoidType && Q_TYPES[x.avoidType] ? '\n\n(이번에는 ' + x.avoidType + '(' + Q_TYPES[x.avoidType] + ') 유형이 아닌 다른 유형으로 만든다.)' : '');
+        (x.avoidType && Q_TYPES[x.avoidType] ? '\n\n(이번에는 ' + x.avoidType + '(' + Q_TYPES[x.avoidType] + ') 유형이 아닌 다른 유형으로 만든다.)' : '') +
+        (x.subs ? '\n\n[세부 과목 후보] ' + x.subs.map(function (sb) { return sb[0] + '(' + sb[1] + ')'; }).join(', ') : '');
     }).join('\n\n') +
+    '\n\n[세부 과목 후보]가 있는 문제는 원본 문제 텍스트의 내용으로 후보 중 하나를 골라 그 id를 subjectId에 넣는다. 확실하지 않거나 후보가 없으면 subjectId는 빈 문자열로 둔다. 과목은 질문과 따로 정한다(질문을 못 만들어도 과목은 고른다).' +
     '\n\n설명 없이 문제 순서대로 ' + list.length + '개 원소를 가진 JSON 배열 하나만 출력한다. 각 원소의 형식:\n' +
-    '{"ok":true,"needsReview":false,"questionType":"definition | judgment | comparison | reason | sequence | exception","recallQuestion":"","recallAnswer":"","keyPoints":[""],"estimatedThinkingSeconds":15,"reason":""}';
+    '{"ok":true,"needsReview":false,"questionType":"definition | judgment | comparison | reason | sequence | exception","recallQuestion":"","recallAnswer":"","keyPoints":[""],"estimatedThinkingSeconds":15,"reason":"","subjectId":""}';
 }
 
 // Returns the fields to keep, or a short reason string ('needsReview' when Claude said the material is not enough).
@@ -2554,10 +2556,24 @@ function checkQuestion(r, conceptText) {
 }
 
 // list: [{ problemText, conceptText, avoidType }] → one result per entry (fields object or reason string). Throws the sample error.
+// list entries may carry subs (the major subject's sub-subjects) when the sub-subject is still unassigned;
+// each result then has subjectId set to the chosen id, or '' when Claude was unsure.
 async function askQuestions(list) {
   var res = await sampleFn.json(questionPrompt(list), { cache: false });
   var arr = asList(res, list.length);
-  return list.map(function (x, i) { return checkQuestion(arr && arr[i], x.conceptText); });
+  return list.map(function (x, i) {
+    var r = arr && arr[i];
+    var sid = r && typeof r === 'object' ? String(r.subjectId || '') : '';
+    return { result: checkQuestion(r, x.conceptText), subjectId: x.subs && x.subs.some(function (sb) { return sb[0] === sid; }) ? sid : '' };
+  });
+}
+
+// sub-subjects to choose from when this item's subject is a major subject only ("세부 미지정")
+function unassignedSubs(subjectId) {
+  var sj = findSubject(subjectId);
+  if (!sj || !sj.isGroupOnly) return null;
+  var g = GROUPS.find(function (x) { return x.id === sj.group; });
+  return g ? g.subs : null;
 }
 
 function questionFailNote(reason) {
@@ -2594,10 +2610,13 @@ async function makeUploadQuestions(localIds) {
   for (var s = 0; s < items.length; s += 8) {
     var part = items.slice(s, s + 8);
     try {
-      var out = await askQuestions(part.map(function (it) { return { problemText: it.problemText, conceptText: it.caption, avoidType: it.q && it.q.questionType }; }));
+      var out = await askQuestions(part.map(function (it) {
+        return { problemText: it.problemText, conceptText: it.caption, avoidType: it.q && it.q.questionType, subs: unassignedSubs(it.subjectId || uploadSubject) };
+      }));
       part.forEach(function (it, k) {
-        if (typeof out[k] === 'string') it.qNote = questionFailNote(out[k]);
-        else { it.q = out[k]; it.qNote = ''; }
+        if (out[k].subjectId) it.subjectId = out[k].subjectId;
+        if (typeof out[k].result === 'string') it.qNote = questionFailNote(out[k].result);
+        else { it.q = out[k].result; it.qNote = ''; }
       });
     } catch (e) {
       var note = sampleErrorNote(e);
@@ -3706,7 +3725,7 @@ async function regenConceptQuestion(id) {
   galleryQNote[id] = '';
   renderGalleryResults();
   try {
-    var r = (await askQuestions([{ problemText: c.sourceProblemText, conceptText: c.text, avoidType: c.questionType }]))[0];
+    var r = (await askQuestions([{ problemText: c.sourceProblemText, conceptText: c.text, avoidType: c.questionType }]))[0].result;
     if (typeof r === 'string') galleryQNote[id] = questionFailNote(r);
     else { editingQuestionId = id; questionDraft = r; }   // shown for approval; nothing is saved until "저장"
   } catch (e) { galleryQNote[id] = sampleErrorNote(e); }
