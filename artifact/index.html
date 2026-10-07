@@ -613,6 +613,12 @@ button.sel-toggle { width: auto; padding: 7px 14px; margin-left: auto; font-size
 .sel-bar button { width: auto; padding: 9px 16px; }
 .sel-bar select { width: auto; flex: 1 1 160px; }
 
+label.ai-toggle { display: flex; align-items: flex-start; gap: 12px; margin-top: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); cursor: pointer; font-size: 14px; }
+label.ai-toggle input { margin-top: 2px; }
+label.ai-toggle small { display: block; font-size: 12px; color: var(--text-3); font-weight: 500; line-height: 1.5; margin-top: 2px; }
+.ai-note { font-size: 12px; color: var(--text-3); margin: 12px 0 0; text-align: center; }
+select.thumb-subj { font-size: 12px; padding: 6px 8px; }
+
 /* upload saving */
 .save-prog { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin: 14px auto 0; max-width: 320px; }
 .save-prog i { display: block; height: 100%; background: var(--accent); transition: width .2s var(--ease); }
@@ -667,7 +673,7 @@ function subjectGradient(subjectId) {
   return subj ? subj.c1 : 'var(--text-3)';
 }
 
-var db = null, assets = null;
+var db = null, assets = null, mcpFn = null;
 var currentTab = 'home';
 
 // review tab state
@@ -708,6 +714,14 @@ var aiSkipped = 0;           // (unused counter kept for the summary)
 var aiScanSkipped = 0;       // of those, scanned pages without a handwriting layer
 var aiGateSkipped = 0;       // pages skipped by the local colour gate (no AI call)
 var aiLocalCards = 0;        // problems added by local splitting, without AI text
+var GEMINI_SERVERS = ['개념노트 Gemini', 'Gemini'];   // connector display names we accept (claude.ai may shorten a Korean name)
+var GEMINI_SERVER = GEMINI_SERVERS[0];
+var aiAvailable = false;     // the mcp capability is present in this view
+var aiChecked = false;
+var aiOn = true;             // user switch: read handwriting with Gemini
+try { if (localStorage.getItem('aiOn') === '0') aiOn = false; } catch (e) {}
+var aiStopped = false;       // set when a limit/connection problem makes the run fall back to local-only
+var aiReadOk = 0, aiFailed = 0, aiChunkFails = 0, aiNote = '', aiLastError = '';
 
 // pdf manual-crop state
 var pdfDoc = null;
@@ -738,6 +752,7 @@ async function initCapabilities() {
   try { assets = await window.claude.use('assets'); } catch (e) { assets = null; }
   if (db) await loadExams();
   renderCurrentTab();
+  checkAiAvailability();   // optional Gemini reading; the page works without it
   if (db) pruneOldReviewLogs(); // fire-and-forget, doesn't block the UI
 }
 
@@ -1706,6 +1721,7 @@ function renderUploadTab() {
       renderSubjectPicker() +
       '<div class="step-title">2. 문제 올리기</div>' +
       renderPdfZone() +
+      renderAiToggle() +
       '<div class="section-label">직접 올리기</div>' +
       '<div class="dropzone-row">' +
         '<label class="dropzone">' +
@@ -1752,10 +1768,14 @@ function renderUploadTab() {
   }
 
   // review stage — confirm before save
-  var summary = (aiGateSkipped || aiLocalCards)
+  var summary = (aiGateSkipped || aiLocalCards || aiReadOk || aiNote || aiFailed)
     ? '<div class="ai-summary">' +
-        (aiLocalCards ? '문제 ' + aiLocalCards + '개를 잘라 담았어요. 사진 아래 메모 칸에 필요하면 적어 두세요. ' : '') +
+        (aiLocalCards ? '문제 ' + aiLocalCards + '개를 잘라 담았어요. ' + (aiReadOk ? '' : '사진 아래 메모 칸에 필요하면 적어 두세요. ') : '') +
+        (aiReadOk ? 'AI가 손글씨 ' + aiReadOk + '개를 글자로 읽었어요. 틀린 곳이 있으면 고쳐 주세요. ' : '') +
+        (aiNote ? aiNote + ' ' : '') +
+        (aiFailed && !aiNote ? aiFailed + '개는 AI가 읽지 못해 글자 없이 담았어요. ' : '') +
         (aiGateSkipped ? '빨강·파랑 메모가 없는 ' + aiGateSkipped + '페이지는 건너뛰었어요' + (aiScanSkipped ? '(스캔 쪽 ' + aiScanSkipped + '쪽은 필기 그림층이 없어서 제외)' : '') + '. ' : '') +
+        (aiLastError ? '<div style="margin-top:6px;font-size:12px;color:var(--text-3);word-break:break-all">AI 응답: ' + escapeHtml(aiLastError) + '</div>' : '') +
       '</div>'
     : '';
   if (pendingUploads.length === 0) {
@@ -1791,6 +1811,7 @@ function pickUploadGroup(gid) {
 
 function pickUploadSubject(id) {
   uploadSubject = id;
+  pendingUploads.forEach(function (i) { delete i.subjectId; });   // 전부 같은 과목으로 다시 맞춤
   try { localStorage.setItem('uploadSubject', id); } catch (e) {}
   renderUploadTab();
 }
@@ -1800,11 +1821,25 @@ function renderThumbCard(item) {
     '<div class="thumb-img"><img src="' + item.url + '" onclick="openLightbox(\'' + item.url + '\')" alt="개념"></div>' +
     '<div class="thumb-body">' +
     '<textarea placeholder="메모 (선택)" oninput="onCaptionInput(\'' + item.localId + '\', this.value)">' + escapeHtml(item.caption) + '</textarea>' +
+    itemSubjectSelect(item) +
     '<div class="thumb-card-foot">' +
       '<label><input type="checkbox" ' + (item.included ? 'checked' : '') + ' onchange="onIncludedChange(\'' + item.localId + '\', this.checked)"> 저장에 포함</label>' +
       '<button class="btn-icon" aria-label="삭제" onclick="removePendingUpload(\'' + item.localId + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg></button>' +
     '</div></div>' +
   '</div>';
+}
+
+function itemSubjectSelect(item) {
+  var cur = findSubject(item.subjectId || uploadSubject);
+  var g = cur && GROUPS.find(function (x) { return x.id === cur.group; });
+  if (!g) return '';
+  return '<select class="thumb-subj" aria-label="세부 과목" onchange="onItemSubject(\'' + item.localId + '\', this.value)">' +
+    '<option value="' + g.id + '"' + (cur.id === g.id ? ' selected' : '') + '>' + g.name + ' · 세부 미지정</option>' +
+    g.subs.map(function (sb) { return '<option value="' + sb[0] + '"' + (cur.id === sb[0] ? ' selected' : '') + '>' + sb[1] + '</option>'; }).join('') + '</select>';
+}
+function onItemSubject(localId, value) {
+  var item = findPending(localId);
+  if (item) item.subjectId = value;
 }
 
 function findPending(localId) { return pendingUploads.find(function (i) { return i.localId === localId; }); }
@@ -1823,10 +1858,10 @@ function removePendingUpload(localId) {
   renderUploadTab();
 }
 
-function onImagesPicked(fileList) {
+async function onImagesPicked(fileList) {
   var files = Array.prototype.slice.call(fileList || []);
   if (files.length === 0) return;
-  pendingUploads = pendingUploads.concat(files.map(function (file) {
+  var added = files.map(function (file) {
     return {
       localId: 'p' + (uploadSeq++),
       file: file,
@@ -1834,7 +1869,16 @@ function onImagesPicked(fileList) {
       caption: '',
       included: true,
     };
-  }));
+  });
+  pendingUploads = pendingUploads.concat(added);
+  if (aiWanted()) {
+    startLocalRun();
+    aiProgress = files.length + '장에서 손글씨 읽는 중';
+    renderUploadTab();
+    try { await aiFillPending(added, files.length + '장에서 손글씨 읽는 중'); } catch (e) {}
+    finishLocalRun();
+    return;
+  }
   uploadStage = 'review';
   renderUploadTab();
 }
@@ -2048,6 +2092,7 @@ function resetUploadFlow() {
   aiGateSkipped = 0;
   aiScanSkipped = 0;
   aiLocalCards = 0;
+  aiReadOk = 0; aiFailed = 0; aiChunkFails = 0; aiNote = ''; aiLastError = ''; aiStopped = false;
   renderUploadTab();
 }
 
@@ -2066,7 +2111,7 @@ async function saveAllUploads() {
       var up = await assets.upload(item.file);
       await db.collection('concepts').add({
         text: item.caption || '',
-        subjectId: uploadSubject,
+        subjectId: item.subjectId || uploadSubject,
         imageId: up.id,
         state: 'new',
         step: 0,
@@ -2099,6 +2144,213 @@ async function saveAllUploads() {
 
 var AI_PAGE_SCALE = 2.5;   // render scale for pages — crops keep enough detail for handwriting
 var AI_BOX_PAD = 12;       // padding added around each problem box, in 0-1000 units
+
+/* ───────────────── 선택 기능: Gemini로 손글씨 읽기 (커넥터 "개념노트 Gemini") ─────────────────
+   로컬 분할은 그대로 두고, 담긴 문제의 빨강·파랑 손글씨를 글자로 옮기고(필요하면 세부 과목도 추정) 메모 칸을 채운다.
+   커넥터가 없거나 한도(429/503)·연결 문제가 생기면 그 자리에서 멈추고, 나머지는 글자 없이 담긴 그대로 둔다. */
+
+var AI_READ_RULES =
+  '- 검정 잉크(문제 풀이 과정, 채점 표시, 계산)는 완전히 무시하세요.\n' +
+  '- 빨간색 또는 파란색 잉크로 쓴 손글씨만 읽으세요. 이것이 수험생이 이 문제에서 새로 얻은 개념/통찰입니다.\n' +
+  '- 읽은 내용을 핵심만 담은 짧은 한 줄 개념(한 문장, 가능하면 40자 안팎)으로 정리하세요. 여러 줄이나 목록으로 쓰지 마세요.\n' +
+  '- 약어·축약 표현은 회계·재무·세무·경제 지식으로 정확한 용어로 풀어 쓰되, 설명을 덧붙여 길게 늘이지 마세요.\n' +
+  '- 수험생이 쓰지 않은 새 주장·해석을 추가하지 말고, 의미를 바꾸지 마세요.\n' +
+  '- 빨강/파랑 잉크가 전혀 없으면 coloredInk를 false, text를 빈 문자열로 두세요.\n';
+
+function aiSubjectName() {
+  var cur = findSubject(uploadSubject);
+  return cur ? (cur.isGroupOnly ? cur.groupName : cur.name) : '';
+}
+function aiCropPrompt(n) {
+  return '이미지 ' + n + '장은 한국 CPA 수험생이 푼 ' + aiSubjectName() + ' 문제를 하나씩 잘라낸 것입니다.\n' +
+    '각 이미지에 대해:\n' + AI_READ_RULES +
+    '다른 말 없이 이미지 순서대로 ' + n + '개 원소를 가진 JSON 배열만 답하세요: [{"coloredInk":true,"text":"짧은 한 줄 개념"}]';
+}
+function aiClassifyPrompt(n, g) {
+  return '이미지 ' + n + '장은 한국 CPA 시험 대비 ' + g.name + ' 문제를 하나씩 잘라낸 것입니다.\n' +
+    '각 문제가 아래 세부 과목 중 어디에 속하는지 문제 내용을 보고 고르세요.\n' +
+    g.subs.map(function (sb) { return '- ' + sb[0] + ': ' + sb[1]; }).join('\n') + '\n' +
+    '확신이 없으면 빈 문자열("")로 두세요.\n' +
+    '다른 말 없이 이미지 순서대로 ' + n + '개 원소를 가진 JSON 배열만 답하세요: [{"subject":"세부 과목 id 또는 빈 문자열"}]';
+}
+
+async function checkAiAvailability() {
+  try { mcpFn = await window.claude.use('mcp'); } catch (e) { mcpFn = null; }
+  aiAvailable = !!mcpFn;
+  aiChecked = true;
+  if (currentTab === 'upload' && uploadStage === 'idle') renderUploadTab();
+}
+function aiWanted() { return aiAvailable && aiOn && !aiStopped; }
+function setAiOn(v) {
+  aiOn = !!v;
+  try { localStorage.setItem('aiOn', aiOn ? '1' : '0'); } catch (e) {}
+}
+function renderAiToggle() {
+  if (!aiChecked) return '';
+  if (!aiAvailable) {
+    return '<p class="ai-note">손글씨를 글자로 읽는 AI는 Claude 앱에서 "' + GEMINI_SERVERS[0] + '" 커넥터를 연결하면 쓸 수 있어요. 지금은 사진으로만 담겨요.</p>';
+  }
+  return '<label class="ai-toggle"><input type="checkbox" ' + (aiOn ? 'checked' : '') + ' onchange="setAiOn(this.checked)">' +
+    '<span><b>AI로 손글씨 읽기 (Gemini)</b><small>켜면 빨강·파랑 손글씨를 메모 칸에 글자로 옮겨요. 한도나 연결 문제가 생기면 AI 없이 담아요. 처음 쓸 때 허용 창이 떠요.</small></span></label>';
+}
+
+function blobToBase64(blob) {
+  return new Promise(function (resolve, reject) {
+    var r = new FileReader();
+    r.onload = function () { resolve(String(r.result).split(',')[1] || ''); };
+    r.onerror = function () { reject(r.error); };
+    r.readAsDataURL(blob);
+  });
+}
+
+// the connector takes ~1 MiB of JSON per call, so shrink anything big first
+function shrinkForAi(blob) {
+  var LIMIT = 600000;
+  if (blob.size <= LIMIT) return Promise.resolve(blob);
+  return new Promise(function (resolve) {
+    var url = URL.createObjectURL(blob), img = new Image();
+    img.onload = function () {
+      var scale = Math.max(0.25, Math.sqrt(LIMIT * 0.85 / blob.size));
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(function (b) { resolve(b || blob); }, 'image/jpeg', 0.8);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); resolve(blob); };
+    img.src = url;
+  });
+}
+
+function aiChunks(blobs) {
+  var chunks = [], cur = [], size = 0;
+  blobs.forEach(function (b, i) {
+    if (cur.length && (cur.length >= 10 || size + b.size > 650000)) { chunks.push(cur); cur = []; size = 0; }
+    cur.push(b); size += b.size;
+  });
+  if (cur.length) chunks.push(cur);
+  return chunks;
+}
+
+// Gemini sometimes wraps arrays/objects differently than asked; accept the common shapes.
+function asList(res, n) {
+  if (Array.isArray(res)) return res;
+  if (!res || typeof res !== 'object') return null;
+  var keys = ['items', 'results', 'problems', 'questions', 'data'];
+  for (var i = 0; i < keys.length; i++) if (Array.isArray(res[keys[i]])) return res[keys[i]];
+  var all = Object.keys(res);
+  for (var j = 0; j < all.length; j++) if (Array.isArray(res[all[j]])) return res[all[j]];
+  return n === 1 ? [res] : null;
+}
+
+async function aiAsk(prompt, blobs) {
+  var images = [];
+  for (var i = 0; i < blobs.length; i++) images.push(await blobToBase64(blobs[i]));
+  var res = null, lastErr = null;
+  var order = GEMINI_SERVERS.slice();
+  order.sort(function (a, b) { return (a === GEMINI_SERVER ? 0 : 1) - (b === GEMINI_SERVER ? 0 : 1); });
+  for (var si = 0; si < order.length; si++) {
+    try {
+      res = await mcpFn.callTool(order[si], 'gemini_vision', { prompt: prompt, images: images, mimeType: 'image/jpeg' }, { signal: aiCtl.signal, cache: false });
+      GEMINI_SERVER = order[si];
+      lastErr = null;
+      break;
+    } catch (e) {
+      lastErr = e;
+      var c = e && e.code;
+      // only a missing/unselected connector justifies trying the other name
+      if (c !== 'server_not_connected' && c !== 'not_in_manifest' && c !== 'server_not_found' && c !== 'selection_required') break;
+    }
+  }
+  if (lastErr) throw lastErr;
+  var payload = res && res.payload;
+  if (typeof payload === 'string') {
+    try { payload = JSON.parse(payload); }
+    catch (e) {
+      var m = payload.match(/[\[{][\s\S]*[\]}]/);
+      try { payload = m ? JSON.parse(m[0]) : null; } catch (e2) { payload = null; }
+    }
+  }
+  if (payload == null || typeof payload !== 'object') throw { code: 'invalid_json', message: 'AI 응답을 읽지 못했어요' };
+  return payload;
+}
+
+// Returns true when the AI part of the run should stop (the rest is saved without AI text).
+function handleAiError(e) {
+  var code = e && e.code, msg = String((e && e.message) || '');
+  if (code === 'cancelled') return true;
+  if (code === 'tool_error' && /429|RESOURCE_EXHAUSTED|rate.?limit|quota|503|UNAVAILABLE|overload/i.test(msg)) {
+    aiNote = 'Gemini 한도에 걸려 AI 읽기를 멈췄어요. 나머지는 글자 없이 담았어요.';
+    return true;
+  }
+  if (code === 'server_not_connected' || code === 'selection_required' || code === 'server_not_found') {
+    aiNote = '"' + GEMINI_SERVER + '" 커넥터가 연결돼 있지 않아 AI 없이 담았어요. (Claude 설정 → 커넥터)';
+    return true;
+  }
+  if (code === 'needs_reauth') { aiNote = '"' + GEMINI_SERVER + '" 커넥터를 다시 연결해야 해서 AI 없이 담았어요.'; return true; }
+  if (code === 'not_in_manifest' || code === 'blocked_by_policy' || code === 'approval_required' || code === 'not_granted' ||
+      code === 'capability_disabled' || code === 'capability_removed' || code === 'consent_required') {
+    aiNote = 'AI 사용이 허용되지 않아 AI 없이 담았어요.';
+    return true;
+  }
+  aiLastError = (code ? code + ': ' : '') + msg.slice(0, 200);
+  aiChunkFails++;
+  if (aiChunkFails >= 2) { aiNote = 'AI 연결이 불안정해 읽기를 멈추고 나머지는 글자 없이 담았어요.'; return true; }
+  return false;
+}
+
+// Fill captions (and, when only a major subject was chosen, the detailed subject) of the given pending items.
+async function aiFillPending(items, label) {
+  var done = 0;
+  var blobs = [];
+  for (var b = 0; b < items.length; b++) blobs.push(await shrinkForAi(items[b].readBlob || items[b].file));
+  var chunks = aiChunks(blobs);
+  for (var c = 0; c < chunks.length; c++) {
+    if (aiCtl && aiCtl.signal.aborted) return;
+    aiProgress = label + (chunks.length > 1 ? ' (' + done + '/' + items.length + ')' : '');
+    renderUploadTab();
+    var res = null;
+    try { res = await aiAsk(aiCropPrompt(chunks[c].length), chunks[c]); }
+    catch (e) {
+      if (handleAiError(e)) { aiStopped = true; return; }
+      aiFailed += chunks[c].length; done += chunks[c].length; continue;
+    }
+    var list = asList(res, chunks[c].length);
+    for (var j = 0; j < chunks[c].length; j++) {
+      var r = list && list[j], it = items[done + j];
+      if (r && typeof r === 'object') {
+        var t = String(r.text || r.concept || '').trim();
+        if (r.coloredInk !== false && t) { it.caption = t; aiReadOk++; }
+      } else aiFailed++;
+    }
+    done += chunks[c].length;
+  }
+  // 큰 과목만 골랐다면 문제 내용을 보고 세부 과목을 추정
+  var cur = findSubject(uploadSubject);
+  if (!cur || !cur.isGroupOnly || aiStopped) return;
+  var g = GROUPS.find(function (x) { return x.id === cur.group; });
+  var cards = [];
+  for (var k = 0; k < items.length; k++) cards.push(await shrinkForAi(items[k].file));
+  var cchunks = aiChunks(cards), idx = 0;
+  for (var q = 0; q < cchunks.length; q++) {
+    if (aiCtl && aiCtl.signal.aborted) return;
+    aiProgress = '세부 과목 분류하는 중 (' + idx + '/' + items.length + ')';
+    renderUploadTab();
+    var cres = null;
+    try { cres = await aiAsk(aiClassifyPrompt(cchunks[q].length, g), cchunks[q]); }
+    catch (e) {
+      if (handleAiError(e)) { aiStopped = true; return; }
+      idx += cchunks[q].length; continue;
+    }
+    var clist = asList(cres, cchunks[q].length);
+    for (var m = 0; m < cchunks[q].length; m++) {
+      var cr = clist && clist[m], sid = cr && typeof cr === 'object' ? String(cr.subject || '').trim() : '';
+      if (g.subs.some(function (sb) { return sb[0] === sid; })) items[idx + m].subjectId = sid;
+    }
+    idx += cchunks[q].length;
+  }
+}
 
 function renderPdfZone() {
   return '<div class="dropzone-group">' +
@@ -2391,8 +2643,9 @@ function pushPending(blob, caption, included) {
   });
 }
 
-function pushLocal(blob) {
+function pushLocal(blob, readBlob) {
   pushPending(blob, '', true);
+  pendingUploads[pendingUploads.length - 1].readBlob = readBlob || null;
   aiLocalCards++;
 }
 
@@ -2503,8 +2756,8 @@ function localCardBoxes(ranges, memos) {
     var r = g.r, top, bottom, x0, x1;
     if (r) { top = r.y0; bottom = Math.max(r.textBottom, g.y1) + 0.01; x0 = Math.min(r.x0, g.x0); x1 = Math.max(r.x1, g.x1); }
     else { top = Math.max(0, g.y0 - 0.15); bottom = g.y1 + 0.03; x0 = Math.min(0.04, g.x0); x1 = Math.max(0.96, g.x1); }
-    return { top: top, box: [x0 * 1000, top * 1000, x1 * 1000, Math.min(1, bottom) * 1000] };
-  }).sort(function (a, b) { return a.top - b.top; }).map(function (b) { return b.box; });
+    return { top: top, card: [x0 * 1000, top * 1000, x1 * 1000, Math.min(1, bottom) * 1000], read: [g.x0 * 1000, g.y0 * 1000, g.x1 * 1000, g.y1 * 1000] };
+  }).sort(function (a, b) { return a.top - b.top; });
 }
 
 // Split one page into problems without AI and add every problem that has red/blue memos, without text.
@@ -2515,7 +2768,12 @@ async function pushLocalPage(page, pageCanvas, ink, layers) {
   try { ranges = await pdfProblemRanges(page); } catch (e) { ranges = null; }
   if (!ranges) ranges = scanProblemRanges(pageCanvas, layers);
   var boxes = localCardBoxes(ranges, memos);
-  for (var i = 0; i < boxes.length; i++) pushLocal(await canvasToBlob(cropCanvas(pageCanvas, boxes[i]), 0.9));
+  for (var i = 0; i < boxes.length; i++) {
+    var card = await canvasToBlob(cropCanvas(pageCanvas, boxes[i].card), 0.9);
+    // for AI reading: the memo area only, with black/printed ink faded so Gemini sees just the red/blue pen
+    var readBlob = aiWanted() ? await canvasToBlob(inkFocus(cropCanvas(pageCanvas, boxes[i].read)), 0.9) : null;
+    pushLocal(card, readBlob);
+  }
 }
 
 function startLocalRun() {
@@ -2524,6 +2782,7 @@ function startLocalRun() {
   aiGateSkipped = 0;
   aiScanSkipped = 0;
   aiLocalCards = 0;
+  aiReadOk = 0; aiFailed = 0; aiChunkFails = 0; aiNote = ''; aiLastError = ''; aiStopped = false;
   uploadStage = 'ai';
 }
 
@@ -2563,9 +2822,15 @@ async function onPdfAutoPicked(file) {
       if (!pageHasColoredInk(ink)) { aiGateSkipped++; if (bareScan) aiScanSkipped++; continue; }
       await pushLocalPage(textPage, pageCanvas, ink, layers);
     }
+    // optional: read the handwriting with Gemini. Any problem here just leaves the local results as they are.
+    if (aiWanted() && !aiCtl.signal.aborted) {
+      var fresh = pendingUploads.filter(function (i) { return i.readBlob; });
+      if (fresh.length) await aiFillPending(fresh, '손글씨 ' + fresh.length + '개 글자로 읽는 중');
+    }
   } catch (e) {
     // keep whatever was collected
   }
+  pendingUploads.forEach(function (i) { delete i.readBlob; });
   finishLocalRun();
 }
 
