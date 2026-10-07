@@ -223,6 +223,35 @@ svg { display: block; }
 }
 @media (min-width: 1180px) { .content.review-mode .review-side { flex-basis: 320px; } }
 
+/* 질문 카드: 앞면은 질문만, "답 확인" 뒤에 답·원문·개념 */
+.qcard { display: flex; flex-direction: column; gap: 12px; max-width: 680px; margin: 0 auto; width: 100%; }
+.q-front { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px 18px; display: flex; flex-direction: column; gap: 14px; }
+.q-label { font-size: 12px; font-weight: 700; color: var(--text-3); }
+.q-text { font-size: 20px; font-weight: 700; line-height: 1.5; white-space: pre-wrap; word-break: keep-all; }
+.q-hint { margin: 0; font-size: 13px; color: var(--text-3); }
+.q-sec { display: flex; flex-direction: column; gap: 6px; }
+.q-answer { font-size: 16px; line-height: 1.6; white-space: pre-wrap; }
+.q-keys { display: flex; flex-wrap: wrap; gap: 6px; }
+.q-keys span { padding: 3px 10px; border-radius: 999px; background: var(--surface-2); font-size: 12px; font-weight: 700; color: var(--text-2); }
+.q-src { font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: var(--text-2); max-height: 240px; overflow-y: auto; }
+.q-more summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--text-2); }
+.q-more img { display: block; max-width: 100%; margin-top: 8px; border-radius: 4px; background: var(--paper); cursor: zoom-in; }
+.q-guide { margin: 6px 0 0; font-size: 11px; color: var(--text-3); text-align: center; }
+@media (min-width: 820px) {
+  .content.review-mode .qcard { height: 100%; overflow-y: auto; }
+  .content.review-mode .qcard .rating-grid { grid-template-columns: repeat(4, 1fr); }
+  .content.review-mode .qcard .rate-btn { padding: 14px 4px 10px; font-size: 15px; }
+}
+.q-box { display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px dashed var(--border); border-radius: var(--radius-sm); }
+.q-box textarea { min-height: 44px; }
+.q-note { font-size: 12px; color: var(--text-3); }
+.q-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.q-btns button { width: auto; padding: 6px 12px; font-size: 12px; }
+.field-label { font-size: 12px; font-weight: 700; color: var(--text-3); }
+.thumb-body .field-label { margin-bottom: -4px; }
+.g-q { font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+.g-q b { color: var(--text-3); font-size: 11px; margin-right: 4px; }
+
 .rating-bar { position: sticky; bottom: 0; padding: 4px 0 2px; background: var(--bg); }
 .rating-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .rate-btn {
@@ -681,7 +710,7 @@ function subjectGradient(subjectId) {
   return subj ? subj.c1 : 'var(--text-3)';
 }
 
-var db = null, assets = null, mcpFn = null;
+var db = null, assets = null, mcpFn = null, sampleFn = null;
 var currentTab = 'home';
 
 // review tab state
@@ -691,6 +720,7 @@ var dailyStatsToday = null;   // { newIntroduced, reviewsDone } cache for today'
 var dailyStatsKey = null;
 var undoStack = [];           // [{ conceptId, beforeCard, logId, statsField }]
 var reviewBusy = false;
+var reviewRevealed = false;     // question card: the answer side is showing
 var reviewHasCompletedAny = false;
 var sessionAnswered = 0;     // cards answered since the page opened (drives the progress bar)
 var lastPaintedId = null;     // id of the card currently on screen, to animate only real card changes
@@ -729,6 +759,7 @@ var aiChecked = false;
 var aiOn = true;             // user switch: read handwriting with Gemini
 try { if (localStorage.getItem('aiOn') === '0') aiOn = false; } catch (e) {}
 var aiStopped = false;       // set when a limit/connection problem makes the run fall back to local-only
+var qBusy = false;            // Claude is writing review questions for the pending uploads
 var aiReadOk = 0, aiFailed = 0, aiChunkFails = 0, aiNote = '', aiLastError = '';
 
 // pdf manual-crop state
@@ -748,6 +779,8 @@ var conceptsDir = 'desc';       // 'desc' | 'asc' — 정렬 방향
 var conceptsSort = 'new';       // 'new' (최신 업로드순) | 'hard' (자주 어려워한 순)
 try { var savedSort = localStorage.getItem('conceptsSort'); if (savedSort === 'new' || savedSort === 'hard') conceptsSort = savedSort; var savedDir = localStorage.getItem('conceptsDir'); if (savedDir === 'asc' || savedDir === 'desc') conceptsDir = savedDir; } catch (e) {}
 var editingConceptId = null;
+var editingQuestionId = null, questionDraft = null;  // 모아보기: 복습 질문 수정 중인 개념과 새로 만든 초안
+var galleryQBusy = null, galleryQNote = {};
 var selectMode = false;         // 여러 개 선택해서 세부 과목을 한꺼번에 지정
 var selectedIds = {};
 var lastFiltered = [];
@@ -1208,6 +1241,10 @@ document.addEventListener('keydown', function (e) {
   if (currentTab !== 'review' || !reviewQueue || reviewQueue.length === 0 || reviewBusy) return;
   var tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (reviewQueue[0].recallQuestion && !reviewRevealed) {   // question side: no rating before the answer is seen
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); revealAnswer(); return; }
+    if (/^[1-4]$/.test(e.key)) return;
+  }
   if (e.key === '1') rateCurrent('again');
   else if (e.key === '2') rateCurrent('hard');
   else if (e.key === '3') rateCurrent('good');
@@ -1627,6 +1664,7 @@ async function renderReviewTab() {
 
   var item = reviewQueue[0];
   var isNewCard = lastPaintedId !== item.id;
+  if (isNewCard) reviewRevealed = false;
   lastPaintedId = item.id;
   if (cardShownId !== item.id) { cardShownId = item.id; cardShownAt = Date.now(); }
   var counts = queueCounts();
@@ -1644,6 +1682,40 @@ async function renderReviewTab() {
     '<span class="stat-pill"><i class="dot-new"></i>새 카드 <b>' + counts.newCount + '</b></span>' +
     '<span class="stat-pill"><i class="dot-learning"></i>학습 중 <b>' + counts.learningCount + '</b></span>' +
     '<span class="stat-pill"><i class="dot-review"></i>복습 <b>' + counts.reviewCount + '</b></span>';
+  var sideHead =
+        '<div class="rv-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
+        '<div class="side-top">' +
+          '<span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? (subj.isGroupOnly ? subj.groupName : subj.groupName + ' · ' + subj.name) : '과목 없음') + '</span>' +
+          (item.leech ? '<span class="leech-badge">자주 틀림</span>' : (item.reps ? '<span class="card-meta">복습 ' + item.reps + '회</span>' : '<span class="card-meta">새 카드</span>')) +
+        '</div>' +
+        backlogBanner() +
+        '<div class="progress-line">' + pills + '</div>';
+  var ratingBar =
+        '<div class="rating-bar"><div class="rating-grid">' +
+          rateBtn('1', 'rate-again', '다시', 'again') + rateBtn('2', 'rate-hard', '어려움', 'hard') +
+          rateBtn('3', 'rate-good', '좋음', 'good') + rateBtn('4', 'rate-easy', '쉬움', 'easy') +
+        '</div>' + (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '') + '</div>';
+  if (item.recallQuestion) {
+    // 앞면: 질문만. 답·원문·개념·이미지는 "답 확인" 뒤에만 보인다.
+    var back = '';
+    if (reviewRevealed) {
+      var keys = Array.isArray(item.recallKeyPoints) ? item.recallKeyPoints : [];
+      back =
+        '<div class="q-sec"><div class="q-label">모범 답변</div><div class="q-answer">' + escapeHtml(item.recallAnswer || item.text || '') + '</div>' +
+          (keys.length ? '<div class="q-keys">' + keys.map(function (k) { return '<span>' + escapeHtml(k) + '</span>'; }).join('') + '</div>' : '') + '</div>' +
+        (item.sourceProblemText ? '<div class="q-sec"><div class="q-label">원래 문제</div><div class="q-src">' + escapeHtml(item.sourceProblemText) + '</div></div>' : '') +
+        (item.text ? '<div class="q-sec"><div class="q-label">내가 적은 개념</div><div class="review-caption">' + escapeHtml(item.text) + '</div></div>' : '') +
+        (imgUrl ? '<details class="q-more"><summary>원본 이미지 보기</summary><img src="' + imgUrl + '" alt="원본" onclick="openLightbox(\'' + imgUrl + '\')"></details>' : '');
+    }
+    el.innerHTML =
+      '<div class="qcard' + (isNewCard ? ' card-in' : '') + '">' + sideHead +
+        '<div class="q-front"><div class="q-label">오늘의 복습</div><div class="q-text">' + escapeHtml(item.recallQuestion) + '</div>' +
+          (reviewRevealed ? back : '<p class="q-hint">답을 머릿속으로 생각한 뒤 확인하세요.</p><button class="btn-primary" onclick="revealAnswer()">답 확인</button>') +
+        '</div>' +
+        (reviewRevealed ? ratingBar + '<p class="q-guide">다시: 거의 못 떠올림 · 어려움: 일부만 떠올림 · 좋음: 핵심을 대체로 떠올림 · 쉬움: 바로 정확히 떠올림</p>' : '') +
+      '</div>';
+    return;
+  }
   el.innerHTML =
     '<div class="review-split' + (isNewCard ? ' card-in' : '') + '">' +
       '<div class="review-stage' + (reviewZoom === 'wide' ? ' wide' : '') + '" id="reviewStage">' +
@@ -1653,23 +1725,19 @@ async function renderReviewTab() {
             '<button class="stage-btn" onclick="openLightbox(\'' + imgUrl + '\')">확대</button>' +
           '</div>' : '<div class="stage-empty">이미지 없음</div>') +
       '</div>' +
-      '<aside class="review-side">' +
-        '<div class="rv-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
-        '<div class="side-top">' +
-          '<span class="subj-tag"><i style="background:' + (subj ? subj.c1 : 'var(--text-3)') + '"></i>' + (subj ? (subj.isGroupOnly ? subj.groupName : subj.groupName + ' · ' + subj.name) : '과목 없음') + '</span>' +
-          (item.leech ? '<span class="leech-badge">자주 틀림</span>' : (item.reps ? '<span class="card-meta">복습 ' + item.reps + '회</span>' : '<span class="card-meta">새 카드</span>')) +
-        '</div>' +
-        backlogBanner() +
-        '<div class="progress-line">' + pills + '</div>' +
+      '<aside class="review-side">' + sideHead +
         (item.text ? '<div class="review-caption">' + escapeHtml(item.text) + '</div>' : '') +
-        '<div class="rating-bar"><div class="rating-grid">' +
-          rateBtn('1', 'rate-again', '다시', 'again') + rateBtn('2', 'rate-hard', '어려움', 'hard') +
-          rateBtn('3', 'rate-good', '좋음', 'good') + rateBtn('4', 'rate-easy', '쉬움', 'easy') +
-        '</div>' + (undoStack.length > 0 ? '<button class="btn-secondary undo-btn" onclick="undoLast()">되돌리기</button>' : '') + '</div>' +
+        ratingBar +
       '</aside>' +
     '</div>';
   var nx = reviewQueue[1];                       // warm the next card so it appears instantly
   if (nx && nx.imageId) { var pre = new Image(); pre.src = '/_blob/' + nx.imageId; }
+}
+
+function revealAnswer() {
+  if (reviewRevealed || !reviewQueue || !reviewQueue.length) return;
+  reviewRevealed = true;
+  renderReviewTab();
 }
 
 function setRatingBusy(rating) {
@@ -1836,8 +1904,13 @@ function renderUploadTab() {
       '<div style="margin-top:14px"><button class="btn-primary" onclick="resetUploadFlow()">새로 업로드</button></div>';
     return;
   }
-  var html = '<div class="step-title">저장할 과목 <small>전부 같은 과목으로 저장돼요. 세부는 나중에 지정해도 돼요</small></div>' + renderSubjectPicker() + summary + '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
-    '<div class="save-bar"><button class="btn-primary" onclick="saveAllUploads()">전체 저장 (' +
+  var askN = pendingUploads.filter(function (i) { return i.included && !i.q && canAskQuestion(i.problemText, i.caption); }).length;
+  var qBar = qBusy
+    ? '<div class="ai-summary">자기 전 복습 문제를 만드는 중입니다…</div>'
+    : (askN ? '<div class="ai-summary"><button class="btn-secondary" style="width:auto" onclick="makeUploadQuestions()">복습 문제 만들기 (' + askN + '개)</button>' +
+        '<div style="margin-top:6px;font-size:12px;color:var(--text-3)">Claude가 문제마다 머릿속으로 답하는 질문을 하나씩 만들어요. 만든 질문은 고칠 수 있고, 저장할 때 함께 저장돼요. 처음 쓸 때 허용 창이 뜨고 Claude 사용량이 쓰여요.</div></div>' : '');
+  var html = '<div class="step-title">저장할 과목 <small>전부 같은 과목으로 저장돼요. 세부는 나중에 지정해도 돼요</small></div>' + renderSubjectPicker() + summary + qBar + '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
+    '<div class="save-bar"><button class="btn-primary" onclick="saveAllUploads()"' + (qBusy ? ' disabled' : '') + '>전체 저장 (' +
     pendingUploads.filter(function (i) { return i.included; }).length + '개)</button></div>';
   el.innerHTML = html;
 }
@@ -1873,7 +1946,12 @@ function renderThumbCard(item) {
   return '<div class="thumb-card">' +
     '<div class="thumb-img"><img src="' + item.url + '" onclick="openLightbox(\'' + item.url + '\')" alt="개념"></div>' +
     '<div class="thumb-body">' +
+    '<div class="field-label">원본 문제</div>' +
+    '<textarea placeholder="인쇄된 문제 글 (직접 적어도 돼요)" oninput="onProblemInput(\'' + item.localId + '\', this.value)">' + escapeHtml(item.problemText || '') + '</textarea>' +
+    (aiAvailable && !String(item.problemText || '').trim() ? '<div class="q-btns"><button class="btn-secondary" onclick="rereadUpload(\'' + item.localId + '\')"' + (qBusy ? ' disabled' : '') + '>AI로 다시 읽기</button></div>' : '') +
+    '<div class="field-label">내 개념 (빨강·파랑)</div>' +
     '<textarea placeholder="메모 (선택)" oninput="onCaptionInput(\'' + item.localId + '\', this.value)">' + escapeHtml(item.caption) + '</textarea>' +
+    uploadQuestionBox(item) +
     itemSubjectSelect(item) +
     '<div class="thumb-card-foot">' +
       '<label><input type="checkbox" ' + (item.included ? 'checked' : '') + ' onchange="onIncludedChange(\'' + item.localId + '\', this.checked)"> 저장에 포함</label>' +
@@ -2149,8 +2227,23 @@ function resetUploadFlow() {
   renderUploadTab();
 }
 
+// question fields as stored on a concept; the user saw and kept them, so they count as approved
+function questionFields(q) {
+  var f = {
+    recallQuestion: String(q.recallQuestion || '').trim(),
+    recallAnswer: String(q.recallAnswer || '').trim(),
+    recallKeyPoints: q.recallKeyPoints || [],
+    questionApproved: true,
+    questionGeneratedAt: q.generatedAt || new Date().toISOString(),
+    questionEdited: !!q.edited,
+  };
+  if (Q_TYPES[q.questionType]) f.questionType = q.questionType;
+  return f;
+}
+
 async function saveAllUploads() {
   if (!assets || !db) { showToast('저장 기능을 사용할 수 없어요'); return; }
+  if (qBusy) return;
   uploadStage = 'saving';
   var toSave = pendingUploads.filter(function (i) { return i.included; });
   var count = savedCount, failed = [];
@@ -2162,7 +2255,10 @@ async function saveAllUploads() {
     renderUploadTab();
     try {
       var up = await assets.upload(item.file);
-      await db.collection('concepts').add({
+      var extra = {};
+      if (String(item.problemText || '').trim()) extra.sourceProblemText = item.problemText.trim();
+      if (item.q && String(item.q.recallQuestion || '').trim() && String(item.q.recallAnswer || '').trim()) Object.assign(extra, questionFields(item.q));
+      await db.collection('concepts').add(Object.assign({
         text: item.caption || '',
         subjectId: item.subjectId || uploadSubject,
         imageId: up.id,
@@ -2177,7 +2273,7 @@ async function saveAllUploads() {
         nextReviewDate: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         lastReviewedAt: null,
-      });
+      }, extra));
       count++;
     } catch (e) { failed.push(item); }
   }
@@ -2215,13 +2311,23 @@ function aiSubjectName() {
   var cur = findSubject(uploadSubject);
   return cur ? (cur.isGroupOnly ? cur.groupName : cur.name) : '';
 }
-function aiCropPrompt(n) {
-  return '이미지 ' + n + '장은 한국 CPA 수험생이 푼 ' + aiSubjectName() + ' 문제를 하나씩 잘라낸 것입니다.\n' +
-    '각 이미지에 대해:\n' + AI_READ_RULES +
-    '다른 말 없이 이미지 순서대로 ' + n + '개 원소를 가진 JSON 배열만 답하세요: [{"coloredInk":true,"text":"빨강·파랑 글씨를 그대로 옮긴 글"}]';
+// counts[i] = images sent for problem i: 1 (the problem) or 2 (the problem + its memo area with black ink faded)
+function aiCropPrompt(counts) {
+  var n = counts.length;
+  return '아래 이미지는 한국 CPA 수험생이 푼 ' + aiSubjectName() + ' 문제를 하나씩 잘라낸 것입니다. 문제는 ' + n + '개이고 이미지 순서는 다음과 같습니다.\n' +
+    counts.map(function (k, i) {
+      return '- 문제 ' + (i + 1) + ': ' + (k === 2 ? '이미지 2장 (첫째는 문제 전체, 둘째는 같은 문제의 손글씨 부분을 확대하고 검정 글씨를 흐리게 한 것)' : '이미지 1장 (문제 전체)');
+    }).join('\n') +
+    '\n\n문제마다 두 가지를 옮겨 적으세요.\n' +
+    'A. problemText: 인쇄된 원문 문제만 옮겨 적으세요. 문제 번호, 본문, 조건, 선택지, 질문을 포함하고, 인쇄된 표·공식·기호는 가능한 한 글로 옮기세요(표는 한 줄에 한 행, 칸은 " | "로 구분). ' +
+    '손으로 쓴 것(검정펜 풀이, 계산, 체크, 채점 표시, 메모, 임시 숫자, 빨강·파랑 글씨)은 하나도 넣지 마세요. 인쇄된 글자가 없으면 빈 문자열로 두세요.\n' +
+    'B. text: 빨강·파랑 손글씨만 옮겨 적으세요.\n' + AI_READ_RULES +
+    '- 빨강·파랑인지 색이 불분명한 글씨는 앞에 [색?]을 붙이세요.\n' +
+    '다른 말 없이 문제 순서대로 ' + n + '개 원소를 가진 JSON 배열만 답하세요: [{"problemText":"인쇄된 원문 문제","coloredInk":true,"text":"빨강·파랑 글씨를 그대로 옮긴 글"}]';
 }
 async function checkAiAvailability() {
   try { mcpFn = await window.claude.use('mcp'); } catch (e) { mcpFn = null; }
+  try { sampleFn = await window.claude.use('sample'); } catch (e) { sampleFn = null; }
   aiAvailable = !!mcpFn;
   aiChecked = true;
   if (currentTab === 'upload' && uploadStage === 'idle') renderUploadTab();
@@ -2237,7 +2343,7 @@ function renderAiToggle() {
     return '<p class="ai-note">손글씨를 글자로 읽는 AI는 Claude 앱에서 "' + GEMINI_SERVERS[0] + '" 커넥터를 연결하면 쓸 수 있어요. 지금은 사진으로만 담겨요.</p>';
   }
   return '<label class="ai-toggle"><input type="checkbox" ' + (aiOn ? 'checked' : '') + ' onchange="setAiOn(this.checked)">' +
-    '<span><b>AI로 손글씨 읽기 (Gemini)</b><small>켜면 빨강·파랑 손글씨를 메모 칸에 글자로 옮겨요. 한도나 연결 문제가 생기면 AI 없이 담아요. 처음 쓸 때 허용 창이 떠요.</small></span></label>';
+    '<span><b>AI로 손글씨 읽기 (Gemini)</b><small>켜면 인쇄된 원문 문제와 빨강·파랑 손글씨를 글자로 옮겨요. 한도나 연결 문제가 생기면 AI 없이 담아요. 처음 쓸 때 허용 창이 떠요.</small></span></label>';
 }
 
 function blobToBase64(blob) {
@@ -2250,8 +2356,8 @@ function blobToBase64(blob) {
 }
 
 // the connector takes ~1 MiB of JSON per call, so shrink anything big first
-function shrinkForAi(blob) {
-  var LIMIT = 600000;
+function shrinkForAi(blob, limit) {
+  var LIMIT = limit || 600000;
   if (blob.size <= LIMIT) return Promise.resolve(blob);
   return new Promise(function (resolve) {
     var url = URL.createObjectURL(blob), img = new Image();
@@ -2269,11 +2375,13 @@ function shrinkForAi(blob) {
   });
 }
 
-function aiChunks(blobs) {
+// groups[i] = the images of one problem; a problem's images always go in the same call
+function aiChunks(groups) {
   var chunks = [], cur = [], size = 0;
-  blobs.forEach(function (b, i) {
-    if (cur.length && (cur.length >= 10 || size + b.size > 650000)) { chunks.push(cur); cur = []; size = 0; }
-    cur.push(b); size += b.size;
+  groups.forEach(function (g) {
+    var gs = g.reduce(function (t, b) { return t + b.size; }, 0);
+    if (cur.length && (cur.length >= 5 || size + gs > 650000)) { chunks.push(cur); cur = []; size = 0; }
+    cur.push(g); size += gs;
   });
   if (cur.length) chunks.push(cur);
   return chunks;
@@ -2346,18 +2454,25 @@ function handleAiError(e) {
   return false;
 }
 
-// Fill captions (and, when only a major subject was chosen, the detailed subject) of the given pending items.
+// Fill the problem text and the memo (caption) of the given pending items; fields the user already filled are kept.
 async function aiFillPending(items, label) {
   var done = 0;
-  var blobs = [];
-  for (var b = 0; b < items.length; b++) blobs.push(await shrinkForAi(items[b].readBlob || items[b].file));
-  var chunks = aiChunks(blobs);
+  var groups = [];
+  for (var b = 0; b < items.length; b++) {
+    var it0 = items[b];
+    var g = [await shrinkForAi(it0.file, it0.readBlob ? 300000 : 600000)];
+    if (it0.readBlob) g.push(await shrinkForAi(it0.readBlob, 250000));
+    groups.push(g);
+  }
+  var chunks = aiChunks(groups);
   for (var c = 0; c < chunks.length; c++) {
     if (aiCtl && aiCtl.signal.aborted) return;
     aiProgress = label + (chunks.length > 1 ? ' (' + done + '/' + items.length + ')' : '');
     renderUploadTab();
     var res = null;
-    try { res = await aiAsk(aiCropPrompt(chunks[c].length), chunks[c]); }
+    try {
+      res = await aiAsk(aiCropPrompt(chunks[c].map(function (g) { return g.length; })), [].concat.apply([], chunks[c]));
+    }
     catch (e) {
       if (handleAiError(e)) { aiStopped = true; return; }
       aiFailed += chunks[c].length; done += chunks[c].length; continue;
@@ -2365,13 +2480,182 @@ async function aiFillPending(items, label) {
     var list = asList(res, chunks[c].length);
     for (var j = 0; j < chunks[c].length; j++) {
       var r = list && list[j], it = items[done + j];
+      it.readTried = true;
       if (r && typeof r === 'object') {
-        var t = String(r.text || r.concept || '').trim();
-        if (r.coloredInk !== false && t) { it.caption = t; aiReadOk++; }
+        var p = String(r.problemText || r.sourceProblemText || '').trim();
+        var t = String(r.text || r.conceptText || r.concept || '').trim();
+        if (p && !it.problemText) it.problemText = p;
+        if (r.coloredInk !== false && t && !it.caption) { it.caption = t; aiReadOk++; }
       } else aiFailed++;
     }
     done += chunks[c].length;
   }
+}
+
+/* ───────────────── 자기 전 복습 질문 (Claude, sample 기능) ─────────────────
+   Gemini가 옮긴 원문 문제와 빨강·파랑 개념으로, 누워서 머릿속으로 답하는 말문제를 하나 만든다.
+   만든 질문은 사용자가 확인·수정한 뒤 저장할 때만 카드에 들어간다. 스케줄러는 건드리지 않는다. */
+
+var Q_TYPES = { definition: '정의', judgment: '핵심 판단 기준', comparison: '비교·구분', reason: '이유·원리', sequence: '판단 순서', exception: '예외·주의' };
+
+function questionPrompt(list) {
+  return '너는 CPA 시험 개념을 위한 자기 전 복습 카드 편집자다.\n\n' +
+    '사용자는 침대에 누워 자기 전에 이 카드를 본다.\n' +
+    '사용자는 종이나 계산기를 사용하지 않고, 질문을 읽은 뒤 머릿속으로 답한다.\n' +
+    '따라서 복잡한 계산 문제나 긴 풀이 문제를 만들면 안 된다.\n\n' +
+    '목표: 원본 문제와 개념 텍스트를 근거로, 사용자가 기억에서 핵심 개념을 꺼낼 수 있는 짧은 말문제를 만든다.\n\n' +
+    '질문 유형은 다음 중 하나만 선택한다. 핵심 판단 기준(judgment)을 먼저 고려한다.\n' +
+    Object.keys(Q_TYPES).map(function (k) { return '- ' + k + ': ' + Q_TYPES[k]; }).join('\n') + '\n\n' +
+    '규칙:\n' +
+    '1. 문제 하나당 질문은 정확히 하나만 만들고, 하나의 핵심만 묻는다.\n' +
+    '2. 계산, 긴 수식 전개, 표 작성, 종이에 풀어야 하는 작업을 요구하지 않는다. 새로운 수치 문제나 변형 계산 문제를 만들지 않는다.\n' +
+    '3. 답은 핵심 키워드 또는 1~3문장으로 답할 수 있어야 한다. 모범 답변도 짧게 핵심만 쓴다.\n' +
+    '4. 질문은 사용자가 10~60초 안에 머릿속으로 생각할 수 있어야 한다.\n' +
+    '5. 원본 문제와 개념 텍스트에 없는 새 사실·예외·기준·판례를 만들지 않는다.\n' +
+    '6. 검정펜 풀이 내용은 근거로 사용하지 않는다.\n' +
+    '7. 원본 문제를 처음부터 다시 풀어야만 답할 수 있는 질문은 만들지 않는다.\n' +
+    '8. 단순히 원문을 복사한 질문보다, 개념을 회상하게 하는 질문을 우선한다.\n' +
+    '9. CPA 문제에서 중요한 판단 기준, 개념 간 차이, 적용 이유를 우선 고려한다.\n' +
+    '10. 근거가 부족하거나 개념이 불명확하면 needsReview를 true로 한다.\n' +
+    '11. 짧고 자연스러운 한국어로 쓰고, 원본 문제 맥락과 이어지도록 필요하면 질문 앞에 "이 문제에서"를 쓴다.\n' +
+    '12. keyPoints는 모범 답변의 핵심 키워드 1~5개다.\n\n' +
+    '입력은 문제 ' + list.length + '개다.\n\n' +
+    list.map(function (x, i) {
+      return '### 문제 ' + (i + 1) + '\n[원본 문제 텍스트]\n' + x.problemText + '\n\n[사용자가 빨간색 또는 파란색 펜으로 작성한 개념 텍스트]\n' + x.conceptText +
+        (x.avoidType && Q_TYPES[x.avoidType] ? '\n\n(이번에는 ' + x.avoidType + '(' + Q_TYPES[x.avoidType] + ') 유형이 아닌 다른 유형으로 만든다.)' : '');
+    }).join('\n\n') +
+    '\n\n설명 없이 문제 순서대로 ' + list.length + '개 원소를 가진 JSON 배열 하나만 출력한다. 각 원소의 형식:\n' +
+    '{"ok":true,"needsReview":false,"questionType":"definition | judgment | comparison | reason | sequence | exception","recallQuestion":"","recallAnswer":"","keyPoints":[""],"estimatedThinkingSeconds":15,"reason":""}';
+}
+
+// Returns the fields to keep, or a short reason string ('needsReview' when Claude said the material is not enough).
+function checkQuestion(r) {
+  if (!r || typeof r !== 'object') return '응답 형식이 맞지 않아요';
+  if (r.needsReview === true || r.ok === false) return 'needsReview';
+  var q = String(r.recallQuestion || '').trim(), a = String(r.recallAnswer || '').trim();
+  var keys = Array.isArray(r.keyPoints) ? r.keyPoints.map(function (k) { return String(k).trim(); }).filter(Boolean) : [];
+  if (!q || !a) return '질문이나 답이 비어 있어요';
+  if (!Q_TYPES[r.questionType]) return '질문 유형이 맞지 않아요';
+  if (keys.length < 1 || keys.length > 5) return '핵심 키워드 수가 맞지 않아요';
+  if ((q.match(/\?/g) || []).length > 1) return '한 번에 여러 가지를 묻는 질문이에요';
+  if (/계산하|구하시오|산출하|금액은 얼마/.test(q)) return '계산을 요구하는 질문이에요';
+  if (a.length > 300 || a.split(/[.!?](?:\s|$)|\n/).filter(function (x) { return x.trim(); }).length > 3) return '답이 너무 길어요';
+  return { questionType: r.questionType, recallQuestion: q, recallAnswer: a, recallKeyPoints: keys, generatedAt: new Date().toISOString() };
+}
+
+// list: [{ problemText, conceptText, avoidType }] → one result per entry (fields object or reason string). Throws the sample error.
+async function askQuestions(list) {
+  var res = await sampleFn.json(questionPrompt(list), { cache: false });
+  var arr = asList(res, list.length);
+  return list.map(function (x, i) { return checkQuestion(arr && arr[i]); });
+}
+
+function questionFailNote(reason) {
+  return reason === 'needsReview'
+    ? '이 자료만으로는 신뢰할 수 있는 복습 문제를 만들기 어렵습니다. 질문을 직접 작성하거나 원본 텍스트를 수정해 주세요.'
+    : '질문을 자동으로 만들지 못했습니다(' + reason + '). 직접 입력하시겠습니까?';
+}
+
+function sampleErrorNote(e) {
+  var c = e && e.code;
+  if (c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared' || c === 'capability_disabled' || c === 'capability_removed') {
+    sampleFn = null;   // permanent for this view: hide the buttons, keep manual entry
+    return 'Claude 사용이 허용되지 않아 질문을 자동으로 만들 수 없어요. 직접 입력해 주세요.';
+  }
+  if (c === 'rate_limited') return 'Claude 사용 한도에 걸렸어요. 잠시 뒤 다시 눌러 주세요.';
+  if (c === 'session_expired') return '다시 로그인한 뒤 눌러 주세요.';
+  return '복습 질문을 만들지 못했습니다. 다시 누르거나 직접 입력해 주세요.';
+}
+
+// a question needs both the printed problem and the user's own concept
+function canAskQuestion(problemText, conceptText) {
+  return !!(sampleFn && String(problemText || '').trim() && String(conceptText || '').trim());
+}
+
+// Upload review: make questions for the given pending items (default: every included item that can have one and has none).
+async function makeUploadQuestions(localIds) {
+  if (!sampleFn || qBusy) return;
+  var items = localIds
+    ? localIds.map(findPending).filter(Boolean)
+    : pendingUploads.filter(function (i) { return i.included && !i.q && canAskQuestion(i.problemText, i.caption); });
+  if (!items.length) return;
+  qBusy = true;
+  renderUploadTab();
+  for (var s = 0; s < items.length; s += 8) {
+    var part = items.slice(s, s + 8);
+    try {
+      var out = await askQuestions(part.map(function (it) { return { problemText: it.problemText, conceptText: it.caption, avoidType: it.q && it.q.questionType }; }));
+      part.forEach(function (it, k) {
+        if (typeof out[k] === 'string') it.qNote = questionFailNote(out[k]);
+        else { it.q = out[k]; it.qNote = ''; }
+      });
+    } catch (e) {
+      var note = sampleErrorNote(e);
+      part.forEach(function (it) { it.qNote = note; });
+      if (e && e.code !== 'upstream_error' && e.code !== 'invalid_json') break;
+    }
+    renderUploadTab();
+  }
+  qBusy = false;
+  renderUploadTab();
+}
+
+function manualUploadQuestion(localId) {
+  var it = findPending(localId);
+  if (!it) return;
+  it.q = { questionType: '', recallQuestion: '', recallAnswer: '', recallKeyPoints: [], edited: true };
+  it.qNote = '';
+  renderUploadTab();
+}
+function dropUploadQuestion(localId) {
+  var it = findPending(localId);
+  if (!it) return;
+  it.q = null;
+  renderUploadTab();
+}
+function onQuestionInput(localId, field, value) {
+  var it = findPending(localId);
+  if (!it || !it.q) return;
+  it.q[field] = value;
+  it.q.edited = true;
+}
+function onProblemInput(localId, value) {
+  var it = findPending(localId);
+  if (it) it.problemText = value;
+}
+
+// read one problem again with Gemini (after a failed or empty read)
+async function rereadUpload(localId) {
+  var it = findPending(localId);
+  if (!it || !mcpFn || qBusy) return;
+  qBusy = true;
+  renderUploadTab();
+  aiCtl = new AbortController();
+  aiChunkFails = 0;
+  try { await aiFillPending([it], ''); } catch (e) {}
+  aiCtl = null;
+  qBusy = false;
+  if (!String(it.problemText || '').trim()) showToast('문제 텍스트를 추출하지 못했습니다');
+  renderUploadTab();
+}
+
+function uploadQuestionBox(item) {
+  var id = item.localId, dis = qBusy ? ' disabled' : '';
+  var can = canAskQuestion(item.problemText, item.caption);
+  if (item.q) {
+    return '<div class="q-box"><div class="field-label">복습 질문' + (Q_TYPES[item.q.questionType] ? ' · ' + Q_TYPES[item.q.questionType] : '') + '</div>' +
+      '<textarea placeholder="머릿속으로 답할 질문" oninput="onQuestionInput(\'' + id + '\', \'recallQuestion\', this.value)">' + escapeHtml(item.q.recallQuestion) + '</textarea>' +
+      '<div class="field-label">예상 정답</div>' +
+      '<textarea placeholder="짧은 답" oninput="onQuestionInput(\'' + id + '\', \'recallAnswer\', this.value)">' + escapeHtml(item.q.recallAnswer) + '</textarea>' +
+      (item.qNote ? '<div class="q-note">' + escapeHtml(item.qNote) + '</div>' : '') +
+      '<div class="q-btns">' + (can ? '<button class="btn-secondary" onclick="makeUploadQuestions([\'' + id + '\'])"' + dis + '>질문 다시 만들기</button>' : '') +
+        '<button class="btn-secondary" onclick="dropUploadQuestion(\'' + id + '\')"' + dis + '>질문 빼기</button></div></div>';
+  }
+  return '<div class="q-box">' +
+    (item.qNote ? '<div class="q-note">' + escapeHtml(item.qNote) + '</div>' : '') +
+    (sampleFn && !can ? '<div class="q-note">원본 문제와 개념 글이 모두 있어야 복습 질문을 만들 수 있어요.</div>' : '') +
+    '<div class="q-btns">' + (can ? '<button class="btn-secondary" onclick="makeUploadQuestions([\'' + id + '\'])"' + dis + '>복습 문제 만들기</button>' : '') +
+      '<button class="btn-secondary" onclick="manualUploadQuestion(\'' + id + '\')"' + dis + '>질문 직접 입력</button></div></div>';
 }
 
 function renderPdfZone() {
@@ -2846,13 +3130,12 @@ async function onPdfAutoPicked(file) {
     }
     // optional: read the handwriting with Gemini. Any problem here just leaves the local results as they are.
     if (aiWanted() && !aiCtl.signal.aborted) {
-      var fresh = pendingUploads.filter(function (i) { return i.readBlob; });
+      var fresh = pendingUploads.filter(function (i) { return i.readBlob && !i.readTried; });
       if (fresh.length) await aiFillPending(fresh, '손글씨 ' + fresh.length + '개 글자로 읽는 중');
     }
   } catch (e) {
     // keep whatever was collected
   }
-  pendingUploads.forEach(function (i) { delete i.readBlob; });
   finishLocalRun();
 }
 
@@ -3368,9 +3651,78 @@ function renderGalleryResults() {
         (editingConceptId === c.id
           ? '<textarea class="g-caption-edit" onblur="saveEditCaption(\'' + c.id + '\', this.value)">' + escapeHtml(c.text || '') + '</textarea>'
           : '<div class="g-caption" onclick="startEditCaption(\'' + c.id + '\')">' + (c.text ? highlightText(c.text, tokens) : '메모 추가...') + '</div>') +
+        galleryQuestionHtml(c) +
       '</div>' +
     '</div>';
   }).join('') + '</div>';
+}
+
+// 모아보기: 복습 질문 보기·직접 수정·다시 만들기. 질문 필드만 바꾸고 복습 기록은 그대로 둔다.
+function galleryQuestionHtml(c) {
+  var id = c.id, busy = galleryQBusy === id, dis = galleryQBusy ? ' disabled' : '';
+  var can = canAskQuestion(c.sourceProblemText, c.text);
+  var note = galleryQNote[id] ? '<div class="q-note">' + escapeHtml(galleryQNote[id]) + '</div>' : '';
+  if (editingQuestionId === id) {
+    var src = questionDraft || c;
+    return '<div class="q-box"><div class="field-label">복습 질문' + (Q_TYPES[src.questionType] ? ' · ' + Q_TYPES[src.questionType] : '') + (questionDraft ? ' (새로 만든 질문, 저장해야 반영돼요)' : '') + '</div>' +
+      '<textarea id="qeQ">' + escapeHtml(src.recallQuestion || '') + '</textarea>' +
+      '<div class="field-label">답</div><textarea id="qeA">' + escapeHtml(src.recallAnswer || '') + '</textarea>' + note +
+      '<div class="q-btns"><button class="btn-primary" onclick="saveEditQuestion(\'' + id + '\')">저장</button><button class="btn-secondary" onclick="cancelEditQuestion()">취소</button></div></div>';
+  }
+  return '<div class="q-box">' +
+    (c.recallQuestion ? '<div class="g-q"><b>복습 질문</b>' + escapeHtml(c.recallQuestion) + '</div><div class="g-q"><b>답</b>' + escapeHtml(c.recallAnswer || '') + '</div>' : '') +
+    (busy ? '<div class="q-note">자기 전 복습 문제를 만드는 중입니다…</div>' : note) +
+    '<div class="q-btns"><button class="btn-secondary" onclick="startEditQuestion(\'' + id + '\')"' + dis + '>' + (c.recallQuestion ? '질문 수정' : '질문 직접 입력') + '</button>' +
+      (can ? '<button class="btn-secondary" onclick="regenConceptQuestion(\'' + id + '\')"' + dis + '>' + (c.recallQuestion ? '질문 다시 만들기' : '질문 만들기') + '</button>' : '') +
+    '</div></div>';
+}
+
+function startEditQuestion(id) {
+  editingQuestionId = id;
+  questionDraft = null;
+  galleryQNote[id] = '';
+  renderGalleryResults();
+}
+function cancelEditQuestion() {
+  editingQuestionId = null;
+  questionDraft = null;
+  renderGalleryResults();
+}
+
+async function regenConceptQuestion(id) {
+  var c = allConcepts.find(function (x) { return x.id === id; });
+  if (!c || galleryQBusy || !canAskQuestion(c.sourceProblemText, c.text)) return;
+  galleryQBusy = id;
+  galleryQNote[id] = '';
+  renderGalleryResults();
+  try {
+    var r = (await askQuestions([{ problemText: c.sourceProblemText, conceptText: c.text, avoidType: c.questionType }]))[0];
+    if (typeof r === 'string') galleryQNote[id] = questionFailNote(r);
+    else { editingQuestionId = id; questionDraft = r; }   // shown for approval; nothing is saved until "저장"
+  } catch (e) { galleryQNote[id] = sampleErrorNote(e); }
+  galleryQBusy = null;
+  renderGalleryResults();
+}
+
+async function saveEditQuestion(id) {
+  var q = (document.getElementById('qeQ') || {}).value || '', a = (document.getElementById('qeA') || {}).value || '';
+  if (!q.trim() || !a.trim()) { showToast('질문과 답을 모두 적어 주세요'); return; }
+  var c = allConcepts.find(function (x) { return x.id === id; }) || {};
+  var base = questionDraft || { questionType: c.questionType, recallKeyPoints: c.recallKeyPoints, generatedAt: c.questionGeneratedAt, recallQuestion: c.recallQuestion, recallAnswer: c.recallAnswer };
+  var edited = !questionDraft || q.trim() !== base.recallQuestion || a.trim() !== base.recallAnswer;
+  var fields = questionFields(Object.assign({}, base, { recallQuestion: q, recallAnswer: a, edited: edited }));
+  try {
+    await db.doc('concepts/' + id).update(fields);
+  } catch (e) {
+    showToast('저장 실패');
+    return;
+  }
+  Object.assign(c, fields);
+  editingQuestionId = null;
+  questionDraft = null;
+  reviewQueue = null;   // 복습 큐가 바뀐 질문으로 다시 불러오게 함
+  waitingQueue = [];
+  renderGalleryResults();
 }
 
 async function deleteConcept(id) {

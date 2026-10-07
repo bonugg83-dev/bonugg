@@ -118,6 +118,13 @@ Claude Code 세션이 직접 수행해서 아티팩트의 DB/자산 저장소에
 - `nextReviewDate`: review 상태면 만기일 04:00(현지) ISO, learning/relearning
   이면 정확한 만기 시각
 - `createdAt`, `lastReviewedAt`
+- (선택) `sourceProblemText`: 인쇄된 원문 문제 글 (Gemini가 옮기거나 사용자가 적음)
+- (선택) 자기 전 말문제: `recallQuestion`, `recallAnswer`, `recallKeyPoints`(배열),
+  `questionType`(`definition`/`judgment`/`comparison`/`reason`/`sequence`/`exception`),
+  `questionApproved`, `questionGeneratedAt`, `questionEdited`. `recallQuestion`이 있으면
+  복습 화면 앞면에 질문만 나오고 "답 확인" 뒤에 답·원문·개념·이미지가 나온다. 없으면
+  예전처럼 이미지와 메모를 함께 보여준다. 질문을 붙이거나 바꿀 때는 이 필드만
+  `update`하고 스케줄러 필드는 건드리지 않는다.
 
 새로 만든 개념은 위 7번 예시처럼 `state:"new", step:0, reps:0, lapses:0,
 leech:false`로 넣고, `nextReviewDate`를 지금 시각으로 넣어서 그날 밤 복습
