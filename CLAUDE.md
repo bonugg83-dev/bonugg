@@ -120,7 +120,7 @@ Claude Code 세션이 직접 수행해서 아티팩트의 DB/자산 저장소에
 - `createdAt`, `lastReviewedAt`
 - (선택) `sourceProblemText`: 인쇄된 원문 문제 글 (Gemini가 옮기거나 사용자가 적음)
 - (선택) 자기 전 말문제: `recallQuestion`, `recallAnswer`, `recallKeyPoints`(배열),
-  `questionType`(`definition`/`judgment`/`comparison`/`reason`/`sequence`/`exception`),
+  `questionType`(새로 만드는 질문은 `ox`/`twist`/`trap`/`reason`/`connect`/`memo`, 옛 카드에는 `definition`/`judgment`/`comparison`/`sequence`/`exception`도 있음),
   `questionApproved`, `questionGeneratedAt`, `questionEdited`. `recallQuestion`이 있으면
   복습 화면 앞면에 질문만 나오고 "답 확인" 뒤에 답·원문·개념·이미지가 나온다. 없으면
   예전처럼 이미지와 메모를 함께 보여준다. 질문을 붙이거나 바꿀 때는 이 필드만
