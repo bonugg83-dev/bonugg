@@ -364,6 +364,8 @@ select:focus, textarea:focus, input:focus { border-color: var(--accent); }
 .thumb-card-foot { display: flex; align-items: center; justify-content: space-between; }
 .thumb-card-foot label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); font-weight: 600; cursor: pointer; }
 .save-bar { position: sticky; bottom: 0; padding: 10px 0 2px; background: var(--bg); }
+.btn-link { display: block; width: 100%; margin-top: 4px; padding: 8px; border: 0; background: none; color: var(--text-3); font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.btn-link:disabled { opacity: .5; cursor: default; }
 
 /* ── collection (모아보기) ── */
 .concept-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
@@ -1938,13 +1940,18 @@ function renderUploadTab() {
     return;
   }
   var askN = pendingUploads.filter(function (i) { return i.included && !i.q && canAskQuestion(i.problemText, i.caption); }).length;
+  // default flow: make the bedtime questions first, check them, then save; saving without questions is the side option
+  var saveN = pendingUploads.filter(function (i) { return i.included; }).length;
   var qBar = qBusy
     ? '<div class="ai-summary">자기 전 복습 문제를 만드는 중입니다…</div>'
-    : (askN ? '<div class="ai-summary"><button class="btn-secondary" style="width:auto" onclick="makeUploadQuestions()">복습 문제 만들기 (' + askN + '개)</button>' +
-        '<div style="margin-top:6px;font-size:12px;color:var(--text-3)">Claude가 문제마다 머릿속으로 답하는 질문을 하나씩 만들고, 세부 과목이 비어 있으면 원문을 보고 함께 골라요. 만든 질문은 고칠 수 있고, 저장할 때 함께 저장돼요. 처음 쓸 때 허용 창이 뜨고 Claude 사용량이 쓰여요.</div></div>' : '');
+    : (askN ? '<div class="ai-summary">아래 버튼을 누르면 Claude가 문제마다 머릿속으로 답하는 질문을 하나씩 만들고, 세부 과목이 비어 있으면 원문을 보고 함께 골라요. 만든 질문을 확인하고 고친 뒤 저장하면 돼요. 처음 쓸 때 허용 창이 뜨고 Claude 사용량이 쓰여요.</div>' : '');
+  var dis = qBusy ? ' disabled' : '';
+  var bar = askN
+    ? '<button class="btn-primary" onclick="makeUploadQuestions()"' + dis + '>복습 문제 만들기 (' + askN + '개)</button>' +
+      '<button class="btn-link" onclick="saveAllUploads()"' + dis + '>질문 없이 바로 저장 (' + saveN + '개)</button>'
+    : '<button class="btn-primary" onclick="saveAllUploads()"' + dis + '>' + (pendingUploads.some(function (i) { return i.included && i.q; }) ? '문제와 함께 저장' : '전체 저장') + ' (' + saveN + '개)</button>';
   var html = '<div class="step-title">저장할 과목 <small>전부 같은 과목으로 저장돼요. 세부는 나중에 지정해도 돼요</small></div>' + renderSubjectPicker() + summary + qBar + '<div class="thumb-grid">' + pendingUploads.map(renderThumbCard).join('') + '</div>' +
-    '<div class="save-bar"><button class="btn-primary" onclick="saveAllUploads()"' + (qBusy ? ' disabled' : '') + '>전체 저장 (' +
-    pendingUploads.filter(function (i) { return i.included; }).length + '개)</button></div>';
+    '<div class="save-bar">' + bar + '</div>';
   el.innerHTML = html;
 }
 
