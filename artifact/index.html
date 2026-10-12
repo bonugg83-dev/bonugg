@@ -796,6 +796,7 @@ var aiChecked = false;
 var aiOn = true;             // user switch: read handwriting with Gemini
 try { if (localStorage.getItem('aiOn') === '0') aiOn = false; } catch (e) {}
 var aiStopped = false;       // set when a limit/connection problem makes the run fall back to local-only
+var qRunNote = '';            // what the last question run did, shown at the top of the review screen
 var qBusy = false;            // Claude is writing review questions for the pending uploads
 var aiReadOk = 0, aiFailed = 0, aiChunkFails = 0, aiNote = '', aiLastError = '';
 
@@ -1944,7 +1945,7 @@ function renderUploadTab() {
   var saveN = pendingUploads.filter(function (i) { return i.included; }).length;
   var qBar = qBusy
     ? '<div class="ai-summary">자기 전 복습 문제를 만드는 중입니다…</div>'
-    : (askN ? '<div class="ai-summary">아래 버튼을 누르면 Claude가 문제마다 머릿속으로 답하는 질문을 하나씩 만들고, 세부 과목이 비어 있으면 원문을 보고 함께 골라요. 만든 질문을 확인하고 고친 뒤 저장하면 돼요. 처음 쓸 때 허용 창이 뜨고 Claude 사용량이 쓰여요.</div>' : '');
+    : (qRunNote ? '<div class="ai-summary q-run-note">' + escapeHtml(qRunNote) + '</div>' : '') + (askN ? '<div class="ai-summary">아래 버튼을 누르면 Claude가 문제마다 머릿속으로 답하는 질문을 하나씩 만들고, 세부 과목이 비어 있으면 원문을 보고 함께 골라요. 만든 질문을 확인하고 고친 뒤 저장하면 돼요. 처음 쓸 때 허용 창이 뜨고 Claude 사용량이 쓰여요.</div>' : '');
   var dis = qBusy ? ' disabled' : '';
   var bar = askN
     ? '<button class="btn-primary" onclick="makeUploadQuestions()"' + dis + '>복습 문제 만들기 (' + askN + '개)</button>' +
@@ -2257,6 +2258,7 @@ function onCropDragUp() {
 
 function resetUploadFlow() {
   uploadStage = 'idle';
+  qRunNote = '';
   pendingUploads = [];
   savedCount = 0;
   aiSkipped = 0;
@@ -2578,6 +2580,7 @@ function questionPrompt(list) {
     list.map(function (x, i) {
       return '### 문제 ' + (i + 1) + '\n[원본 문제 텍스트]\n' + x.problemText + '\n\n[사용자가 빨간색 또는 파란색 펜으로 작성한 개념 텍스트]\n' + x.conceptText +
         (x.lapses ? '\n\n[복습 기록] 복습에서 ' + x.lapses + '번 틀린 적이 있다.' : '') +
+        (x.retryWhy ? '\n\n(지난번 질문 "' + x.retryQ + '"은(는) "' + x.retryWhy + '" 때문에 쓰지 못했다. 이 점을 고쳐서 다시 만든다.)' : '') +
         (x.avoidType && Q_LABELS[x.avoidType] ? '\n\n(이번에는 ' + x.avoidType + '(' + Q_LABELS[x.avoidType] + ') 유형이 아닌 다른 유형으로 만든다.)' : '') +
         (x.subs ? '\n\n[세부 과목 후보] ' + x.subs.map(function (sb) { return sb[0] + '(' + sb[1] + ')'; }).join(', ') : '');
     }).join('\n\n') +
@@ -2598,8 +2601,12 @@ function checkQuestion(r, conceptText) {
   if (q.length > Q_MAX_LEN) return '질문이 3줄을 넘어요';
   if (r.questionType !== 'memo' && (q.match(/\?/g) || []).length > 1) return '한 번에 여러 가지를 묻는 질문이에요';
   // the question must be about the user's own memo: at least one keyword has to appear in it
+  // a keyword written in the memo, or failing that a memo word (2+ letters) used in the question or a keyword
   var memo = String(conceptText || '').replace(/\s+/g, '');
-  if (memo && !keys.some(function (k) { return memo.indexOf(k.replace(/\s+/g, '')) !== -1; })) return '내가 적은 개념과 관련 없는 질문이에요';
+  var qa = (q + keys.join('')).replace(/\s+/g, '');
+  var memoWords = String(conceptText || '').split(/[^0-9A-Za-z가-힣]+/).filter(function (w) { return w.length >= 2; });
+  if (memo && !keys.some(function (k) { return memo.indexOf(k.replace(/\s+/g, '')) !== -1; }) &&
+      !memoWords.some(function (w) { return qa.indexOf(w) !== -1; })) return '내가 적은 개념과 관련 없는 질문이에요';
   if (/계산하|구하시오|산출하|금액은 얼마/.test(q)) return '계산을 요구하는 질문이에요';
   if (/(이|위|본|해당|다음)\s?(문제|자료|표|그림)|위의|보기\s?중|보기에서/.test(q)) return '원본 문제를 봐야 답할 수 있는 질문이에요';
   // O/X, a word, a direction or one sentence; "X. <reason>" counts as one sentence
@@ -2616,7 +2623,9 @@ async function askQuestions(list) {
   return list.map(function (x, i) {
     var r = arr && arr[i];
     var sid = r && typeof r === 'object' ? String(r.subjectId || '') : '';
-    return { result: checkQuestion(r, x.conceptText), subjectId: x.subs && x.subs.some(function (sb) { return sb[0] === sid; }) ? sid : '' };
+    var out = { result: checkQuestion(r, x.conceptText), subjectId: x.subs && x.subs.some(function (sb) { return sb[0] === sid; }) ? sid : '' };
+    if (typeof out.result === 'string' && r && typeof r === 'object') out.rejectedQ = String(r.recallQuestion || '').slice(0, 200);
+    return out;
   });
 }
 
@@ -2651,34 +2660,57 @@ function canAskQuestion(problemText, conceptText) {
 }
 
 // Upload review: make questions for the given pending items (default: every included item that can have one and has none).
+// Questions go out in small batches. A question the checks reject is asked again once with the reason; a batch
+// whose reply can't be read is retried one problem at a time. Every item ends with a question or a visible note,
+// and qRunNote sums the run up at the top of the screen.
+var Q_CHUNK = 4;
 async function makeUploadQuestions(localIds) {
   if (!sampleFn || qBusy) return;
   var items = localIds
     ? localIds.map(findPending).filter(Boolean)
     : pendingUploads.filter(function (i) { return i.included && !i.q && canAskQuestion(i.problemText, i.caption); });
-  if (!items.length) return;
+  if (!items.length) { qRunNote = '질문을 만들 문제가 없어요. 원본 문제 글과 내 개념이 모두 있는 문제만 만들 수 있어요.'; renderUploadTab(); return; }
   qBusy = true;
+  qRunNote = '';
+  items.forEach(function (it) { it.qNote = ''; it.qWhy = ''; it.qOk = false; });
   renderUploadTab();
-  for (var s = 0; s < items.length; s += 8) {
-    var part = items.slice(s, s + 8);
-    try {
-      var out = await askQuestions(part.map(function (it) {
-        return { problemText: it.problemText, conceptText: it.caption, avoidType: it.q && it.q.questionType, subs: unassignedSubs(it.subjectId || uploadSubject) };
-      }));
-      part.forEach(function (it, k) {
-        if (out[k].subjectId) it.subjectId = out[k].subjectId;
-        if (typeof out[k].result === 'string') it.qNote = questionFailNote(out[k].result);
-        else { it.q = out[k].result; it.qNote = ''; }
-      });
-    } catch (e) {
+  var stopNote = '';
+  var ask = async function (part, retry) {
+    var out = await askQuestions(part.map(function (it) {
+      return { problemText: it.problemText, conceptText: it.caption, avoidType: it.q && it.q.questionType,
+               subs: unassignedSubs(it.subjectId || uploadSubject), retryWhy: retry && it.qWhy, retryQ: retry && it.qPrevQ };
+    }));
+    part.forEach(function (it, k) {
+      if (out[k].subjectId) it.subjectId = out[k].subjectId;
+      if (typeof out[k].result === 'string') { it.qWhy = out[k].result; it.qPrevQ = out[k].rejectedQ || ''; it.qNote = questionFailNote(out[k].result); }
+      else { it.q = out[k].result; it.qNote = ''; it.qWhy = ''; it.qOk = true; }
+    });
+  };
+  var run = async function (part, retry) {
+    if (stopNote) { part.forEach(function (it) { it.qNote = stopNote; }); return; }
+    try { await ask(part, retry); }
+    catch (e) {
       var note = sampleErrorNote(e);
-      part.forEach(function (it) { it.qNote = note; });
-      if (e && e.code !== 'upstream_error' && e.code !== 'invalid_json') break;
+      var soft = e && (e.code === 'upstream_error' || e.code === 'invalid_json');
+      if (soft && part.length > 1) { for (var j = 0; j < part.length; j++) await run([part[j]], retry); return; }
+      part.forEach(function (it) { it.qNote = note; it.qWhy = ''; });
+      if (!soft) stopNote = note;   // not granted, rate limited…: don't keep calling, but say so on every problem
     }
     renderUploadTab();
-  }
+  };
+  for (var s = 0; s < items.length; s += Q_CHUNK) await run(items.slice(s, s + Q_CHUNK), false);
+  // one more try for questions the checks rejected (not for needsReview: the material itself is too thin)
+  var again = items.filter(function (it) { return !it.qOk && it.qWhy && it.qWhy !== 'needsReview'; });
+  for (var r = 0; r < again.length; r += Q_CHUNK) await run(again.slice(r, r + Q_CHUNK), true);
+  var made = items.filter(function (it) { return it.qOk; }).length;
+  var failed = items.length - made;
+  var noText = localIds ? 0 : pendingUploads.filter(function (i) { return i.included && !i.q && !canAskQuestion(i.problemText, i.caption); }).length;
+  qRunNote = (stopNote && !made ? stopNote
+    : '복습 질문 ' + made + '개를 만들었어요.' + (failed ? ' ' + failed + '개는 만들지 못했어요. 문제 카드 아래에 이유가 있으니 다시 만들거나 직접 입력해 주세요.' : '')) +
+    (noText ? ' 원본 문제 글이나 내 개념이 비어 있는 ' + noText + '개는 처음부터 만들 수 없어요(카드에서 "AI로 다시 읽기" 또는 직접 입력).' : '');
   qBusy = false;
   renderUploadTab();
+  showToast(failed ? '질문 ' + made + '개 생성, ' + failed + '개 실패' : '질문 ' + made + '개를 만들었어요');
 }
 
 function manualUploadQuestion(localId) {
